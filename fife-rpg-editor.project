@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project CEGUIDefaultResolution="800x600" CEGUIVersion="1.0" baseDirectory="." fontsPath="gui/fonts" imagesetsPath="gui/imagesets" layoutsPath="gui/layouts" looknfeelsPath="gui/looknfeel" schemesPath="gui/schemes" version="CEED Project 1" xmlSchemasPath="gui/xml_schemas">
+    <Items />
+</Project>
