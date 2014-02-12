@@ -92,6 +92,151 @@ class Editor(object):
         """Returns the number of maps"""
         return self.__model.getMapCount()
 
+    def create_layer(self, fife_map_id, layer_name, grid_type):
+        """Creates a new layer on a map
+
+        Args:
+
+            fife_map_id: The identifier of the map
+
+            layer_name: The identifier of the new layer
+
+            grid_type: A fife.CellGrid or the name of the Grid
+
+        Raise:
+
+            ValueError if the there is already a layer with that name on the
+            map.
+
+        Raises:
+
+            ValueError if there was no map with that identifier
+
+        Returns:
+
+            The created layer
+        """
+        fife_map = self.__model.getMap(fife_map_id)
+        if not fife_map:
+            raise ValueError("A map with the id %s could not be found" % (
+                             fife_map_id))
+        if 0:  # Just for IDEs
+            assert isinstance(fife_map, fife.Map)
+        if fife_map.getLayer(layer_name):
+            raise ValueError(
+                "The map %s already has a layer named %s" % (
+                fife_map.getId(), layer_name))
+        if not isinstance(grid_type, fife.CellGrid):
+            grid_type = self.__model.getCellGrid(grid_type)
+        return fife_map.createLayer(layer_name, grid_type)
+
+    def delete_layer(self, fife_map_id, layer):
+        """Deletes a layer from a map
+
+        Args:
+
+            fife_map_id: A fife.Map or the identifier of the map
+
+            layer: A fife.Layer or the identifier of the layer
+
+        Raises:
+
+            ValueError if there was no map with that identifier
+        """
+        fife_map = self.__model.getMap(fife_map_id)
+        if not fife_map:
+            raise ValueError("A map with the id %s could not be found" % (
+                             fife_map_id))
+        if 0:  # Just for IDEs
+            assert isinstance(fife_map, fife.Map)
+        if not isinstance(layer, fife.Layer):
+            layer = fife_map.getLayer(layer)
+        fife_map.deleteLayer(layer)
+
+    def delete_layers(self, fife_map_id):
+        """Deletes all layers from a map
+
+        Args:
+
+            fife_map_id: A fife.Map or the identifier of the map
+
+        Raises:
+
+            ValueError if there was no map with that identifier
+        """
+        fife_map = self.__model.getMap(fife_map_id)
+        if not fife_map:
+            raise ValueError("A map with the id %s could not be found" % (
+                             fife_map_id))
+        if 0:  # Just for IDEs
+            assert isinstance(fife_map, fife.Map)
+        fife_map.deleteLayers()
+
+    def get_layers(self, fife_map_id):
+        """Returns a list of the layers of a map
+
+        Args:
+
+            fife_map_id: A fife.Map or the identifier of the map
+
+        Raises:
+
+            ValueError if there was no map with that identifier
+        """
+        fife_map = self.__model.getMap(fife_map_id)
+        if not fife_map:
+            raise ValueError("A map with the id %s could not be found" % (
+                             fife_map_id))
+        if 0:  # Just for IDEs
+            assert isinstance(fife_map, fife.Map)
+        return fife_map.getLayers()
+
+    def get_layer(self, fife_map_id, layer):
+        """Get a layer from a map
+
+        Args:
+
+            fife_map_id: A fife.Map or the identifier of the map
+
+            layer: The identifier of the layer
+
+        Raises:
+
+            ValueError if there was no map with that identifier.
+
+        Returns:
+
+            The layer, if present on the map.
+        """
+        fife_map = self.__model.getMap(fife_map_id)
+        if not fife_map:
+            raise ValueError("A map with the id %s could not be found" % (
+                             fife_map_id))
+        if 0:  # Just for IDEs
+            assert isinstance(fife_map, fife.Map)
+        return fife_map.getLayer(layer)
+
+    def get_layer_count(self, fife_map_id):
+        """Returns the number of layers on a map
+
+        Args:
+
+            fife_map_id: A fife.Map or the identifier of the map
+
+            layer: The identifier of the layer
+
+        Raises:
+
+            ValueError if there was no map with that identifier
+        """
+        fife_map = self.__model.getMap(fife_map_id)
+        if not fife_map:
+            raise ValueError("A map with the id %s could not be found" % (
+                             fife_map_id))
+        if 0:  # Just for IDEs
+            assert isinstance(fife_map, fife.Map)
+        return fife_map.getLayerCount()
+
     def get_namespaces(self):
         """Returns a list of all namespaces"""
         return self.__model.getNamespaces()

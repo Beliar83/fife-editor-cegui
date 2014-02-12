@@ -1,9 +1,6 @@
 <?xml version="1.0" ?>
 <GUIScheme version="5" name="WindowsLookSkin">
 	<Imageset filename="WindowsLook.imageset" />
-	<Font filename="DejaVuSans-10.font" />
-	<Font filename="DejaVuSans-12.font" />
-	<Font filename="DejaVuSans-14.font" />
 	<LookNFeel filename="WindowsLook.looknfeel" />
 	<WindowRendererSet filename="CEGUICoreWindowRendererSet" />
 
