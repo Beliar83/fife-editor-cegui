@@ -8,27 +8,57 @@
         <Window type="VerticalLayoutContainer" name="MainContainer" >
             <Property name="Area" value="{{0,0},{0,0},{1,0},{1,0}}" />
             <Property name="AutoRenderingSurface" value="True" />
-            <Window type="WindowsLook/Menubar" name="Menu" >
+            <Window type="TaharezLook/Menubar" name="Menu" >
                 <Property name="Area" value="{{0,0},{0,0},{1,0},{0.03,0}}" />
             </Window>
             <Window type="HorizontalLayoutContainer" name="MiddleContainer" >
-                <Property name="Area" value="{{0,0},{0.03,0},{1,0},{0.97,0}}" />
+                <Property name="Area" value="{{0,0},{0.03,-1},{1,0},{0.97,-1}}" />
                 <Property name="AutoRenderingSurface" value="True" />
-                <Window type="WindowsLook/Static" name="ToolBar" >
+                <Window type="TaharezLook/TabControl" name="Toolbar" >
                     <Property name="Area" value="{{0,0},{0,0},{0.2,0},{0.94,0}}" />
-                    <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                    <Property name="TabHeight" value="{0,-1}" />
+                    <AutoWindow namePath="__auto_TabPane__" >
+                        <Property name="EnableBottom" value="1" />
+                    </AutoWindow>
+                    <AutoWindow namePath="__auto_TabPane__Buttons" >
+                        <Property name="EnableTop" value="0" />
+                    </AutoWindow>
+                    <AutoWindow namePath="__auto_TabPane__ScrollLeft" >
+                        <Property name="Visible" value="False" />
+                    </AutoWindow>
+                    <AutoWindow namePath="__auto_TabPane__ScrollRight" >
+                        <Property name="Visible" value="False" />
+                    </AutoWindow>
                 </Window>
                 <Window type="GridLayoutContainer" name="GridLayoutContainer" >
-                    <Property name="Area" value="{{0.198828,0},{0.000520867,0},{0.806055,0},{0.913021,0}}" />
+                    <Property name="Area" value="{{0.2,0},{0.000520867,0},{0.8,0},{0.094,0}}" />
                 </Window>
-                <Window type="WindowsLook/Static" name="Property Window" >
+                <Window type="TaharezLook/FrameWindow" name="FrameWindow" >
                     <Property name="Area" value="{{0.8,0},{0,0},{1,0},{0.94,0}}" />
-                    <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                    <Property name="FrameEnabled" value="False" />
+                    <Property name="RollUpEnabled" value="False" />
+                    <Property name="SizingEnabled" value="False" />
+                    <Property name="TitlebarEnabled" value="False" />
+                    <Property name="DragMovingEnabled" value="False" />
+                    <Property name="CloseButtonEnabled" value="False" />
+                    <Property name="SizingBorderThickness" value="0" />
+                    <AutoWindow namePath="__auto_titlebar__" >
+                        <Property name="DraggingEnabled" value="False" />
+                    </AutoWindow>
                 </Window>
             </Window>
-            <Window type="WindowsLook/Static" name="Statusbar" >
-                <Property name="Area" value="{{0,0},{0.97,0},{1,0},{1,0}}" />
-                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Window type="TaharezLook/FrameWindow" name="Statusbar" >
+                <Property name="Area" value="{{0,1},{0.969,0},{1,1},{0.969,0}}" />
+                <Property name="MinSize" value="{{1,0},{0.03,0}}" />
+                <Property name="FrameEnabled" value="False" />
+                <Property name="RollUpEnabled" value="False" />
+                <Property name="SizingEnabled" value="False" />
+                <Property name="TitlebarEnabled" value="False" />
+                <Property name="DragMovingEnabled" value="False" />
+                <Property name="CloseButtonEnabled" value="False" />
+                <AutoWindow namePath="__auto_titlebar__" >
+                    <Property name="DraggingEnabled" value="False" />
+                </AutoWindow>
             </Window>
         </Window>
     </Window>

@@ -39,8 +39,8 @@ class EditorApplication(RPGApplicationCEGUI):
 
     def __loadData(self):
         """Load gui datafiles"""
-        PyCEGUI.ImageManager.getSingleton().loadImageset("WindowsLook.imageset")
-        PyCEGUI.SchemeManager.getSingleton().createFromFile("WindowsLook.scheme")
+        PyCEGUI.ImageManager.getSingleton().loadImageset("TaharezLook.imageset")
+        PyCEGUI.SchemeManager.getSingleton().createFromFile("TaharezLook.scheme")
         PyCEGUI.FontManager.getSingleton().createFromFile("DejaVuSans-10.font")
         PyCEGUI.FontManager.getSingleton().createFromFile("DejaVuSans-12.font")
         PyCEGUI.FontManager.getSingleton().createFromFile("DejaVuSans-14.font")
@@ -48,20 +48,24 @@ class EditorApplication(RPGApplicationCEGUI):
 
     def create_menu(self):
         self.menubar = self.main_container.getChild("Menu")
-        self.file_menu = self.menubar.createChild("WindowsLook/MenuItem", "File")
+        self.file_menu = self.menubar.createChild("TaharezLook/MenuItem", "File")
         self.file_menu.setText(_("File"))
         self.file_menu.setVerticalAlignment(PyCEGUI.VerticalAlignment.VA_CENTRE)
-        file_popup = self.file_menu.createChild("WindowsLook/PopupMenu", "FilePopup")
-        file_new = file_popup.createChild("WindowsLook/MenuItem", "FileNew")
-        file_new.setText(_("New"))
-        file_open = file_popup.createChild("WindowsLook/MenuItem", "FileOpen")
-        file_open.setText(_("Open"))
-        file_quit = file_popup.createChild("WindowsLook/MenuItem", "FileQuit")
+        file_popup = self.file_menu.createChild("TaharezLook/PopupMenu", "FilePopup")
+        file_new = file_popup.createChild("TaharezLook/MenuItem", "FileNew")
+        file_new.setText(_("New Project"))
+        file_open = file_popup.createChild("TaharezLook/MenuItem", "FileOpen")
+        file_open.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_open)
+        file_open.setText(_("Open Project"))
+        file_quit = file_popup.createChild("TaharezLook/MenuItem", "FileQuit")
         file_quit.setText(_("Quit"))
         file_quit.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_quit)
 
     def cb_quit(self, args):
         self.quit()
+
+    def cb_open(self, args):
+        self.filebrowser.show(self.editor_window)
 
 if __name__ == '__main__':
     setting = Setting(app_name="frpg-editor", settings_file="./settings.xml")
