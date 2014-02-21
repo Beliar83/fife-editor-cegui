@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GUILayout version="4" >
+    <Window type="VerticalLayoutContainer" name="toolbar_page" >
+        <Property name="Area" value="{{0,0},{0,0},{1,0},{1,0}}" />
+        <Window type="TaharezLook/FrameWindow" name="Title" >
+            <Property name="Area" value="{{0,0},{0,2},{1,0},{0.03,2}}" />
+            <Property name="MinSize" value="{{1,0},{0.03,0}}" />
+            <Property name="FrameEnabled" value="False" />
+            <Property name="RollUpEnabled" value="False" />
+            <Property name="SizingEnabled" value="False" />
+            <Property name="TitlebarEnabled" value="False" />
+            <Property name="DragMovingEnabled" value="False" />
+            <Property name="CloseButtonEnabled" value="False" />
+            <AutoWindow namePath="__auto_titlebar__" >
+                <Property name="DraggingEnabled" value="False" />
+            </AutoWindow>
+        </Window>
+        <Window type="GridLayoutContainer" name="Items" >
+            <Property name="Area" value="{{0,0},{0,0},{1,0},{1,0}}" />
+        </Window>
+    </Window>
+</GUILayout>

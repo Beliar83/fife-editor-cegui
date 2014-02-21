@@ -5,5 +5,7 @@
         <Item path="gui/fonts/DejaVuSans-12.font" type="file" />
         <Item path="gui/fonts/DejaVuSans-14.font" type="file" />
         <Item path="gui/layouts/editor_window.layout" type="file" />
+        <Item path="gui/layouts/filebrowser.layout" type="file" />
+        <Item path="gui/layouts/toolbar_page.layout" type="file" />
     </Items>
 </Project>

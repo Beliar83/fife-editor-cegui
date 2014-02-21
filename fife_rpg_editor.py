@@ -13,12 +13,13 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import PyCEGUI
-from fife import fife
 from fife.extensions.fife_settings import Setting
 from fife_rpg import RPGApplicationCEGUI
 
-class EditorApplication(RPGApplicationCEGUI):
+from editor.filebrowser import FileBrowser
 
+
+class EditorApplication(RPGApplicationCEGUI):
 
     def __init__(self, setting):
         #For IDES
@@ -30,28 +31,34 @@ class EditorApplication(RPGApplicationCEGUI):
         RPGApplicationCEGUI.__init__(self, setting)
 
         self.__loadData()
-        self.editor_window = PyCEGUI.WindowManager.getSingleton().loadLayoutFromFile(
-                                                                    "editor_window.layout")
+        window_manager = PyCEGUI.WindowManager.getSingleton()
+        self.editor_window = window_manager.loadLayoutFromFile(
+            "editor_window.layout")
         self.main_container = self.editor_window.getChild("MainContainer")
-        PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(self.editor_window)
+        PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(
+            self.editor_window)
         self.create_menu()
-
+        self.filebrowser = FileBrowser(self.engine)
 
     def __loadData(self):
         """Load gui datafiles"""
-        PyCEGUI.ImageManager.getSingleton().loadImageset("TaharezLook.imageset")
-        PyCEGUI.SchemeManager.getSingleton().createFromFile("TaharezLook.scheme")
+        PyCEGUI.ImageManager.getSingleton().loadImageset(
+            "TaharezLook.imageset")
+        PyCEGUI.SchemeManager.getSingleton().createFromFile(
+            "TaharezLook.scheme")
         PyCEGUI.FontManager.getSingleton().createFromFile("DejaVuSans-10.font")
         PyCEGUI.FontManager.getSingleton().createFromFile("DejaVuSans-12.font")
         PyCEGUI.FontManager.getSingleton().createFromFile("DejaVuSans-14.font")
 
-
     def create_menu(self):
         self.menubar = self.main_container.getChild("Menu")
-        self.file_menu = self.menubar.createChild("TaharezLook/MenuItem", "File")
+        self.file_menu = self.menubar.createChild("TaharezLook/MenuItem",
+                                                  "File")
         self.file_menu.setText(_("File"))
-        self.file_menu.setVerticalAlignment(PyCEGUI.VerticalAlignment.VA_CENTRE)
-        file_popup = self.file_menu.createChild("TaharezLook/PopupMenu", "FilePopup")
+        self.file_menu.setVerticalAlignment(
+            PyCEGUI.VerticalAlignment.VA_CENTRE)
+        file_popup = self.file_menu.createChild("TaharezLook/PopupMenu",
+                                                "FilePopup")
         file_new = file_popup.createChild("TaharezLook/MenuItem", "FileNew")
         file_new.setText(_("New Project"))
         file_open = file_popup.createChild("TaharezLook/MenuItem", "FileOpen")
@@ -65,7 +72,12 @@ class EditorApplication(RPGApplicationCEGUI):
         self.quit()
 
     def cb_open(self, args):
+        self.filebrowser.extension_filter = ["xml", ]
         self.filebrowser.show(self.editor_window)
+        while self.filebrowser.return_value is None:
+            self.engine.pump()
+        if self.filebrowser.return_value:
+            print self.filebrowser.selected_file
 
 if __name__ == '__main__':
     setting = Setting(app_name="frpg-editor", settings_file="./settings.xml")
