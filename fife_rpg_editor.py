@@ -12,9 +12,12 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+
 import PyCEGUI
 from fife.extensions.fife_settings import Setting
 from fife_rpg import RPGApplicationCEGUI
+from fife.extensions.serializers.simplexml import SimpleXMLSerializer
 
 from editor.filebrowser import FileBrowser
 
@@ -30,6 +33,9 @@ class EditorApplication(RPGApplicationCEGUI):
             self.file_menu = PyCEGUI.MenuItem()
         RPGApplicationCEGUI.__init__(self, setting)
 
+        self.current_project_file = ""
+        self.project = None
+
         self.__loadData()
         window_manager = PyCEGUI.WindowManager.getSingleton()
         self.editor_window = window_manager.loadLayoutFromFile(
@@ -38,6 +44,7 @@ class EditorApplication(RPGApplicationCEGUI):
         PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(
             self.editor_window)
         self.create_menu()
+        self.create_world()
         self.filebrowser = FileBrowser(self.engine)
 
     def __loadData(self):
@@ -68,6 +75,62 @@ class EditorApplication(RPGApplicationCEGUI):
         file_quit.setText(_("Quit"))
         file_quit.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_quit)
 
+    def clear(self):
+        """Clears all data and restores saved settings"""
+        self.__maps = {}
+        self.__current_map = None
+        self.__components = {}
+        self.__actions = {}
+        self.__systems = {}
+        self.__behaviours = {}
+        self.world.clear()
+
+    def load_project(self, filepath):
+        """Tries to load a project
+
+        Args:
+
+            filepath: The path to the project file.
+
+        Returns: True of the project was loaded. False if not."""
+        self.clear()
+        settings = SimpleXMLSerializer()
+        settings.load(filepath)
+        if "fife-rpg" in settings.getModuleNameList():
+            self.project = settings
+            project_dir = str(os.path.split(filepath)[0])
+            self.engine.getVFS().addNewSource(project_dir)
+            self.load_maps()
+            return True
+        return False
+
+    def load_map(self, name):
+        """Load the map with the given name
+
+        Args:
+            name: The name of the map to load
+        """
+        maps_path = self.project.get(
+            "fife-rpg", "MapsPath", "maps")
+        camera = self.project.get(
+            "fife-rpg", "Camera", "main")
+        self.settings.set(
+            "fife-rpg", "MapsPath", maps_path)
+        self.settings.set(
+            "fife-rpg", "Camera", camera)
+        try:
+            RPGApplicationCEGUI.load_map(self, name)
+        except Exception as e:
+            print e.message
+
+    def load_maps(self):
+        """Load the names of the available maps from a map file."""
+        maps_path = self.project.get(
+            "fife-rpg", "MapsPath", "maps")
+        self.settings.set(
+            "fife-rpg", "MapsPath", maps_path)
+        RPGApplicationCEGUI.load_maps(self)
+
     def cb_quit(self, args):
         self.quit()
 
@@ -77,7 +140,15 @@ class EditorApplication(RPGApplicationCEGUI):
         while self.filebrowser.return_value is None:
             self.engine.pump()
         if self.filebrowser.return_value:
-            print self.filebrowser.selected_file
+            self.current_project_file = self.filebrowser.selected_file
+            if self.load_project(self.current_project_file):
+                maps = self.maps
+                if len(maps) > 0:
+                    self.load_map(maps.keys()[0])
+            else:
+                # TODO: Offer to convert to fife-rpg project
+                print "%s is not a valid fife-rpg project"
+        print "project loaded"
 
 if __name__ == '__main__':
     setting = Setting(app_name="frpg-editor", settings_file="./settings.xml")
