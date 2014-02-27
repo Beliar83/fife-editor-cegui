@@ -110,13 +110,17 @@ class EditorApplication(RPGApplicationCEGUI):
             filepath: The path to the project file.
 
         Returns: True of the project was loaded. False if not."""
-        self.clear()
+        try:
+            self.clear()
+        except Exception as e:
+            print e
         settings = SimpleXMLSerializer()
         settings.load(filepath)
         if "fife-rpg" in settings.getModuleNameList():
             self.project = settings
             project_dir = str(os.path.split(filepath)[0])
-            self.project_source = self.engine.getVFS().addNewSource(project_dir)
+            self.engine.getVFS().addNewSource(project_dir)
+            self.project_source = project_dir
             self.load_maps()
             return True
         return False
