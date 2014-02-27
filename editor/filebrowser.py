@@ -23,6 +23,17 @@ class FileBrowser(object):
     """Class that displays a filebrowser"""
 
     def __init__(self, engine, directory=None, extension_filter=None):
+        """Constructor
+
+        Args:
+
+            engine: A fife engine object
+
+            directory: The starting directory of the filebrowser
+
+            extension_filter: A list of file extension to show. None means
+                              all extensions
+        """
         self.engine = engine
         self.directory = directory or os.getcwd()
         self.extension_filter = extension_filter or ()
@@ -106,6 +117,8 @@ class FileBrowser(object):
                 if (len(self.extension_filter) == 0 or
                     extension in self.extension_filter):
                     file_list.append(content)
+        dir_list = sorted(dir_list, key=lambda s: s.lower())
+        file_list = sorted(file_list, key=lambda s: s.lower())
         self.dir_list_widget.resetList()
         self.file_list_widget.resetList()
         self.dir_list_widget.addItem(PyCEGUI.ListboxTextItem(_("Populating"
@@ -114,7 +127,6 @@ class FileBrowser(object):
                                                                 " contents")))
 
         self.engine.pump()
-        self.dirs = []
         self.dir_list_widget.resetList()
         for directory in dir_list:
             item = PyCEGUI.ListboxTextItem(directory)
