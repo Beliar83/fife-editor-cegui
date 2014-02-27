@@ -23,8 +23,12 @@ from editor.filebrowser import FileBrowser
 
 
 class EditorApplication(RPGApplicationCEGUI):
+    """The application for the editor"""
 
     def __init__(self, setting):
+        """Constructor
+
+        """
         #For IDES
         if False:
             self.editor_window = PyCEGUI.DefaultWindow()
@@ -35,6 +39,7 @@ class EditorApplication(RPGApplicationCEGUI):
 
         self.current_project_file = ""
         self.project = None
+        self.project_source = None
 
         self.__loadData()
         window_manager = PyCEGUI.WindowManager.getSingleton()
@@ -58,6 +63,7 @@ class EditorApplication(RPGApplicationCEGUI):
         PyCEGUI.FontManager.getSingleton().createFromFile("DejaVuSans-14.font")
 
     def create_menu(self):
+        """Create the menu items"""
         self.menubar = self.main_container.getChild("Menu")
         self.file_menu = self.menubar.createChild("TaharezLook/MenuItem",
                                                   "File")
@@ -71,6 +77,9 @@ class EditorApplication(RPGApplicationCEGUI):
         file_open = file_popup.createChild("TaharezLook/MenuItem", "FileOpen")
         file_open.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_open)
         file_open.setText(_("Open Project"))
+        file_open = file_popup.createChild("TaharezLook/MenuItem", "FileClose")
+        file_open.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_close)
+        file_open.setText(_("Close Project"))
         file_quit = file_popup.createChild("TaharezLook/MenuItem", "FileQuit")
         file_quit.setText(_("Quit"))
         file_quit.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_quit)
@@ -84,6 +93,14 @@ class EditorApplication(RPGApplicationCEGUI):
         self.__systems = {}
         self.__behaviours = {}
         self.world.clear()
+        model = self.engine.getModel()
+        model.deleteObjects()
+        model.deleteMaps()
+        if self.project_source is not None:
+            self.engine.getVFS().removeSource(self.project_source)
+            self.project_source = None
+        self.project_dir = None
+        self.project = None
 
     def load_project(self, filepath):
         """Tries to load a project
@@ -99,7 +116,7 @@ class EditorApplication(RPGApplicationCEGUI):
         if "fife-rpg" in settings.getModuleNameList():
             self.project = settings
             project_dir = str(os.path.split(filepath)[0])
-            self.engine.getVFS().addNewSource(project_dir)
+            self.project_source = self.engine.getVFS().addNewSource(project_dir)
             self.load_maps()
             return True
         return False
@@ -132,9 +149,15 @@ class EditorApplication(RPGApplicationCEGUI):
         RPGApplicationCEGUI.load_maps(self)
 
     def cb_quit(self, args):
+        """Callback when quit was clicked in the file menu"""
         self.quit()
 
+    def cb_close(self, args):
+        """Callback when cllose was clicked in the file menu"""
+        self.clear()
+
     def cb_open(self, args):
+        """Callback when open was clicked in the file menu"""
         self.filebrowser.extension_filter = ["xml", ]
         self.filebrowser.show(self.editor_window)
         while self.filebrowser.return_value is None:
