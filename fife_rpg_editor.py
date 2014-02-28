@@ -40,6 +40,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.current_project_file = ""
         self.project = None
         self.project_source = None
+        self.file_close = None
 
         self.__loadData()
         window_manager = PyCEGUI.WindowManager.getSingleton()
@@ -77,9 +78,11 @@ class EditorApplication(RPGApplicationCEGUI):
         file_open = file_popup.createChild("TaharezLook/MenuItem", "FileOpen")
         file_open.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_open)
         file_open.setText(_("Open Project"))
-        file_open = file_popup.createChild("TaharezLook/MenuItem", "FileClose")
-        file_open.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_close)
-        file_open.setText(_("Close Project"))
+        file_close = file_popup.createChild("TaharezLook/MenuItem", "FileClose")
+        file_close.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_close)
+        file_close.setText(_("Close Project"))
+        file_close.setEnabled(False)
+        self.file_close = file_close
         file_quit = file_popup.createChild("TaharezLook/MenuItem", "FileQuit")
         file_quit.setText(_("Quit"))
         file_quit.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_quit)
@@ -101,6 +104,7 @@ class EditorApplication(RPGApplicationCEGUI):
             self.project_source = None
         self.project_dir = None
         self.project = None
+        self.file_close.setEnabled(False)
 
     def load_project(self, filepath):
         """Tries to load a project
@@ -122,6 +126,7 @@ class EditorApplication(RPGApplicationCEGUI):
             self.engine.getVFS().addNewSource(project_dir)
             self.project_source = project_dir
             self.load_maps()
+            self.file_close.setEnabled(True)
             return True
         return False
 
@@ -158,6 +163,7 @@ class EditorApplication(RPGApplicationCEGUI):
 
     def cb_close(self, args):
         """Callback when cllose was clicked in the file menu"""
+        # TODO: Ask to save project/files
         self.clear()
 
     def cb_open(self, args):
