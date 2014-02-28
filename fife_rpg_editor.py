@@ -35,12 +35,14 @@ class EditorApplication(RPGApplicationCEGUI):
             self.main_container = PyCEGUI.VerticalLayoutContainer()
             self.menubar = PyCEGUI.Menubar()
             self.file_menu = PyCEGUI.MenuItem()
+            self.view_menu = PyCEGUI.MenuItem()
         RPGApplicationCEGUI.__init__(self, setting)
 
         self.current_project_file = ""
         self.project = None
         self.project_source = None
         self.file_close = None
+        self.view_maps_menu = None
 
         self.__loadData()
         window_manager = PyCEGUI.WindowManager.getSingleton()
@@ -52,6 +54,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.create_menu()
         self.create_world()
         self.filebrowser = FileBrowser(self.engine)
+        self.clear()
 
     def __loadData(self):
         """Load gui datafiles"""
@@ -66,6 +69,7 @@ class EditorApplication(RPGApplicationCEGUI):
     def create_menu(self):
         """Create the menu items"""
         self.menubar = self.main_container.getChild("Menu")
+        #File Menu
         self.file_menu = self.menubar.createChild("TaharezLook/MenuItem",
                                                   "File")
         self.file_menu.setText(_("File"))
@@ -86,15 +90,26 @@ class EditorApplication(RPGApplicationCEGUI):
         file_quit = file_popup.createChild("TaharezLook/MenuItem", "FileQuit")
         file_quit.setText(_("Quit"))
         file_quit.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_quit)
+        #View Menu
+        self.view_menu = self.menubar.createChild("TaharezLook/MenuItem",
+                                          "View")
+        self.view_menu.setText(_("View"))
+        view_popup = self.view_menu.createChild("TaharezLook/PopupMenu",
+                                                "FilePopup")
+        view_maps = view_popup.createChild("TaharezLook/MenuItem", "ViewMaps")
+        view_maps.setText(_("Maps"))
+        self.view_maps_menu = view_maps.createChild("TaharezLook/PopupMenu",
+                                                    "ViewMapsMenu")
+        view_maps.setAutoPopupTimeout(0.5)
 
     def clear(self):
         """Clears all data and restores saved settings"""
-        self.__maps = {}
-        self.__current_map = None
-        self.__components = {}
-        self.__actions = {}
-        self.__systems = {}
-        self.__behaviours = {}
+        self._maps = {}
+        self._current_map = None
+        self._components = {}
+        self._actions = {}
+        self._systems = {}
+        self._behaviours = {}
         self.world.clear()
         model = self.engine.getModel()
         model.deleteObjects()
@@ -105,6 +120,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.project_dir = None
         self.project = None
         self.file_close.setEnabled(False)
+        self.reset_maps_menu()
 
     def load_project(self, filepath):
         """Tries to load a project
@@ -146,6 +162,7 @@ class EditorApplication(RPGApplicationCEGUI):
             "fife-rpg", "Camera", camera)
         try:
             RPGApplicationCEGUI.load_map(self, name)
+            self.reset_maps_menu()
         except Exception as e:
             print e.message
 
@@ -156,6 +173,25 @@ class EditorApplication(RPGApplicationCEGUI):
         self.settings.set(
             "fife-rpg", "MapsPath", maps_path)
         RPGApplicationCEGUI.load_maps(self)
+        self.reset_maps_menu()
+
+    def reset_maps_menu(self):
+        """Recreate the view->maps menu"""
+        menu = self.view_maps_menu
+        menu.resetList()
+        item = menu.createChild("TaharezLook/MenuItem", "NoMap")
+        item.setText(_("No Map"))
+        item.setSelectable(True)
+        if self.current_map is None:
+            item.select()
+        print item.isSelected()
+        for map in self.maps.iterkeys():
+            item = menu.createChild("TaharezLook/MenuItem", map)
+            item.setText(map)
+            item.select()
+            if self.current_map is not None and self.current_map.name is map:
+                item.setSelected(True)
+
 
     def cb_quit(self, args):
         """Callback when quit was clicked in the file menu"""
@@ -177,7 +213,8 @@ class EditorApplication(RPGApplicationCEGUI):
             if self.load_project(self.current_project_file):
                 maps = self.maps
                 if len(maps) > 0:
-                    self.load_map(maps.keys()[0])
+                    self.switch_map(maps.keys()[0])
+                    self.reset_maps_menu()
             else:
                 # TODO: Offer to convert to fife-rpg project
                 print "%s is not a valid fife-rpg project"
