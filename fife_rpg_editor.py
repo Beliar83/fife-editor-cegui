@@ -172,7 +172,10 @@ class EditorApplication(RPGApplicationCEGUI):
             "fife-rpg", "MapsPath", "maps")
         self.settings.set(
             "fife-rpg", "MapsPath", maps_path)
-        RPGApplicationCEGUI.load_maps(self)
+        try:
+            RPGApplicationCEGUI.load_maps(self)
+        except:
+            pass
         self.reset_maps_menu()
 
     def reset_maps_menu(self):
@@ -180,17 +183,44 @@ class EditorApplication(RPGApplicationCEGUI):
         menu = self.view_maps_menu
         menu.resetList()
         item = menu.createChild("TaharezLook/MenuItem", "NoMap")
-        item.setText(_("No Map"))
-        item.setSelectable(True)
+        item.setUserData(None)
+        item.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_map_switch)
         if self.current_map is None:
-            item.select()
-        print item.isSelected()
+            item.setText("+" + _("No Map"))
+        else:
+            item.setText("   " + _("No Map"))
         for map in self.maps.iterkeys():
             item = menu.createChild("TaharezLook/MenuItem", map)
-            item.setText(map)
-            item.select()
+            item.setUserData(map)
+            item.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_map_switch)
             if self.current_map is not None and self.current_map.name is map:
-                item.setSelected(True)
+                item.setText("+" + map)
+            else:
+                item.setText("   " + map)
+
+    def load_combined(self, filepath=None):
+        """Load the actions, behaviours, sysems and actions"""
+        combined_file = self.project.get(
+            "fife-rpg", "CombinedFile", None)
+        self.settings.set(
+            "fife-rpg", "CombinedFile", combined_file)
+        actions_file = self.project.get(
+            "fife-rpg", "ActionsFile", None)
+        self.settings.set(
+            "fife-rpg", "ActionsFile", actions_file)
+        systems_file = self.project.get(
+            "fife-rpg", "SystemsFile", None)
+        self.settings.set(
+            "fife-rpg", "SystemsFile", systems_file)
+        behaviours_file = self.project.get(
+            "fife-rpg", "BehavioursFile", None)
+        self.settings.set(
+            "fife-rpg", "BehavioursFile", behaviours_file)
+        components_file = self.project.get(
+            "fife-rpg", "ComponentsFile", None)
+        self.settings.set(
+            "fife-rpg", "ComponentsFile", components_file)
+        RPGApplicationCEGUI.load_combined(self, filepath)
 
 
     def cb_quit(self, args):
@@ -211,14 +241,24 @@ class EditorApplication(RPGApplicationCEGUI):
         if self.filebrowser.return_value:
             self.current_project_file = self.filebrowser.selected_file
             if self.load_project(self.current_project_file):
-                maps = self.maps
-                if len(maps) > 0:
-                    self.switch_map(maps.keys()[0])
-                    self.reset_maps_menu()
+                self.reset_maps_menu()
+                try:
+                    self.load_combined()
+                except:
+                    self.load_combined("combined.yaml")
+                self.register_components()
+                self.register_actions()
+                self.register_systems()
+                self.register_behaviours()
             else:
                 # TODO: Offer to convert to fife-rpg project
                 print "%s is not a valid fife-rpg project"
         print "project loaded"
+
+    def cb_map_switch(self, args):
+        """Callback when a map from the menu was clicked"""
+        self.switch_map(args.window.getUserData())
+        self.reset_maps_menu()
 
 if __name__ == '__main__':
     setting = Setting(app_name="frpg-editor", settings_file="./settings.xml")
