@@ -17,7 +17,7 @@
             </AutoWindow>
         </Window>
         <Window type="GridLayoutContainer" name="Items" >
-            <Property name="Area" value="{{0,0},{0,0},{1,0},{1,0}}" />
+            <Property name="Area" value="{{0,0},{0.03,0},{1,0},{1.03,-25}}" />
         </Window>
     </Window>
 </GUILayout>
