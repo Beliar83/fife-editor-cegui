@@ -42,7 +42,7 @@ class FileBrowser(object):
         window_manager = PyCEGUI.WindowManager.getSingleton()
         self.window = window_manager.loadLayoutFromFile("filebrowser.layout")
         self.window.hide()
-        #self.window.setAlwaysOnTop(True)
+        # self.window.setAlwaysOnTop(True)
         main = self.window.getChild("Main")
         self.current_directory_widget = main.getChild("CurrentDirectory")
         top = main.getChild("Top")
@@ -74,13 +74,12 @@ class FileBrowser(object):
         """Sets up the windows"""
         main = self.window.getChild("Main")
         self.dir_list_widget.subscribeEvent(
-                                          PyCEGUI.Listbox.EventSelectionChanged,
-                                          self.cb_directory_selected)
+                                         PyCEGUI.Listbox.EventSelectionChanged,
+                                         self.cb_directory_selected)
         self.file_list_widget.subscribeEvent(
-                                          PyCEGUI.Listbox.EventSelectionChanged,
-                                          self.cb_file_selected)
+                                         PyCEGUI.Listbox.EventSelectionChanged,
+                                         self.cb_file_selected)
 
-        # TODO events for the filepath
         self.filepath.subscribeEvent(PyCEGUI.Editbox.EventTextAccepted,
                                      self.cb_filepath_accepted)
 
@@ -90,7 +89,8 @@ class FileBrowser(object):
         okay.subscribeEvent(PyCEGUI.ButtonBase.EventActivated, self.cb_ok)
         cancel = bottom.getChild("Cancel")
         cancel.setText(_("Cancel"))
-        cancel.subscribeEvent(PyCEGUI.ButtonBase.EventActivated, self.cb_cancel)
+        cancel.subscribeEvent(PyCEGUI.ButtonBase.EventActivated,
+                              self.cb_cancel)
 
     def select_directory(self, path):
         """Update the filebrowser to she contents of a directory
@@ -100,7 +100,7 @@ class FileBrowser(object):
             path: The path to the directory
         """
         if not os.path.isdir(path):
-            raise ValueError("%s is not a valid directory." % (path))
+            raise ValueError(_("%s is not a valid directory.") % (path))
         self.current_directory = path
         self.current_directory_widget.setText(path)
         self.engine.pump()
