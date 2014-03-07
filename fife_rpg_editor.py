@@ -18,9 +18,11 @@ import PyCEGUI
 from fife.extensions.fife_settings import Setting
 from fife_rpg import RPGApplicationCEGUI
 from fife.extensions.serializers.simplexml import SimpleXMLSerializer
-
+from fife_rpg.components import ComponentManager
+from fife_rpg.actions import ActionManager
+from fife_rpg.systems import SystemManager
+from fife_rpg.behaviours import BehaviourManager
 from editor.filebrowser import FileBrowser
-
 
 class EditorApplication(RPGApplicationCEGUI):
     """The application for the editor"""
@@ -52,7 +54,6 @@ class EditorApplication(RPGApplicationCEGUI):
         PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(
             self.editor_window)
         self.create_menu()
-        self.create_world()
         self.filebrowser = FileBrowser(self.engine)
         self.clear()
 
@@ -110,7 +111,12 @@ class EditorApplication(RPGApplicationCEGUI):
         self._actions = {}
         self._systems = {}
         self._behaviours = {}
-        self.world.clear()
+        ComponentManager.clear_components()
+        ComponentManager.clear_checkers()
+        ActionManager.clear_actions()
+        ActionManager.clear_commands()
+        SystemManager.clear_systems()
+        BehaviourManager.clear_behaviours()
         model = self.engine.getModel()
         model.deleteObjects()
         model.deleteMaps()
@@ -141,42 +147,14 @@ class EditorApplication(RPGApplicationCEGUI):
             project_dir = str(os.path.split(filepath)[0])
             self.engine.getVFS().addNewSource(project_dir)
             self.project_source = project_dir
-            self.load_maps()
+            self.load_project_settings()
+            try:
+                self.load_maps()
+            except:
+                pass
             self.file_close.setEnabled(True)
             return True
         return False
-
-    def load_map(self, name):
-        """Load the map with the given name
-
-        Args:
-            name: The name of the map to load
-        """
-        maps_path = self.project.get(
-            "fife-rpg", "MapsPath", "maps")
-        camera = self.project.get(
-            "fife-rpg", "Camera", "main")
-        self.settings.set(
-            "fife-rpg", "MapsPath", maps_path)
-        self.settings.set(
-            "fife-rpg", "Camera", camera)
-        try:
-            RPGApplicationCEGUI.load_map(self, name)
-            self.reset_maps_menu()
-        except Exception as e:
-            print e.message
-
-    def load_maps(self):
-        """Load the names of the available maps from a map file."""
-        maps_path = self.project.get(
-            "fife-rpg", "MapsPath", "maps")
-        self.settings.set(
-            "fife-rpg", "MapsPath", maps_path)
-        try:
-            RPGApplicationCEGUI.load_maps(self)
-        except:
-            pass
-        self.reset_maps_menu()
 
     def reset_maps_menu(self):
         """Recreate the view->maps menu"""
@@ -198,30 +176,11 @@ class EditorApplication(RPGApplicationCEGUI):
             else:
                 item.setText("   " + map)
 
-    def load_combined(self, filepath=None):
-        """Load the actions, behaviours, sysems and actions"""
-        combined_file = self.project.get(
-            "fife-rpg", "CombinedFile", None)
-        self.settings.set(
-            "fife-rpg", "CombinedFile", combined_file)
-        actions_file = self.project.get(
-            "fife-rpg", "ActionsFile", None)
-        self.settings.set(
-            "fife-rpg", "ActionsFile", actions_file)
-        systems_file = self.project.get(
-            "fife-rpg", "SystemsFile", None)
-        self.settings.set(
-            "fife-rpg", "SystemsFile", systems_file)
-        behaviours_file = self.project.get(
-            "fife-rpg", "BehavioursFile", None)
-        self.settings.set(
-            "fife-rpg", "BehavioursFile", behaviours_file)
-        components_file = self.project.get(
-            "fife-rpg", "ComponentsFile", None)
-        self.settings.set(
-            "fife-rpg", "ComponentsFile", components_file)
-        RPGApplicationCEGUI.load_combined(self, filepath)
-
+    def load_project_settings(self):
+        """Loads the settings file"""
+        project_settings = self.project.getAllSettings("fife-rpg")
+        del project_settings["ProjectName"]
+        self.settings.setAllSettings("fife-rpg", project_settings)
 
     def cb_quit(self, args):
         """Callback when quit was clicked in the file menu"""
@@ -250,6 +209,13 @@ class EditorApplication(RPGApplicationCEGUI):
                 self.register_actions()
                 self.register_systems()
                 self.register_behaviours()
+                self.create_world()
+                try:
+                    self.world.read_object_db()
+                    self.world.import_agent_objects()
+                    self.world.load_and_create_entities()
+                except:
+                    pass
             else:
                 # TODO: Offer to convert to fife-rpg project
                 print "%s is not a valid fife-rpg project"
@@ -257,7 +223,11 @@ class EditorApplication(RPGApplicationCEGUI):
 
     def cb_map_switch(self, args):
         """Callback when a map from the menu was clicked"""
-        self.switch_map(args.window.getUserData())
+        try:
+            self.switch_map(args.window.getUserData())
+        except Exception as e:
+            print e
+            raise
         self.reset_maps_menu()
 
 if __name__ == '__main__':
