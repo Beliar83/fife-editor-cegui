@@ -24,6 +24,7 @@ from fife_rpg.systems import SystemManager
 from fife_rpg.behaviours import BehaviourManager
 from editor.filebrowser import FileBrowser
 
+
 class EditorApplication(RPGApplicationCEGUI):
     """The application for the editor"""
 
@@ -170,7 +171,8 @@ class EditorApplication(RPGApplicationCEGUI):
         for map in self.maps.iterkeys():
             item = menu.createChild("TaharezLook/MenuItem", map)
             item.setUserData(map)
-            item.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_map_switch)
+            item.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                                self.cb_map_switch)
             if self.current_map is not None and self.current_map.name is map:
                 item.setText("+" + map)
             else:
