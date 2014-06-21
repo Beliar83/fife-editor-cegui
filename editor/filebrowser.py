@@ -102,7 +102,7 @@ class FileBrowser(object):
         if not os.path.isdir(path):
             raise ValueError(_("%s is not a valid directory.") % (path))
         self.current_directory = path
-        self.current_directory_widget.setText(path)
+        self.current_directory_widget.setText(path.replace('\\', '/'))
         self.engine.pump()
         contents = os.listdir(path)
         dir_list = []
