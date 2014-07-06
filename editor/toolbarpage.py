@@ -32,11 +32,11 @@ class ToolbarPage(object):
             self.editor = EditorApplication(None)
         self.editor = editor
         window_manager = PyCEGUI.WindowManager.getSingleton()
-        self.gui = window_manager.loadLayoutFromFile("toolbar_page.layout")
-        title = self.gui.getChild("Title")
-        assert isinstance(title, PyCEGUI.FrameWindow)
-        title.setText(name)
-        self.items = self.gui.getChild("Items")
+        self.items = window_manager.loadLayoutFromFile("toolbar_page.layout")
+        self.items.setText(name)
+        self.items.setGridDimensions(1, 10)
+        self.items.layout()
+        #self.items = self.gui.getChild("Items")
 
     @abstractmethod
     def update_items(self):

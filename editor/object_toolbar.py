@@ -227,15 +227,19 @@ def parse_animation_atlas(animation, root_path):
 
 
 class ObjectToolbar(ToolbarPage):
+
     """A toolbar for displaying and placing static objects on a map"""
 
     def __init__(self, editor):
         ToolbarPage.__init__(self, editor, "Objects")
         self.objects = {}
+        self.images = {}
 
     def update_items(self):
         """Update the items of the toolbar page"""
         self.objects = {}
+        vec2f = PyCEGUI.Vector2f
+        sizef = PyCEGUI.Sizef
         model = self.editor.engine.getModel()
         namespaces = model.getNamespaces()
         for namespace in namespaces:
@@ -247,6 +251,7 @@ class ObjectToolbar(ToolbarPage):
                 objects = parse_file(filename)
                 cegui_system = PyCEGUI.System.getSingleton()
                 renderer = cegui_system.getRenderer()
+                image_manager = PyCEGUI.ImageManager.getSingleton()
                 for obj in objects:
                     obj_def = obj["object"]
                     id = obj_def["id"]
@@ -296,42 +301,99 @@ class ObjectToolbar(ToolbarPage):
                                             tex = renderer.createTexture(name,
                                                                          frame,
                                                                          "FIFE")
+                                            pos = vec2f(0 ,0)
+                                            size = sizef(tex.getSize().d_width,
+                                                         tex.getSize().d_height)
+                                            area = PyCEGUI.Rectf(pos, size)
+                                            image = image_manager.create(
+                                                "BasicImage",
+                                                name)
+                                            image.setTexture(tex)
+                                            image.setArea(area)
                                         frame_id = frame_id + 1
                                     dir_dict["frames"] = frame_id
                                 elif img_type == "single":
                                     dir_dict["type"] = "single"
-                                    dir_def["frames"] = []
-                                    frames = dir_def["frames"]
-                                    line = frame_count / frames_p_line
-                                    col =  frame_count % frames_p_line
-                                    pos = PyCEGUI.Vector2f(col * frame_width,
-                                                           line * frame_height)
-                                    size = PyCEGUI.Sizef(frame_width,
-                                                         frame_height)
-                                    frames.append(PyCEGUI.Rectf(pos, size))
-                                    frame_count = frame_count + 1
+                                    frames = int(dir_def["frames"])
+                                    for frame_id in xrange(frames):
+                                        line = frame_count / frames_p_line
+                                        col = frame_count % frames_p_line
+                                        pos = vec2f(col * frame_width,
+                                                    line * frame_height)
+                                        size = sizef(frame_width,
+                                                     frame_height)
+                                        area = PyCEGUI.Rectf(pos, size)
+                                        name = ".".join([id,
+                                                         action,
+                                                         str(direction),
+                                                         str(frame_id)])
+                                        if not image_manager.isDefined(name):
+                                            image = image_manager.create(
+                                                "BasicImage",
+                                                name)
+                                            image.setTexture(tex)
+                                            image.setArea(area)
+                                        frame_count = frame_count + 1
                     elif int(obj_def["static"]) == 1:
-                        self.objects[id]["directions"] = {}
-                        dir_def = self.objects[id]["directions"]
+                        self.objects[id]["directions"] = []
+                        dir_list = self.objects[id]["directions"]
                         dir_iter = iter(sorted(obj["directions"].iteritems()))
                         for direction, dir_def in dir_iter:
+                            dir_list.append(direction)
                             source = dir_def["source"]
                             if dir_def["type"] == "atlas":
-                                tex_name = id
+                                tex_name = ".".joint(id, "atlas")
+                                img_name = ".".join([id, str(direction)])
+
                                 if not renderer.isTextureDefined(tex_name):
-                                    renderer.createTexture(tex_name,
-                                                           source,
-                                                           "FIFE")
-                                pos = PyCEGUI.Vector2f(float(dir_def["xpos"]),
-                                                       float(dir_def["ypos"]))
-                                size = PyCEGUI.Sizef(float(dir_def["width"]),
-                                                     float(dir_def["height"]))
-                                dir_def["rect"] = PyCEGUI.Rectf(pos, size)
+                                    tex = renderer.createTexture(tex_name,
+                                                                 source,
+                                                                 "FIFE")
+                                    pos = vec2f(float(dir_def["xpos"]),
+                                                float(dir_def["ypos"]))
+                                    size = sizeff(float(dir_def["width"]),
+                                                  float(dir_def["height"]))
+                                    area = PyCEGUI.Rectf(pos, size)
+                                    image = image_manager.create(
+                                        "BasicImage",
+                                        img_name)
+                                    image.setTexture(tex)
+                                    image.setArea(area)
                             elif dir_def["type"] == "image":
                                 tex_name = ".".join([id, str(direction)])
                                 if not renderer.isTextureDefined(tex_name):
-                                    renderer.createTexture(tex_name,
-                                                           source,
-                                                           "FIFE")
+                                    tex = renderer.createTexture(tex_name,
+                                                                 source,
+                                                                 "FIFE")
+                                    pos = vec2f(0 ,0)
+                                    size = sizef(tex.getSize().d_width,
+                                                 tex.getSize().d_height)
+                                    area = PyCEGUI.Rectf(pos, size)
+                                    image = image_manager.create(
+                                        "BasicImage",
+                                        tex_name)
+                                    image.setTexture(tex)
+                                    image.setArea(area)
         # TODO: Create the CEGUI images
+        for id, obj in self.objects.iteritems():
+            wmgr = PyCEGUI.WindowManager.getSingleton()
+            if id not in self.images:
+                image = wmgr.createWindow("TaharezLook/StaticImage", id)
+                image.setTooltipText(id)
+                if int(obj["static"]) == 0:
+                    f_action = obj["actions"].keys()[0]
+                    f_action_def = obj["actions"][f_action]
+                    f_dir = f_action_def.keys()[0]
+                    f_dir_def = f_action_def[f_dir]
+                    img_name = ".".join([id,
+                                         f_action,
+                                         str(f_dir),
+                                         str(0)])
+                    image.setProperty("Image", img_name)
+                elif int(obj["static"]) == 1:
+                    f_dir = obj["directions"][0]
+                    img_name = ".".join([id, str(direction)])
+                    image.setProperty("Image", img_name)
+                self.items.addChild(image)
+                self.images[id] = image
         ToolbarPage.update_items(self)
