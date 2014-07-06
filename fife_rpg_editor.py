@@ -23,7 +23,8 @@ from fife_rpg.actions import ActionManager
 from fife_rpg.systems import SystemManager
 from fife_rpg.behaviours import BehaviourManager
 from editor.filebrowser import FileBrowser
-
+from editor.object_toolbar import ObjectToolbar
+from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer
 
 class EditorApplication(RPGApplicationCEGUI):
     """The application for the editor"""
@@ -39,7 +40,9 @@ class EditorApplication(RPGApplicationCEGUI):
             self.menubar = PyCEGUI.Menubar()
             self.file_menu = PyCEGUI.MenuItem()
             self.view_menu = PyCEGUI.MenuItem()
+            self.toolbar = PyCEGUI.TabControl()
         RPGApplicationCEGUI.__init__(self, setting)
+        PyCEGUI.System.getSingleton().getDefaultGUIContext().setDefaultTooltipType("TaharezLook/Tooltip");
 
         self.current_project_file = ""
         self.project = None
@@ -52,11 +55,15 @@ class EditorApplication(RPGApplicationCEGUI):
         self.editor_window = window_manager.loadLayoutFromFile(
             "editor_window.layout")
         self.main_container = self.editor_window.getChild("MainContainer")
+        self.toolbar = self.main_container.getChild("MiddleContainer/Toolbar")
         PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(
             self.editor_window)
         self.create_menu()
+        self.toolbars = {}
+        self.create_toolbars()
         self.filebrowser = FileBrowser(self.engine)
         self.clear()
+        self.main_container.layout()
 
     def __loadData(self):
         """Load gui datafiles"""
@@ -103,6 +110,16 @@ class EditorApplication(RPGApplicationCEGUI):
         self.view_maps_menu = view_maps.createChild("TaharezLook/PopupMenu",
                                                     "ViewMapsMenu")
         view_maps.setAutoPopupTimeout(0.5)
+
+    def create_toolbars(self):
+        """Creates the editors toolbars"""
+        new_toolbar = ObjectToolbar(self)
+        self.toolbar.setTabHeight(PyCEGUI.UDim(0, -1))
+        self.toolbars["Objects"] = new_toolbar
+        items = new_toolbar.items
+        #gui.show()
+        self.toolbar.addTab(items)
+        self.toolbar.setSelectedTabAtIndex(0)
 
     def clear(self):
         """Clears all data and restores saved settings"""
@@ -183,6 +200,16 @@ class EditorApplication(RPGApplicationCEGUI):
         project_settings = self.project.getAllSettings("fife-rpg")
         del project_settings["ProjectName"]
         self.settings.setAllSettings("fife-rpg", project_settings)
+
+    def _pump(self):
+        """
+        Application pump.
+
+        Derived classes can specialize this for unique behavior.
+        This is called every frame.
+        """
+        for toolbar in self.toolbars.itervalues():
+            toolbar.update_items()
 
     def cb_quit(self, args):
         """Callback when quit was clicked in the file menu"""
