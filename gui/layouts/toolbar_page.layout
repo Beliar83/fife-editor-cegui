@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <GUILayout version="4" >
-    <Window type="GridLayoutContainer" name="Items" >
+    <Window type="TaharezLook/ScrollablePane" name="Items" >
         <Property name="Area" value="{{0,0},{0.03,-1},{1,0},{1.03,-26}}" />
+        <Window type="VerticalLayoutContainer" name="Items" >
+        </Window>
     </Window>
 </GUILayout>

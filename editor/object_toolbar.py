@@ -245,6 +245,9 @@ class ObjectToolbar(ToolbarPage):
         for namespace in namespaces:
             objects = model.getObjects(namespace)
             for fife_object in objects:
+                id = fife_object.getId()
+                if id in self.objects or id in self.images:
+                    continue
                 project_dir = self.editor.project_source
                 object_filename = fife_object.getFilename()
                 filename = os.path.join(project_dir, object_filename)
@@ -342,23 +345,27 @@ class ObjectToolbar(ToolbarPage):
                             dir_list.append(direction)
                             source = dir_def["source"]
                             if dir_def["type"] == "atlas":
-                                tex_name = ".".joint(id, "atlas")
+                                tex_name = ".".join([id, "atlas"])
                                 img_name = ".".join([id, str(direction)])
 
                                 if not renderer.isTextureDefined(tex_name):
                                     tex = renderer.createTexture(tex_name,
                                                                  source,
                                                                  "FIFE")
-                                    pos = vec2f(float(dir_def["xpos"]),
-                                                float(dir_def["ypos"]))
-                                    size = sizeff(float(dir_def["width"]),
-                                                  float(dir_def["height"]))
-                                    area = PyCEGUI.Rectf(pos, size)
-                                    image = image_manager.create(
-                                        "BasicImage",
-                                        img_name)
-                                    image.setTexture(tex)
-                                    image.setArea(area)
+                                else:
+                                    tex = renderer.getTexture(tex_name)
+                                if image_manager.isDefined(img_name):
+                                    continue
+                                pos = vec2f(float(dir_def["xpos"]),
+                                            float(dir_def["ypos"]))
+                                size = sizef(float(dir_def["width"]),
+                                              float(dir_def["height"]))
+                                area = PyCEGUI.Rectf(pos, size)
+                                image = image_manager.create(
+                                    "BasicImage",
+                                    img_name)
+                                image.setTexture(tex)
+                                image.setArea(area)
                             elif dir_def["type"] == "image":
                                 tex_name = ".".join([id, str(direction)])
                                 if not renderer.isTextureDefined(tex_name):
@@ -392,8 +399,11 @@ class ObjectToolbar(ToolbarPage):
                     image.setProperty("Image", img_name)
                 elif int(obj["static"]) == 1:
                     f_dir = obj["directions"][0]
-                    img_name = ".".join([id, str(direction)])
+                    img_name = ".".join([id, str(f_dir)])
                     image.setProperty("Image", img_name)
                 self.items.addChild(image)
                 self.images[id] = image
+        for image_id in self.images:
+            if image_id not in self.objects:
+                del self.images[image_id]
         ToolbarPage.update_items(self)

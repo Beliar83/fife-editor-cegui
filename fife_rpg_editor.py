@@ -116,9 +116,9 @@ class EditorApplication(RPGApplicationCEGUI):
         new_toolbar = ObjectToolbar(self)
         self.toolbar.setTabHeight(PyCEGUI.UDim(0, -1))
         self.toolbars["Objects"] = new_toolbar
-        items = new_toolbar.items
+        gui = new_toolbar.gui
         #gui.show()
-        self.toolbar.addTab(items)
+        self.toolbar.addTab(gui)
         self.toolbar.setSelectedTabAtIndex(0)
 
     def clear(self):
