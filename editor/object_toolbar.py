@@ -246,7 +246,10 @@ class ObjectToolbar(ToolbarPage):
             objects = model.getObjects(namespace)
             for fife_object in objects:
                 id = fife_object.getId()
-                if id in self.objects or id in self.images:
+                if id in self.objects:
+                    continue
+                if id in self.images:
+                    self.objects[id] = {}
                     continue
                 project_dir = self.editor.project_source
                 object_filename = fife_object.getFilename()
@@ -403,7 +406,11 @@ class ObjectToolbar(ToolbarPage):
                     image.setProperty("Image", img_name)
                 self.items.addChild(image)
                 self.images[id] = image
-        for image_id in self.images:
+        for image_id in self.images.keys():
             if image_id not in self.objects:
+                wmgr = PyCEGUI.WindowManager.getSingleton()
+                image = self.images[image_id]
+                image.getParent().removeChild(image)
+                wmgr.destroyWindow(image)
                 del self.images[image_id]
         ToolbarPage.update_items(self)
