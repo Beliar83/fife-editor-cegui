@@ -23,6 +23,7 @@ from fife import fife
 
 
 class Editor(object):
+
     """Contains methods to create and edit maps"""
 
     def __init__(self, engine):
@@ -125,7 +126,7 @@ class Editor(object):
         if fife_map.getLayer(layer_name):
             raise ValueError(
                 "The map %s already has a layer named %s" % (
-                fife_map.getId(), layer_name))
+                    fife_map.getId(), layer_name))
         if not isinstance(grid_type, fife.CellGrid):
             grid_type = self.__model.getCellGrid(grid_type)
         return fife_map.createLayer(layer_name, grid_type)

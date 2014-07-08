@@ -20,6 +20,7 @@ import PyCEGUI
 
 
 class FileBrowser(object):
+
     """Class that displays a filebrowser"""
 
     def __init__(self, engine, directory=None, extension_filter=None):
@@ -74,11 +75,11 @@ class FileBrowser(object):
         """Sets up the windows"""
         main = self.window.getChild("Main")
         self.dir_list_widget.subscribeEvent(
-                                         PyCEGUI.Listbox.EventSelectionChanged,
-                                         self.cb_directory_selected)
+            PyCEGUI.Listbox.EventSelectionChanged,
+            self.cb_directory_selected)
         self.file_list_widget.subscribeEvent(
-                                         PyCEGUI.Listbox.EventSelectionChanged,
-                                         self.cb_file_selected)
+            PyCEGUI.Listbox.EventSelectionChanged,
+            self.cb_file_selected)
 
         self.filepath.subscribeEvent(PyCEGUI.Editbox.EventTextAccepted,
                                      self.cb_filepath_accepted)
@@ -115,7 +116,7 @@ class FileBrowser(object):
             elif os.path.isfile(os.path.join(path, content)):
                 extension = os.path.splitext(content)[1][1:]
                 if (len(self.extension_filter) == 0 or
-                    extension in self.extension_filter):
+                        extension in self.extension_filter):
                     file_list.append(content)
         dir_list = sorted(dir_list, key=lambda s: s.lower())
         file_list = sorted(file_list, key=lambda s: s.lower())

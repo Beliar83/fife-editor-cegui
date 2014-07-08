@@ -24,9 +24,11 @@ from io import StringIO
 import os
 
 from lxml import etree
-import yaml
 import PyCEGUI
-from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer
+
+# pylint: disable=unused-import
+from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
+# pylint: enable=unused-import
 
 from .toolbarpage import ToolbarPage
 
@@ -45,15 +47,16 @@ def parse_file(filename):
     try:
         tree = etree.parse(filename)
         objects.append(parse_object(tree.getroot(), root_path))
-    except etree.XMLSyntaxError as e:
-        doc = file(filename, "r")
-        line_no = e.position[0] - 2
+    except etree.XMLSyntaxError as error:
+        doc = file(filename, "r")  # pylint: disable=non-gettext-ed string
+        line_no = error.position[0] - 2
         lines = doc.readlines()
         first_doc = StringIO(u"".join(lines[:line_no]))
         tree = etree.parse(first_doc)
         root = tree.getroot()
-        pi = root.getprevious()
-        file_type = pi.text.split("=")[1].replace('"', '').lower()
+        proc_instr = root.getprevious()
+        file_type = proc_instr.text.split("=")[1].replace('"', '').lower()
+        # pylint: disable=non-gettext-ed string
         if not file_type == "atlas":
             raise RuntimeError("Unexpected file format '%s'" % (filename))
         atlas_def = parse_atlas(root, root_path)
@@ -63,12 +66,13 @@ def parse_file(filename):
         second_doc = StringIO(u"".join(second_doc))
         tree = etree.parse(second_doc)
         object_defs = tree.getroot().findall("object")
+        # pylint: enable=non-gettext-ed string
         for obj in object_defs:
             objects.append(parse_object(obj, root_path, atlas_def))
     return objects
 
 
-def parse_atlas(element, root_path):
+def parse_atlas(element, root_path):  # pylint: disable=unused-argument
     """Parse an atlas definition
 
         Args:
@@ -80,6 +84,7 @@ def parse_atlas(element, root_path):
         Returns: A dictionary with images and their positions in an atlas
     """
     atlas_def = {}
+    # pylint: disable=non-gettext-ed string
     atlas_def["atlas"] = element
     atlas_def["images"] = {}
     images = element.findall("image")
@@ -87,6 +92,7 @@ def parse_atlas(element, root_path):
         attribs = image.attrib
         image_name = attribs["source"]
         atlas_def["images"][image_name] = image
+    # pylint: enable=non-gettext-ed string
     return atlas_def
 
 
@@ -102,6 +108,7 @@ def parse_object(obj, root_path, atlas_def=None):
             atlas_def: A dictionary with images and their positions in an atlas
     """
     obj_def = {}
+    # pylint: disable=non-gettext-ed string
     obj_def["object"] = dict(obj.attrib)
     if atlas_def:
         image_sources = atlas_def["images"]
@@ -126,8 +133,9 @@ def parse_object(obj, root_path, atlas_def=None):
             image_def["source"] = os.path.abspath(source)
             direction = int(image_def["direction"])
             dir_defs[direction] = image_def
+    # pylint: enable=non-gettext-ed string
     else:
-        raise RuntimeError("Don't know how to handle '%s'" % (obj[0].tag))
+        raise RuntimeError(_("Don't know how to handle '%s'") % (obj[0].tag))
     return obj_def
 
 
@@ -142,8 +150,10 @@ def parse_actions(actions, root_path):
     """
     action_dict = {}
     for action in actions:
+        # pylint: disable=non-gettext-ed string
         animations = parse_animations(action.findall("animation"), root_path)
         action_dict[action.attrib["id"]] = animations
+        # pylint: enable=non-gettext-ed string
     return action_dict
 
 
@@ -157,6 +167,7 @@ def parse_animations(animations, root_path):
             root_path: The path of the object file the elements are in
     """
     ani_dict = {}
+    # pylint: disable=non-gettext-ed string
     if "atlas" in animations[0].attrib:
         ani_dict["type"] = "single"
         animation = animations[0]
@@ -168,6 +179,7 @@ def parse_animations(animations, root_path):
             ani_def = parse_animation(animation, root_path)
             direction = int(ani_def["direction"])
             ani_dict["directions"][direction] = ani_def
+    # pylint: enable=non-gettext-ed string
     return ani_dict
 
 
@@ -181,6 +193,7 @@ def parse_animation(animation, root_path):
             root_path: The path of the object file the element is in
     """
     ani_dict = {}
+    # pylint: disable=non-gettext-ed string
     if "source" in animation.attrib:
         animation_file = animation.attrib["source"]
         ani_file = os.path.join(root_path, animation_file)
@@ -199,6 +212,7 @@ def parse_animation(animation, root_path):
         ani_dict["frames"] = frames
         ani_dict["x_offset"] = animation.attrib["x_offset"]
         ani_dict["y_offset"] = animation.attrib["y_offset"]
+    # pylint: enable=non-gettext-ed string
     return ani_dict
 
 
@@ -212,6 +226,7 @@ def parse_animation_atlas(animation, root_path):
             root_path: The path of the object file the element is in
     """
     ani_dict = {}
+    # pylint: disable=non-gettext-ed string
     ani_dict["atlas"] = {}
     image = os.path.join(root_path, animation.attrib["atlas"])
     ani_dict["atlas"]["image"] = os.path.abspath(image)
@@ -223,6 +238,7 @@ def parse_animation_atlas(animation, root_path):
         dir_data = ani_dict["directions"][action_dir] = {}
         dir_data["delay"] = direction.attrib["delay"]
         dir_data["frames"] = direction.attrib["frames"]
+    # pylint: enable=non-gettext-ed string
     return ani_dict
 
 
@@ -231,12 +247,15 @@ class ObjectToolbar(ToolbarPage):
     """A toolbar for displaying and placing static objects on a map"""
 
     def __init__(self, editor):
+        # pylint: disable=non-gettext-ed string
         ToolbarPage.__init__(self, editor, "Objects")
+        # pylint: enable=non-gettext-ed string
         self.objects = {}
         self.images = {}
 
     def update_items(self):
         """Update the items of the toolbar page"""
+        # pylint: disable=non-gettext-ed string
         self.objects = {}
         vec2f = PyCEGUI.Vector2f
         sizef = PyCEGUI.Sizef
@@ -245,11 +264,11 @@ class ObjectToolbar(ToolbarPage):
         for namespace in namespaces:
             objects = model.getObjects(namespace)
             for fife_object in objects:
-                id = fife_object.getId()
-                if id in self.objects:
+                identifier = fife_object.getId()
+                if identifier in self.objects:
                     continue
-                if id in self.images:
-                    self.objects[id] = {}
+                if identifier in self.images:
+                    self.objects[identifier] = {}
                     continue
                 project_dir = self.editor.project_source
                 object_filename = fife_object.getFilename()
@@ -260,18 +279,18 @@ class ObjectToolbar(ToolbarPage):
                 image_manager = PyCEGUI.ImageManager.getSingleton()
                 for obj in objects:
                     obj_def = obj["object"]
-                    id = obj_def["id"]
-                    self.objects[id] = {}
-                    self.objects[id]["static"] = obj_def["static"]
+                    identifier = obj_def["id"]
+                    self.objects[identifier] = {}
+                    self.objects[identifier]["static"] = obj_def["static"]
                     if int(obj_def["static"]) == 0:
                         actions = obj["actions"]
-                        self.objects[id]["actions"] = {}
-                        actions_dict = self.objects[id]["actions"]
+                        self.objects[identifier]["actions"] = {}
+                        actions_dict = self.objects[identifier]["actions"]
                         for action, action_def in actions.iteritems():
                             img_type = action_def["type"]
                             if img_type == "single":
                                 atlas_def = action_def["atlas"]
-                                name = ".".join([id, action, "atlas"])
+                                name = ".".join([identifier, action, "atlas"])
                                 fname = atlas_def["image"]
                                 if renderer.isTextureDefined(name):
                                     tex = renderer.getTexture(name)
@@ -281,7 +300,6 @@ class ObjectToolbar(ToolbarPage):
                                                                  "FIFE")
                                 tex_size = tex.getSize()
                                 tex_width = tex_size.d_width
-                                tex_heigh = tex_size.d_height
                                 frame_width = int(atlas_def["width"])
                                 frame_height = int(atlas_def["height"])
                                 frames_p_line = tex_width / frame_width
@@ -299,17 +317,19 @@ class ObjectToolbar(ToolbarPage):
                                     frame_id = 0
                                     frames = dir_def["frames"]
                                     for frame in frames:
-                                        name = ".".join([id,
+                                        name = ".".join([identifier,
                                                          action,
                                                          str(direction),
                                                          str(frame_id)])
                                         if not renderer.isTextureDefined(name):
-                                            tex = renderer.createTexture(name,
-                                                                         frame,
-                                                                         "FIFE")
-                                            pos = vec2f(0 ,0)
-                                            size = sizef(tex.getSize().d_width,
-                                                         tex.getSize().d_height)
+                                            tex = renderer.createTexture(
+                                                name,
+                                                frame,
+                                                "FIFE")
+                                            pos = vec2f(0, 0)
+                                            size = sizef(
+                                                tex.getSize().d_width,
+                                                tex.getSize().d_height)
                                             area = PyCEGUI.Rectf(pos, size)
                                             image = image_manager.create(
                                                 "BasicImage",
@@ -329,7 +349,7 @@ class ObjectToolbar(ToolbarPage):
                                         size = sizef(frame_width,
                                                      frame_height)
                                         area = PyCEGUI.Rectf(pos, size)
-                                        name = ".".join([id,
+                                        name = ".".join([identifier,
                                                          action,
                                                          str(direction),
                                                          str(frame_id)])
@@ -341,15 +361,16 @@ class ObjectToolbar(ToolbarPage):
                                             image.setArea(area)
                                         frame_count = frame_count + 1
                     elif int(obj_def["static"]) == 1:
-                        self.objects[id]["directions"] = []
-                        dir_list = self.objects[id]["directions"]
+                        self.objects[identifier]["directions"] = []
+                        dir_list = self.objects[identifier]["directions"]
                         dir_iter = iter(sorted(obj["directions"].iteritems()))
                         for direction, dir_def in dir_iter:
                             dir_list.append(direction)
                             source = dir_def["source"]
                             if dir_def["type"] == "atlas":
-                                tex_name = ".".join([id, "atlas"])
-                                img_name = ".".join([id, str(direction)])
+                                tex_name = ".".join([identifier, "atlas"])
+                                img_name = ".".join(
+                                    [identifier, str(direction)])
 
                                 if not renderer.isTextureDefined(tex_name):
                                     tex = renderer.createTexture(tex_name,
@@ -362,7 +383,7 @@ class ObjectToolbar(ToolbarPage):
                                 pos = vec2f(float(dir_def["xpos"]),
                                             float(dir_def["ypos"]))
                                 size = sizef(float(dir_def["width"]),
-                                              float(dir_def["height"]))
+                                             float(dir_def["height"]))
                                 area = PyCEGUI.Rectf(pos, size)
                                 image = image_manager.create(
                                     "BasicImage",
@@ -370,12 +391,13 @@ class ObjectToolbar(ToolbarPage):
                                 image.setTexture(tex)
                                 image.setArea(area)
                             elif dir_def["type"] == "image":
-                                tex_name = ".".join([id, str(direction)])
+                                tex_name = ".".join(
+                                    [identifier, str(direction)])
                                 if not renderer.isTextureDefined(tex_name):
                                     tex = renderer.createTexture(tex_name,
                                                                  source,
                                                                  "FIFE")
-                                    pos = vec2f(0 ,0)
+                                    pos = vec2f(0, 0)
                                     size = sizef(tex.getSize().d_width,
                                                  tex.getSize().d_height)
                                     area = PyCEGUI.Rectf(pos, size)
@@ -385,27 +407,27 @@ class ObjectToolbar(ToolbarPage):
                                     image.setTexture(tex)
                                     image.setArea(area)
         # TODO: Create the CEGUI images
-        for id, obj in self.objects.iteritems():
+        for identifier, obj in self.objects.iteritems():
             wmgr = PyCEGUI.WindowManager.getSingleton()
-            if id not in self.images:
-                image = wmgr.createWindow("TaharezLook/StaticImage", id)
-                image.setTooltipText(id)
+            if identifier not in self.images:
+                image = wmgr.createWindow(
+                    "TaharezLook/StaticImage", identifier)
+                image.setTooltipText(identifier)
                 if int(obj["static"]) == 0:
                     f_action = obj["actions"].keys()[0]
                     f_action_def = obj["actions"][f_action]
                     f_dir = f_action_def.keys()[0]
-                    f_dir_def = f_action_def[f_dir]
-                    img_name = ".".join([id,
+                    img_name = ".".join([identifier,
                                          f_action,
                                          str(f_dir),
                                          str(0)])
                     image.setProperty("Image", img_name)
                 elif int(obj["static"]) == 1:
                     f_dir = obj["directions"][0]
-                    img_name = ".".join([id, str(f_dir)])
+                    img_name = ".".join([identifier, str(f_dir)])
                     image.setProperty("Image", img_name)
                 self.items.addChild(image)
-                self.images[id] = image
+                self.images[identifier] = image
         for image_id in self.images.keys():
             if image_id not in self.objects:
                 wmgr = PyCEGUI.WindowManager.getSingleton()
@@ -414,3 +436,4 @@ class ObjectToolbar(ToolbarPage):
                 wmgr.destroyWindow(image)
                 del self.images[image_id]
         ToolbarPage.update_items(self)
+    # pylint: enable=non-gettext-ed string

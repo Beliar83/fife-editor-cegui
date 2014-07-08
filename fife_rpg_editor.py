@@ -24,16 +24,18 @@ from fife_rpg.systems import SystemManager
 from fife_rpg.behaviours import BehaviourManager
 from editor.filebrowser import FileBrowser
 from editor.object_toolbar import ObjectToolbar
-from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer
+from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
+
 
 class EditorApplication(RPGApplicationCEGUI):
+
     """The application for the editor"""
 
     def __init__(self, setting):
         """Constructor
 
         """
-        #For IDES
+        # For IDES
         if False:
             self.editor_window = PyCEGUI.DefaultWindow()
             self.main_container = PyCEGUI.VerticalLayoutContainer()
@@ -42,7 +44,9 @@ class EditorApplication(RPGApplicationCEGUI):
             self.view_menu = PyCEGUI.MenuItem()
             self.toolbar = PyCEGUI.TabControl()
         RPGApplicationCEGUI.__init__(self, setting)
-        PyCEGUI.System.getSingleton().getDefaultGUIContext().setDefaultTooltipType("TaharezLook/Tooltip");
+        cegui_system = PyCEGUI.System.getSingleton()
+        cegui_system.getDefaultGUIContext().setDefaultTooltipType(
+            "TaharezLook/Tooltip")
 
         self.current_project_file = ""
         self.project = None
@@ -56,7 +60,7 @@ class EditorApplication(RPGApplicationCEGUI):
             "editor_window.layout")
         self.main_container = self.editor_window.getChild("MainContainer")
         self.toolbar = self.main_container.getChild("MiddleContainer/Toolbar")
-        PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(
+        cegui_system.getDefaultGUIContext().setRootWindow(
             self.editor_window)
         self.create_menu()
         self.toolbars = {}
@@ -78,7 +82,7 @@ class EditorApplication(RPGApplicationCEGUI):
     def create_menu(self):
         """Create the menu items"""
         self.menubar = self.main_container.getChild("Menu")
-        #File Menu
+        # File Menu
         self.file_menu = self.menubar.createChild("TaharezLook/MenuItem",
                                                   "File")
         self.file_menu.setText(_("File"))
@@ -91,7 +95,8 @@ class EditorApplication(RPGApplicationCEGUI):
         file_open = file_popup.createChild("TaharezLook/MenuItem", "FileOpen")
         file_open.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_open)
         file_open.setText(_("Open Project"))
-        file_close = file_popup.createChild("TaharezLook/MenuItem", "FileClose")
+        file_close = file_popup.createChild(
+            "TaharezLook/MenuItem", "FileClose")
         file_close.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_close)
         file_close.setText(_("Close Project"))
         file_close.setEnabled(False)
@@ -99,9 +104,9 @@ class EditorApplication(RPGApplicationCEGUI):
         file_quit = file_popup.createChild("TaharezLook/MenuItem", "FileQuit")
         file_quit.setText(_("Quit"))
         file_quit.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_quit)
-        #View Menu
+        # View Menu
         self.view_menu = self.menubar.createChild("TaharezLook/MenuItem",
-                                          "View")
+                                                  "View")
         self.view_menu.setText(_("View"))
         view_popup = self.view_menu.createChild("TaharezLook/PopupMenu",
                                                 "FilePopup")
@@ -117,7 +122,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.toolbar.setTabHeight(PyCEGUI.UDim(0, -1))
         self.toolbars["Objects"] = new_toolbar
         gui = new_toolbar.gui
-        #gui.show()
+        # gui.show()
         self.toolbar.addTab(gui)
         self.toolbar.setSelectedTabAtIndex(0)
 
@@ -185,15 +190,16 @@ class EditorApplication(RPGApplicationCEGUI):
             item.setText("+" + _("No Map"))
         else:
             item.setText("   " + _("No Map"))
-        for map in self.maps.iterkeys():
-            item = menu.createChild("TaharezLook/MenuItem", map)
-            item.setUserData(map)
+        for game_map in self.maps.iterkeys():
+            item = menu.createChild("TaharezLook/MenuItem", game_map)
+            item.setUserData(game_map)
             item.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
                                 self.cb_map_switch)
-            if self.current_map is not None and self.current_map.name is map:
-                item.setText("+" + map)
+            if (self.current_map is not None and
+                    self.current_map.name is game_map):
+                item.setText("+" + game_map)
             else:
-                item.setText("   " + map)
+                item.setText("   " + game_map)
 
     def load_project_settings(self):
         """Loads the settings file"""
