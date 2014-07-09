@@ -48,7 +48,7 @@ def parse_file(filename):
         tree = etree.parse(filename)
         objects.append(parse_object(tree.getroot(), root_path))
     except etree.XMLSyntaxError as error:
-        doc = file(filename, "r")  # pylint: disable=non-gettext-ed string
+        doc = file(filename, "r")
         line_no = error.position[0] - 2
         lines = doc.readlines()
         first_doc = StringIO(u"".join(lines[:line_no]))
@@ -56,7 +56,6 @@ def parse_file(filename):
         root = tree.getroot()
         proc_instr = root.getprevious()
         file_type = proc_instr.text.split("=")[1].replace('"', '').lower()
-        # pylint: disable=non-gettext-ed string
         if not file_type == "atlas":
             raise RuntimeError("Unexpected file format '%s'" % (filename))
         atlas_def = parse_atlas(root, root_path)
@@ -66,7 +65,6 @@ def parse_file(filename):
         second_doc = StringIO(u"".join(second_doc))
         tree = etree.parse(second_doc)
         object_defs = tree.getroot().findall("object")
-        # pylint: enable=non-gettext-ed string
         for obj in object_defs:
             objects.append(parse_object(obj, root_path, atlas_def))
     return objects
@@ -84,7 +82,7 @@ def parse_atlas(element, root_path):  # pylint: disable=unused-argument
         Returns: A dictionary with images and their positions in an atlas
     """
     atlas_def = {}
-    # pylint: disable=non-gettext-ed string
+
     atlas_def["atlas"] = element
     atlas_def["images"] = {}
     images = element.findall("image")
@@ -92,7 +90,7 @@ def parse_atlas(element, root_path):  # pylint: disable=unused-argument
         attribs = image.attrib
         image_name = attribs["source"]
         atlas_def["images"][image_name] = image
-    # pylint: enable=non-gettext-ed string
+
     return atlas_def
 
 
@@ -108,7 +106,7 @@ def parse_object(obj, root_path, atlas_def=None):
             atlas_def: A dictionary with images and their positions in an atlas
     """
     obj_def = {}
-    # pylint: disable=non-gettext-ed string
+
     obj_def["object"] = dict(obj.attrib)
     if atlas_def:
         image_sources = atlas_def["images"]
@@ -133,7 +131,7 @@ def parse_object(obj, root_path, atlas_def=None):
             image_def["source"] = os.path.abspath(source)
             direction = int(image_def["direction"])
             dir_defs[direction] = image_def
-    # pylint: enable=non-gettext-ed string
+
     else:
         raise RuntimeError(_("Don't know how to handle '%s'") % (obj[0].tag))
     return obj_def
@@ -150,10 +148,10 @@ def parse_actions(actions, root_path):
     """
     action_dict = {}
     for action in actions:
-        # pylint: disable=non-gettext-ed string
+
         animations = parse_animations(action.findall("animation"), root_path)
         action_dict[action.attrib["id"]] = animations
-        # pylint: enable=non-gettext-ed string
+
     return action_dict
 
 
@@ -167,7 +165,7 @@ def parse_animations(animations, root_path):
             root_path: The path of the object file the elements are in
     """
     ani_dict = {}
-    # pylint: disable=non-gettext-ed string
+
     if "atlas" in animations[0].attrib:
         ani_dict["type"] = "single"
         animation = animations[0]
@@ -179,7 +177,7 @@ def parse_animations(animations, root_path):
             ani_def = parse_animation(animation, root_path)
             direction = int(ani_def["direction"])
             ani_dict["directions"][direction] = ani_def
-    # pylint: enable=non-gettext-ed string
+
     return ani_dict
 
 
@@ -193,7 +191,7 @@ def parse_animation(animation, root_path):
             root_path: The path of the object file the element is in
     """
     ani_dict = {}
-    # pylint: disable=non-gettext-ed string
+
     if "source" in animation.attrib:
         animation_file = animation.attrib["source"]
         ani_file = os.path.join(root_path, animation_file)
@@ -212,7 +210,7 @@ def parse_animation(animation, root_path):
         ani_dict["frames"] = frames
         ani_dict["x_offset"] = animation.attrib["x_offset"]
         ani_dict["y_offset"] = animation.attrib["y_offset"]
-    # pylint: enable=non-gettext-ed string
+
     return ani_dict
 
 
@@ -226,7 +224,7 @@ def parse_animation_atlas(animation, root_path):
             root_path: The path of the object file the element is in
     """
     ani_dict = {}
-    # pylint: disable=non-gettext-ed string
+
     ani_dict["atlas"] = {}
     image = os.path.join(root_path, animation.attrib["atlas"])
     ani_dict["atlas"]["image"] = os.path.abspath(image)
@@ -238,7 +236,7 @@ def parse_animation_atlas(animation, root_path):
         dir_data = ani_dict["directions"][action_dir] = {}
         dir_data["delay"] = direction.attrib["delay"]
         dir_data["frames"] = direction.attrib["frames"]
-    # pylint: enable=non-gettext-ed string
+
     return ani_dict
 
 
@@ -247,15 +245,15 @@ class ObjectToolbar(ToolbarPage):
     """A toolbar for displaying and placing static objects on a map"""
 
     def __init__(self, editor):
-        # pylint: disable=non-gettext-ed string
+
         ToolbarPage.__init__(self, editor, "Objects")
-        # pylint: enable=non-gettext-ed string
+
         self.objects = {}
         self.images = {}
 
     def update_items(self):
         """Update the items of the toolbar page"""
-        # pylint: disable=non-gettext-ed string
+
         self.objects = {}
         vec2f = PyCEGUI.Vector2f
         sizef = PyCEGUI.Sizef
@@ -436,4 +434,3 @@ class ObjectToolbar(ToolbarPage):
                 wmgr.destroyWindow(image)
                 del self.images[image_id]
         ToolbarPage.update_items(self)
-    # pylint: enable=non-gettext-ed string

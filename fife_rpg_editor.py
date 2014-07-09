@@ -12,6 +12,14 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+""" Contains the main file for the fife-rpg editor
+
+.. module:: fife_rpg_editor
+    :synopsis: Contains the main file for the fffe-rpg editor
+
+.. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
+"""
+
 import os
 
 import PyCEGUI
@@ -24,7 +32,9 @@ from fife_rpg.systems import SystemManager
 from fife_rpg.behaviours import BehaviourManager
 from editor.filebrowser import FileBrowser
 from editor.object_toolbar import ObjectToolbar
+# pylint: disable=unused-import
 from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
+# pylint: enable=unused-import
 
 
 class EditorApplication(RPGApplicationCEGUI):
@@ -35,6 +45,7 @@ class EditorApplication(RPGApplicationCEGUI):
         """Constructor
 
         """
+        super(EditorApplication, self).__init__(setting)
         # For IDES
         if False:
             self.editor_window = PyCEGUI.DefaultWindow()
@@ -43,7 +54,6 @@ class EditorApplication(RPGApplicationCEGUI):
             self.file_menu = PyCEGUI.MenuItem()
             self.view_menu = PyCEGUI.MenuItem()
             self.toolbar = PyCEGUI.TabControl()
-        RPGApplicationCEGUI.__init__(self, setting)
         cegui_system = PyCEGUI.System.getSingleton()
         cegui_system.getDefaultGUIContext().setDefaultTooltipType(
             "TaharezLook/Tooltip")
@@ -51,6 +61,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.current_project_file = ""
         self.project = None
         self.project_source = None
+        self.project_dir = None
         self.file_close = None
         self.view_maps_menu = None
 
@@ -69,7 +80,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.clear()
         self.main_container.layout()
 
-    def __loadData(self):
+    def __loadData(self):  # pylint: disable=no-self-use, invalid-name
         """Load gui datafiles"""
         PyCEGUI.ImageManager.getSingleton().loadImageset(
             "TaharezLook.imageset")
@@ -161,8 +172,8 @@ class EditorApplication(RPGApplicationCEGUI):
         Returns: True of the project was loaded. False if not."""
         try:
             self.clear()
-        except Exception as e:
-            print e
+        except Exception as error:  # pylint: disable=broad-except
+            print error
         settings = SimpleXMLSerializer()
         settings.load(filepath)
         if "fife-rpg" in settings.getModuleNameList():
@@ -173,7 +184,7 @@ class EditorApplication(RPGApplicationCEGUI):
             self.load_project_settings()
             try:
                 self.load_maps()
-            except:
+            except:  # pylint: disable=bare-except
                 pass
             self.file_close.setEnabled(True)
             return True
@@ -238,7 +249,7 @@ class EditorApplication(RPGApplicationCEGUI):
                 self.reset_maps_menu()
                 try:
                     self.load_combined()
-                except:
+                except:  # pylint: disable=bare-except
                     self.load_combined("combined.yaml")
                 self.register_components()
                 self.register_actions()
@@ -249,23 +260,22 @@ class EditorApplication(RPGApplicationCEGUI):
                     self.world.read_object_db()
                     self.world.import_agent_objects()
                     self.world.load_and_create_entities()
-                except:
+                except:  # pylint: disable=bare-except
                     pass
             else:
                 # TODO: Offer to convert to fife-rpg project
-                print "%s is not a valid fife-rpg project"
-        print "project loaded"
+                print _("%s is not a valid fife-rpg project")
+        print _("project loaded")
 
     def cb_map_switch(self, args):
         """Callback when a map from the menu was clicked"""
         try:
             self.switch_map(args.window.getUserData())
-        except Exception as e:
-            print e
+        except Exception as error:
+            print error
             raise
         self.reset_maps_menu()
-
 if __name__ == '__main__':
-    setting = Setting(app_name="frpg-editor", settings_file="./settings.xml")
-    app = EditorApplication(setting)
-    app.run()
+    SETTING = Setting(app_name="frpg-editor", settings_file="./settings.xml")
+    APP = EditorApplication(SETTING)
+    APP.run()
