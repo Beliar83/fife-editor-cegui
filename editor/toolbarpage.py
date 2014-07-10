@@ -32,7 +32,9 @@ class ToolbarPage(object):
             self.editor = EditorApplication(None)
         self.editor = editor
         window_manager = PyCEGUI.WindowManager.getSingleton()
+        self.name = name
         self.gui = window_manager.loadLayoutFromFile("toolbar_page.layout")
+        self.gui.setName(name)
         self.gui.setText(name)
         self.gui.setShowHorzScrollbar(False)
         self.items = self.gui.getChild("Items")
@@ -41,3 +43,11 @@ class ToolbarPage(object):
     @abstractmethod
     def update_items(self):
         """Update the items of the toolbar page"""
+
+    @abstractmethod
+    def activate(self):
+        """Called when the page gets activated"""
+
+    @abstractmethod
+    def deactivate(self):
+        """Called when the page gets deactivated"""

@@ -71,6 +71,9 @@ class EditorApplication(RPGApplicationCEGUI):
             "editor_window.layout")
         self.main_container = self.editor_window.getChild("MainContainer")
         self.toolbar = self.main_container.getChild("MiddleContainer/Toolbar")
+        self.toolbar.subscribeEvent(PyCEGUI.TabControl.EventSelectionChanged,
+                                    self.cb_tb_page_changed)
+        self.old_toolbar_index = 0
         cegui_system.getDefaultGUIContext().setRootWindow(
             self.editor_window)
         self.create_menu()
@@ -130,8 +133,11 @@ class EditorApplication(RPGApplicationCEGUI):
     def create_toolbars(self):
         """Creates the editors toolbars"""
         new_toolbar = ObjectToolbar(self)
+        if new_toolbar.name in self.toolbars:
+            raise RuntimeError("Toolbar with name %s already exists" %
+                               (new_toolbar.name))
         self.toolbar.setTabHeight(PyCEGUI.UDim(0, -1))
-        self.toolbars["Objects"] = new_toolbar
+        self.toolbars[new_toolbar.name] = new_toolbar
         gui = new_toolbar.gui
         # gui.show()
         self.toolbar.addTab(gui)
@@ -275,6 +281,17 @@ class EditorApplication(RPGApplicationCEGUI):
             print error
             raise
         self.reset_maps_menu()
+
+    def cb_tb_page_changed(self, args):
+        """Called then the toolbar page gets changed"""
+        old_tab = self.toolbar.getTabContentsAtIndex(self.old_toolbar_index)
+        old_toolbar = self.toolbars[old_tab.getText()]
+        old_toolbar.deactivate()
+        index = self.toolbar.getSelectedTabIndex()
+        new_tab = self.toolbar.getTabContentsAtIndex(index)
+        new_toolbar = self.toolbars[new_tab.getText()]
+        new_toolbar.activate()
+
 if __name__ == '__main__':
     SETTING = Setting(app_name="frpg-editor", settings_file="./settings.xml")
     APP = EditorApplication(SETTING)

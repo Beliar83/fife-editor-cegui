@@ -253,6 +253,7 @@ class ObjectToolbar(ToolbarPage):
         self.objects = {}
         self.images = {}
         self.selected_object = None
+        self.is_active = False
 
     def image_clicked(self, args):
         """Called when the user clicked on an image
@@ -272,7 +273,8 @@ class ObjectToolbar(ToolbarPage):
 
     def update_items(self):
         """Update the items of the toolbar page"""
-
+        if not self.is_active:
+            return
         self.objects = {}
         vec2f = PyCEGUI.Vector2f
         sizef = PyCEGUI.Sizef
@@ -456,3 +458,14 @@ class ObjectToolbar(ToolbarPage):
                 wmgr.destroyWindow(image)
                 del self.images[image_id]
         ToolbarPage.update_items(self)
+
+    def activate(self):
+        """Called when the page gets activated"""
+        self.is_active = True
+
+    def deactivate(self):
+        """Called when the page gets deactivated"""
+        if self.selected_object is not None:
+            self.images[self.selected_object].setAlpha(self.DEFAULT_ALPHA)
+        self.selected_object = None
+        self.is_active = False
