@@ -243,6 +243,8 @@ def parse_animation_atlas(animation, root_path):
 class ObjectToolbar(ToolbarPage):
 
     """A toolbar for displaying and placing static objects on a map"""
+    DEFAULT_ALPHA = 0.75
+    HIGHLIGHT_ALPHA = 1.0
 
     def __init__(self, editor):
 
@@ -250,6 +252,23 @@ class ObjectToolbar(ToolbarPage):
 
         self.objects = {}
         self.images = {}
+        self.selected_object = None
+
+    def image_clicked(self, args):
+        """Called when the user clicked on an image
+
+            Args:
+
+                args: The args of the event
+        """
+        window = args.window
+        name = window.getUserData()
+        if name not in self.images:
+            return
+        if self.selected_object is not None:
+            self.images[self.selected_object].setAlpha(self.DEFAULT_ALPHA)
+        self.images[name].setAlpha(self.HIGHLIGHT_ALPHA)
+        self.selected_object = name
 
     def update_items(self):
         """Update the items of the toolbar page"""
@@ -404,7 +423,6 @@ class ObjectToolbar(ToolbarPage):
                                         tex_name)
                                     image.setTexture(tex)
                                     image.setArea(area)
-        # TODO: Create the CEGUI images
         for identifier, obj in self.objects.iteritems():
             wmgr = PyCEGUI.WindowManager.getSingleton()
             if identifier not in self.images:
@@ -426,6 +444,10 @@ class ObjectToolbar(ToolbarPage):
                     image.setProperty("Image", img_name)
                 self.items.addChild(image)
                 self.images[identifier] = image
+                image.setAlpha(self.DEFAULT_ALPHA)
+                image.setUserData(identifier)
+                image.subscribeEvent(PyCEGUI.Window.EventMouseClick,
+                                     self.image_clicked)
         for image_id in self.images.keys():
             if image_id not in self.objects:
                 wmgr = PyCEGUI.WindowManager.getSingleton()
