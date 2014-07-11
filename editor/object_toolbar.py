@@ -254,13 +254,44 @@ class ObjectToolbar(ToolbarPage):
         self.images = {}
         self.selected_object = None
         self.is_active = False
-
+        x_adjust = 5
+        pos = self.gui.getPosition()
+        y_pos = pos.d_y
+        x_pos = PyCEGUI.UDim(0, x_adjust)
+        width = PyCEGUI.UDim(0.9, 0.0)
+        label = self.gui.createChild("TaharezLook/Label",
+                                     "LayersLabel")
+        label.setText(_("Layer"))
+        label.setWidth(width)
+        label.setXPosition(x_pos)
+        label.setProperty("HorzFormatting", "LeftAligned")
+        self.layers_combo = self.gui.createChild("TaharezLook/Combobox",
+                                                 "LayerCombo")
+        y_pos.d_scale = y_pos.d_scale + 0.02
+        self.layers_combo.setPosition(pos)
+        self.layers = []
+        self.layers_combo.setWidth(width)
+        self.layers_combo.setXPosition(x_pos)
+        label = self.gui.createChild("TaharezLook/Label",
+                                     "ObjectsLabel")
+        label.setText(_("Objects"))
+        label.setWidth(width)
+        y_pos.d_scale = y_pos.d_scale + 0.04
+        label.setYPosition(y_pos)
+        label.setXPosition(x_pos)
+        label.setProperty("HorzFormatting", "LeftAligned")
         items_panel = self.gui.createChild("TaharezLook/ScrollablePane",
                                            "Items_panel")
-        items_panel.setPosition(self.gui.getPosition())
-        items_panel.setSize(self.gui.getSize())
+        y_pos.d_scale = y_pos.d_scale + 0.045
+        items_panel.setXPosition(x_pos)
+        items_panel.setYPosition(y_pos)
+        size = self.gui.getSize()
+        size.d_height.d_scale = size.d_height.d_scale - y_pos.d_scale
+        size.d_width.d_offset = size.d_width.d_offset - x_adjust
+        items_panel.setSize(size)
         self.items = items_panel.createChild("VerticalLayoutContainer",
                                              "Items")
+        self.editor.add_map_switch_callback(self.cb_map_changed)
 
     def image_clicked(self, args):
         """Called when the user clicked on an image
@@ -476,3 +507,22 @@ class ObjectToolbar(ToolbarPage):
             self.images[self.selected_object].setAlpha(self.DEFAULT_ALPHA)
         self.selected_object = None
         self.is_active = False
+
+    def cb_map_changed(self, old_map_name, new_map_name):
+        """Called when the map of the editor changed
+
+            Args:
+
+                old_map_name: Name of the map that was previously loaded
+
+                new_map_name: Name of the map that was changed to
+        """
+        game_map = self.editor.maps[new_map_name]
+        self.layers_combo.resetList()
+        self.layers = []
+        layers = game_map.fife_map.getLayers()
+        for layer in layers:
+            item = PyCEGUI.ListboxTextItem(layer.getId())
+            item.setSelectionBrushImage("TaharezLook/MultiListSelectionBrush")
+            self.layers_combo.addItem(item)
+            self.layers.append(item)
