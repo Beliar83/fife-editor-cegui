@@ -254,7 +254,13 @@ class ObjectToolbar(ToolbarPage):
         self.images = {}
         self.selected_object = None
         self.is_active = False
-        self.items = self.gui.createChild("VerticalLayoutContainer", "Items")
+
+        items_panel = self.gui.createChild("TaharezLook/ScrollablePane",
+                                           "Items_panel")
+        items_panel.setPosition(self.gui.getPosition())
+        items_panel.setSize(self.gui.getSize())
+        self.items = items_panel.createChild("VerticalLayoutContainer",
+                                             "Items")
 
     def image_clicked(self, args):
         """Called when the user clicked on an image

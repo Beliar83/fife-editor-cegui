@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <GUILayout version="4" >
-    <Window type="TaharezLook/ScrollablePane" name="toolbar" >
+    <Window type="DefaultWindow" name="toolbar" >
         <Property name="Area" value="{{0,0},{0.03,-1},{1,0},{1.03,-26}}" />
     </Window>
 </GUILayout>

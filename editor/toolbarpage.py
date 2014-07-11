@@ -38,7 +38,6 @@ class ToolbarPage(object):
         self.gui = window_manager.loadLayoutFromFile("toolbar_page.layout")
         self.gui.setName(name)
         self.gui.setText(name)
-        self.gui.setShowHorzScrollbar(False)
     # pylint: enable=unused-argument
 
     @abstractmethod
