@@ -25,7 +25,9 @@ import PyCEGUI
 
 
 class ToolbarPage(object):
+    """The base class for toolbars, sets up the basic gui"""
 
+    # pylint: disable=unused-argument
     def __init__(self, editor, name, metaclass=ABCMeta):
         if False:  # FOR IDEs
             from fife_rpg_editor import EditorApplication
@@ -37,12 +39,11 @@ class ToolbarPage(object):
         self.gui.setName(name)
         self.gui.setText(name)
         self.gui.setShowHorzScrollbar(False)
-        self.items = self.gui.getChild("Items")
-        self.items.layout()
+    # pylint: enable=unused-argument
 
     @abstractmethod
-    def update_items(self):
-        """Update the items of the toolbar page"""
+    def update_contents(self):
+        """Update the contents of the toolbar page"""
 
     @abstractmethod
     def activate(self):

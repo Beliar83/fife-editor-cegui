@@ -254,6 +254,7 @@ class ObjectToolbar(ToolbarPage):
         self.images = {}
         self.selected_object = None
         self.is_active = False
+        self.items = self.gui.createChild("VerticalLayoutContainer", "Items")
 
     def image_clicked(self, args):
         """Called when the user clicked on an image
@@ -271,8 +272,8 @@ class ObjectToolbar(ToolbarPage):
         self.images[name].setAlpha(self.HIGHLIGHT_ALPHA)
         self.selected_object = name
 
-    def update_items(self):
-        """Update the items of the toolbar page"""
+    def update_contents(self):
+        """Update the contents of the toolbar page"""
         if not self.is_active:
             return
         self.objects = {}
@@ -457,7 +458,7 @@ class ObjectToolbar(ToolbarPage):
                 image.getParent().removeChild(image)
                 wmgr.destroyWindow(image)
                 del self.images[image_id]
-        ToolbarPage.update_items(self)
+        ToolbarPage.update_contents(self)
 
     def activate(self):
         """Called when the page gets activated"""

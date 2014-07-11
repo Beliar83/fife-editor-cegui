@@ -232,7 +232,7 @@ class EditorApplication(RPGApplicationCEGUI):
         This is called every frame.
         """
         for toolbar in self.toolbars.itervalues():
-            toolbar.update_items()
+            toolbar.update_contents()
 
     def cb_quit(self, args):
         """Callback when quit was clicked in the file menu"""
