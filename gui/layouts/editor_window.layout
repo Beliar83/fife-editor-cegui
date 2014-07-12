@@ -5,15 +5,18 @@
         <Property name="Area" value="{{0,0},{0,1},{1,0},{1,1}}" />
         <Property name="MaxSize" value="{{1,0},{1,0}}" />
         <Property name="AutoRenderingSurface" value="True" />
+        <Property name="MousePassThroughEnabled" value="True" />
         <Window type="VerticalLayoutContainer" name="MainContainer" >
             <Property name="Area" value="{{0,0},{0,0},{1,0},{1,0}}" />
             <Property name="AutoRenderingSurface" value="True" />
+            <Property name="MousePassThroughEnabled" value="True" />
             <Window type="TaharezLook/Menubar" name="Menu" >
                 <Property name="Area" value="{{0,0},{0,0},{1,0},{0.03,0}}" />
             </Window>
             <Window type="HorizontalLayoutContainer" name="MiddleContainer" >
                 <Property name="Area" value="{{0,0},{0.03,-1},{1,0},{0.97,-1}}" />
                 <Property name="AutoRenderingSurface" value="True" />
+                <Property name="MousePassThroughEnabled" value="True" />
                 <Window type="TaharezLook/TabControl" name="Toolbar" >
                     <Property name="Area" value="{{0,0},{0,0},{0.2,0},{0.94,0}}" />
                     <Property name="TabHeight" value="{0,-1}" />
