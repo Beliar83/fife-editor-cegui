@@ -30,11 +30,15 @@ from fife_rpg.components import ComponentManager
 from fife_rpg.actions import ActionManager
 from fife_rpg.systems import SystemManager
 from fife_rpg.behaviours import BehaviourManager
-from editor.filebrowser import FileBrowser
-from editor.object_toolbar import ObjectToolbar
+from fife_rpg.game_scene import GameSceneView
 # pylint: disable=unused-import
 from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
 # pylint: enable=unused-import
+
+
+from editor.filebrowser import FileBrowser
+from editor.object_toolbar import ObjectToolbar
+from editor.editor_scene import EditorController
 
 
 class EditorApplication(RPGApplicationCEGUI):
@@ -76,11 +80,8 @@ class EditorApplication(RPGApplicationCEGUI):
         self.old_toolbar_index = 0
         cegui_system.getDefaultGUIContext().setRootWindow(
             self.editor_window)
-        self.create_menu()
         self.toolbars = {}
-        self.create_toolbars()
         self.filebrowser = FileBrowser(self.engine)
-        self.clear()
         self.main_container.layout()
 
     def __loadData(self):  # pylint: disable=no-self-use, invalid-name
@@ -92,6 +93,12 @@ class EditorApplication(RPGApplicationCEGUI):
         PyCEGUI.FontManager.getSingleton().createFromFile("DejaVuSans-10.font")
         PyCEGUI.FontManager.getSingleton().createFromFile("DejaVuSans-12.font")
         PyCEGUI.FontManager.getSingleton().createFromFile("DejaVuSans-14.font")
+
+    def setup(self):
+        """Actions that should to be done with an active mode"""
+        self.create_menu()
+        self.create_toolbars()
+        self.clear()
 
     def create_menu(self):
         """Create the menu items"""
@@ -295,4 +302,8 @@ class EditorApplication(RPGApplicationCEGUI):
 if __name__ == '__main__':
     SETTING = Setting(app_name="frpg-editor", settings_file="./settings.xml")
     APP = EditorApplication(SETTING)
+    VIEW = GameSceneView(APP)
+    CONTROLLER = EditorController(VIEW, APP)
+    APP.push_mode(CONTROLLER)
+    APP.setup()
     APP.run()

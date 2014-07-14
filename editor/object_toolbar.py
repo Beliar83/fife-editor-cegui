@@ -12,10 +12,10 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-""" Contains the objects toolbar
+""" Contains the namespaces toolbar
 
 .. module:: toolbarpage
-    :synopsis: Contains the objects toolbar
+    :synopsis: Contains the namespaces toolbar
 
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
@@ -25,6 +25,7 @@ import os
 
 from lxml import etree
 import PyCEGUI
+from fife import fife
 
 # pylint: disable=unused-import
 from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
@@ -60,8 +61,8 @@ def parse_file(filename):
             raise RuntimeError("Unexpected file format '%s'" % (filename))
         atlas_def = parse_atlas(root, root_path)
         second_doc = lines[line_no + 1:]
-        second_doc.insert(0, "<objects>\n")
-        second_doc.append("</objects>\n")
+        second_doc.insert(0, "<namespaces>\n")
+        second_doc.append("</namespaces>\n")
         second_doc = StringIO(u"".join(second_doc))
         tree = etree.parse(second_doc)
         object_defs = tree.getroot().findall("object")
@@ -242,7 +243,7 @@ def parse_animation_atlas(animation, root_path):
 
 class ObjectToolbar(ToolbarPage):
 
-    """A toolbar for displaying and placing static objects on a map"""
+    """A toolbar for displaying and placing static namespaces on a map"""
     DEFAULT_ALPHA = 0.75
     HIGHLIGHT_ALPHA = 1.0
 
@@ -250,9 +251,9 @@ class ObjectToolbar(ToolbarPage):
 
         ToolbarPage.__init__(self, editor, "Objects")
 
-        self.objects = {}
+        self.namespaces = {}
         self.images = {}
-        self.selected_object = None
+        self.selected_object = [None, None]
         self.is_active = False
         x_adjust = 5
         pos = self.gui.getPosition()
@@ -293,6 +294,14 @@ class ObjectToolbar(ToolbarPage):
                                              "Items")
         self.editor.add_map_switch_callback(self.cb_map_changed)
 
+    @property
+    def selected_layer(self):
+        """Returns the selected layer in the combo box"""
+        item = self.layers_combo.getSelectedItem()
+        if item is not None:
+            return str(item.getText())
+        return None
+
     def image_clicked(self, args):
         """Called when the user clicked on an image
 
@@ -300,32 +309,36 @@ class ObjectToolbar(ToolbarPage):
 
                 args: The args of the event
         """
-        window = args.window
-        name = window.getUserData()
-        if name not in self.images:
+        identifier = args.window.getName()
+        image = self.images[identifier]
+        obj_data = image.user_data
+        if identifier not in self.images:
             return
-        if self.selected_object is not None:
-            self.images[self.selected_object].setAlpha(self.DEFAULT_ALPHA)
-        self.images[name].setAlpha(self.HIGHLIGHT_ALPHA)
-        self.selected_object = name
+        if self.selected_object[0] is not None:
+            old_identifier = ".".join(self.selected_object)
+            self.images[old_identifier].setAlpha(self.DEFAULT_ALPHA)
+        self.images[identifier].setAlpha(self.HIGHLIGHT_ALPHA)
+        self.selected_object = obj_data
 
     def update_contents(self):
         """Update the contents of the toolbar page"""
         if not self.is_active:
             return
-        self.objects = {}
+        self.namespaces = {}
         vec2f = PyCEGUI.Vector2f
         sizef = PyCEGUI.Sizef
         model = self.editor.engine.getModel()
         namespaces = model.getNamespaces()
         for namespace in namespaces:
+            self.namespaces[namespace] = {}
+            namespace_def = self.namespaces[namespace]
             objects = model.getObjects(namespace)
             for fife_object in objects:
                 identifier = fife_object.getId()
-                if identifier in self.objects:
+                if identifier in self.namespaces:
                     continue
                 if identifier in self.images:
-                    self.objects[identifier] = {}
+                    namespace_def[identifier] = {}
                     continue
                 project_dir = self.editor.project_source
                 object_filename = fife_object.getFilename()
@@ -337,22 +350,23 @@ class ObjectToolbar(ToolbarPage):
                 for obj in objects:
                     obj_def = obj["object"]
                     identifier = obj_def["id"]
-                    self.objects[identifier] = {}
-                    self.objects[identifier]["static"] = obj_def["static"]
+                    name = ".".join([namespace, identifier])
+                    namespace_def[identifier] = {}
+                    namespace_def[identifier]["static"] = obj_def["static"]
                     if int(obj_def["static"]) == 0:
                         actions = obj["actions"]
-                        self.objects[identifier]["actions"] = {}
-                        actions_dict = self.objects[identifier]["actions"]
+                        namespace_def[identifier]["actions"] = {}
+                        actions_dict = namespace_def[identifier]["actions"]
                         for action, action_def in actions.iteritems():
                             img_type = action_def["type"]
                             if img_type == "single":
                                 atlas_def = action_def["atlas"]
-                                name = ".".join([identifier, action, "atlas"])
+                                tname = ".".join([name, action, "atlas"])
                                 fname = atlas_def["image"]
-                                if renderer.isTextureDefined(name):
-                                    tex = renderer.getTexture(name)
+                                if renderer.isTextureDefined(tname):
+                                    tex = renderer.getTexture(tname)
                                 else:
-                                    tex = renderer.createTexture(name,
+                                    tex = renderer.createTexture(tname,
                                                                  fname,
                                                                  "FIFE")
                                 tex_size = tex.getSize()
@@ -374,13 +388,14 @@ class ObjectToolbar(ToolbarPage):
                                     frame_id = 0
                                     frames = dir_def["frames"]
                                     for frame in frames:
-                                        name = ".".join([identifier,
-                                                         action,
-                                                         str(direction),
-                                                         str(frame_id)])
-                                        if not renderer.isTextureDefined(name):
+                                        tname = ".".join([name,
+                                                          action,
+                                                          str(direction),
+                                                          str(frame_id)])
+                                        if not renderer.isTextureDefined(
+                                                tname):
                                             tex = renderer.createTexture(
-                                                name,
+                                                tname,
                                                 frame,
                                                 "FIFE")
                                             pos = vec2f(0, 0)
@@ -390,7 +405,7 @@ class ObjectToolbar(ToolbarPage):
                                             area = PyCEGUI.Rectf(pos, size)
                                             image = image_manager.create(
                                                 "BasicImage",
-                                                name)
+                                                tname)
                                             image.setTexture(tex)
                                             image.setArea(area)
                                         frame_id = frame_id + 1
@@ -406,28 +421,28 @@ class ObjectToolbar(ToolbarPage):
                                         size = sizef(frame_width,
                                                      frame_height)
                                         area = PyCEGUI.Rectf(pos, size)
-                                        name = ".".join([identifier,
-                                                         action,
-                                                         str(direction),
-                                                         str(frame_id)])
-                                        if not image_manager.isDefined(name):
+                                        iname = ".".join([name,
+                                                          action,
+                                                          str(direction),
+                                                          str(frame_id)])
+                                        if not image_manager.isDefined(iname):
                                             image = image_manager.create(
                                                 "BasicImage",
-                                                name)
+                                                iname)
                                             image.setTexture(tex)
                                             image.setArea(area)
                                         frame_count = frame_count + 1
                     elif int(obj_def["static"]) == 1:
-                        self.objects[identifier]["directions"] = []
-                        dir_list = self.objects[identifier]["directions"]
+                        namespace_def[identifier]["directions"] = []
+                        dir_list = namespace_def[identifier]["directions"]
                         dir_iter = iter(sorted(obj["directions"].iteritems()))
                         for direction, dir_def in dir_iter:
                             dir_list.append(direction)
                             source = dir_def["source"]
                             if dir_def["type"] == "atlas":
-                                tex_name = ".".join([identifier, "atlas"])
+                                tex_name = ".".join([name, "atlas"])
                                 img_name = ".".join(
-                                    [identifier, str(direction)])
+                                    [name, str(direction)])
 
                                 if not renderer.isTextureDefined(tex_name):
                                     tex = renderer.createTexture(tex_name,
@@ -449,7 +464,7 @@ class ObjectToolbar(ToolbarPage):
                                 image.setArea(area)
                             elif dir_def["type"] == "image":
                                 tex_name = ".".join(
-                                    [identifier, str(direction)])
+                                    [name, str(direction)])
                                 if not renderer.isTextureDefined(tex_name):
                                     tex = renderer.createTexture(tex_name,
                                                                  source,
@@ -463,35 +478,38 @@ class ObjectToolbar(ToolbarPage):
                                         tex_name)
                                     image.setTexture(tex)
                                     image.setArea(area)
-        for identifier, obj in self.objects.iteritems():
-            wmgr = PyCEGUI.WindowManager.getSingleton()
-            if identifier not in self.images:
-                image = wmgr.createWindow(
-                    "TaharezLook/StaticImage", identifier)
-                image.setTooltipText(identifier)
-                if int(obj["static"]) == 0:
-                    f_action = obj["actions"].keys()[0]
-                    f_action_def = obj["actions"][f_action]
-                    f_dir = f_action_def.keys()[0]
-                    img_name = ".".join([identifier,
-                                         f_action,
-                                         str(f_dir),
-                                         str(0)])
-                    image.setProperty("Image", img_name)
-                elif int(obj["static"]) == 1:
-                    f_dir = obj["directions"][0]
-                    img_name = ".".join([identifier, str(f_dir)])
-                    image.setProperty("Image", img_name)
-                self.items.addChild(image)
-                self.images[identifier] = image
-                image.setAlpha(self.DEFAULT_ALPHA)
-                image.setUserData(identifier)
-                image.subscribeEvent(PyCEGUI.Window.EventMouseClick,
-                                     self.image_clicked)
-        for image_id in self.images.keys():
-            if image_id not in self.objects:
+        for namespace in self.namespaces.iterkeys():
+            for identifier, obj in self.namespaces[namespace].iteritems():
+                name = ".".join([namespace, identifier])
                 wmgr = PyCEGUI.WindowManager.getSingleton()
-                image = self.images[image_id]
+                if name not in self.images:
+                    image = wmgr.createWindow(
+                        "TaharezLook/StaticImage", name)
+                    image.setTooltipText(identifier)
+                    if int(obj["static"]) == 0:
+                        f_action = obj["actions"].keys()[0]
+                        f_action_def = obj["actions"][f_action]
+                        f_dir = f_action_def.keys()[0]
+                        img_name = ".".join([name,
+                                             f_action,
+                                             str(f_dir),
+                                             str(0)])
+                        image.setProperty("Image", img_name)
+                    elif int(obj["static"]) == 1:
+                        f_dir = obj["directions"][0]
+                        img_name = ".".join([name,
+                                             str(f_dir)])
+                        image.setProperty("Image", img_name)
+                    self.items.addChild(image)
+                    self.images[name] = image
+                    image.setAlpha(self.DEFAULT_ALPHA)
+                    image.user_data = [namespace, identifier]
+                    image.subscribeEvent(PyCEGUI.Window.EventMouseClick,
+                                         self.image_clicked)
+        for image in self.images.itervalues():
+            namespace, image_id = image.user_data
+            if image_id not in self.namespaces[namespace]:
+                wmgr = PyCEGUI.WindowManager.getSingleton()
                 image.getParent().removeChild(image)
                 wmgr.destroyWindow(image)
                 del self.images[image_id]
@@ -500,12 +518,17 @@ class ObjectToolbar(ToolbarPage):
     def activate(self):
         """Called when the page gets activated"""
         self.is_active = True
+        mode = self.editor.current_mode
+        mode.listener.add_callback("mouse_pressed",
+                                   self.cb_map_clicked,
+                                   self.get_map_clicked_kwargs)
 
     def deactivate(self):
         """Called when the page gets deactivated"""
-        if self.selected_object is not None:
-            self.images[self.selected_object].setAlpha(self.DEFAULT_ALPHA)
-        self.selected_object = None
+        namespace, name = self.selected_object
+        if namespace is not None:
+            self.images[namespace][name].setAlpha(self.DEFAULT_ALPHA)
+        self.selected_object = [None, None]
         self.is_active = False
 
     def cb_map_changed(self, old_map_name, new_map_name):
@@ -526,3 +549,31 @@ class ObjectToolbar(ToolbarPage):
             item.setSelectionBrushImage("TaharezLook/MultiListSelectionBrush")
             self.layers_combo.addItem(item)
             self.layers.append(item)
+
+    def cb_map_clicked(self, location):
+        """Called when a position on the map was clicked
+
+        Args:
+
+            location: A fife.Location with the the position that was clicked on
+            the map
+        """
+        if self.selected_layer is None or not self.is_active:
+            return
+        namespace, name = self.selected_object
+        if namespace is None:
+            return
+        layer = self.editor.current_map.get_layer(self.selected_layer)
+        for instance in layer.getInstancesAt(location):
+            layer.deleteInstance(instance)
+        fife_model = self.editor.engine.getModel()
+        map_object = fife_model.getObject(name, namespace)
+        coords = location.getLayerCoordinates()
+        instance = layer.createInstance(map_object, coords)
+        fife.InstanceVisual.create(instance)
+
+    def get_map_clicked_kwargs(self):
+        """Returns keyword args for the map clicked callback"""
+        kwargs = {}
+        kwargs["layer"] = self.selected_layer
+        return kwargs
