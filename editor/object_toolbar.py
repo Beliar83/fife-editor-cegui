@@ -558,22 +558,28 @@ class ObjectToolbar(ToolbarPage):
             self.layers_combo.addItem(item)
             self.layers.append(item)
 
-    def cb_map_clicked(self, location):
+    def cb_map_clicked(self, location, button):
         """Called when a position on the map was clicked
 
         Args:
 
             location: A fife.Location with the the position that was clicked on
             the map
+
+            button: The button that was clicked
         """
         if self.selected_layer is None or not self.is_active:
             return
+        if button == fife.MouseEvent.MIDDLE:
+            return
         namespace, name = self.selected_object
-        if namespace is None:
+        if namespace is None and button == fife.MouseEvent.LEFT:
             return
         layer = self.editor.current_map.get_layer(self.selected_layer)
         for instance in layer.getInstancesAt(location):
             layer.deleteInstance(instance)
+        if button == fife.MouseEvent.RIGHT:
+            return
         fife_model = self.editor.engine.getModel()
         map_object = fife_model.getObject(name, namespace)
         coords = location.getLayerCoordinates()
