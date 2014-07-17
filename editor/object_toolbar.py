@@ -292,6 +292,7 @@ class ObjectToolbar(ToolbarPage):
         items_panel.setSize(size)
         self.items = items_panel.createChild("VerticalLayoutContainer",
                                              "Items")
+        self.have_objects_changed = False
         self.editor.add_map_switch_callback(self.cb_map_changed)
 
     @property
@@ -322,8 +323,15 @@ class ObjectToolbar(ToolbarPage):
 
     def update_contents(self):
         """Update the contents of the toolbar page"""
+        if self.have_objects_changed:
+            self.update_images()
+        ToolbarPage.update_contents(self)
+
+    def update_images(self):
+        """Update the contents of the toolbar page"""
         if not self.is_active:
             return
+        self.have_objects_changed = False
         self.namespaces = {}
         vec2f = PyCEGUI.Vector2f
         sizef = PyCEGUI.Sizef
@@ -440,7 +448,7 @@ class ObjectToolbar(ToolbarPage):
                             dir_list.append(direction)
                             source = dir_def["source"]
                             if dir_def["type"] == "atlas":
-                                tex_name = ".".join([name, "atlas"])
+                                tex_name = ".".join([source, "atlas"])
                                 img_name = ".".join(
                                     [name, str(direction)])
 
@@ -513,7 +521,6 @@ class ObjectToolbar(ToolbarPage):
                 image.getParent().removeChild(image)
                 wmgr.destroyWindow(image)
                 del self.images[image_id]
-        ToolbarPage.update_contents(self)
 
     def activate(self):
         """Called when the page gets activated"""
@@ -540,6 +547,7 @@ class ObjectToolbar(ToolbarPage):
 
                 new_map_name: Name of the map that was changed to
         """
+        self.have_objects_changed = True
         game_map = self.editor.maps[new_map_name]
         self.layers_combo.resetList()
         self.layers = []
