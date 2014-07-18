@@ -25,17 +25,28 @@ from fife_rpg.game_scene import GameSceneListener, GameSceneController
 import PyCEGUI
 
 
-class EditorListener(GameSceneListener):
+class EditorListener(GameSceneListener, fife.IKeyListener):
 
     """The Listener for the editor controller"""
 
     def __init__(self, engine, gamecontroller=None):
         GameSceneListener.__init__(self, engine, gamecontroller)
+        fife.IKeyListener.__init__(self)
         self.callbacks = {}
         self.callbacks["mouse_pressed"] = []
         self.callbacks["mouse_dragged"] = []
         self.middle_container = None
         self.old_mouse_pos = None
+
+    def activate(self):
+        """Makes the listener receive events"""
+        GameSceneListener.activate(self)
+        self.eventmanager.addKeyListener(self)
+
+    def deactivate(self):
+        """Makes the listener receive events"""
+        GameSceneListener.deactivate(self)
+        self.eventmanager.removeKeyListener(self)
 
     def setup_cegui(self):
         """Sets up cegui events for the listener"""
@@ -109,7 +120,7 @@ class EditorListener(GameSceneListener):
             self.old_mouse_pos = cur_mouse_pos
             print offset.getX()
             print offset.getY()
-            current_map.move_camera((offset.getX(), offset.getY()))
+            current_map.move_camera_by((offset.getX(), offset.getY()))
 
     def mouseMoved(self, event):  # pylint: disable=C0103,W0221
         """Called when the mouse was moved.
@@ -123,6 +134,28 @@ class EditorListener(GameSceneListener):
         if (self.middle_container is None or
                 not self.middle_container.isHit(vec)):
             pass
+
+    def keyPressed(self, event):  # pylint: disable=C0103,W0221
+        """Called when a key was pressed
+
+        Args:
+
+            event: The key event
+        """
+        if event.getKey().getValue() == fife.Key.SPACE:
+            application = self.gamecontroller.application
+            if application.current_map is None:
+                return
+            application.current_map.move_camera_to((0, 0))
+
+    def keyReleased(self, event):  # pylint: disable=C0103,W0221
+        """Called when a key was released
+
+        Args:
+
+            event: The key event
+        """
+        pass
 
 
 class EditorController(GameSceneController):
