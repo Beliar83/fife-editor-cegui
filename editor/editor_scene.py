@@ -118,22 +118,7 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
             offset /= 2
             offset.rotate(current_map.camera.getRotation())
             self.old_mouse_pos = cur_mouse_pos
-            print offset.getX()
-            print offset.getY()
             current_map.move_camera_by((offset.getX(), offset.getY()))
-
-    def mouseMoved(self, event):  # pylint: disable=C0103,W0221
-        """Called when the mouse was moved.
-
-        Args:
-            event: The mouse event
-        """
-        GameSceneListener.mouseMoved(self, event)
-        x_pos, y_pos = event.getX(), event.getY()
-        vec = PyCEGUI.Vector2f(x_pos, y_pos)
-        if (self.middle_container is None or
-                not self.middle_container.isHit(vec)):
-            pass
 
     def keyPressed(self, event):  # pylint: disable=C0103,W0221
         """Called when a key was pressed
