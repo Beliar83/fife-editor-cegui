@@ -35,6 +35,7 @@ class EditorListener(GameSceneListener):
         self.callbacks["mouse_pressed"] = []
         self.callbacks["mouse_dragged"] = []
         self.middle_container = None
+        self.old_mouse_pos = None
 
     def setup_cegui(self):
         """Sets up cegui events for the listener"""
@@ -74,6 +75,8 @@ class EditorListener(GameSceneListener):
             )
             func(scr_point, event.getButton())
 
+        self.old_mouse_pos = fife.DoublePoint(event.getX(), event.getY())
+
     def mouseDragged(self, event):  # pylint: disable=C0103,W0221
         """Called when the mouse is moved while a button is being pressed.
 
@@ -95,6 +98,18 @@ class EditorListener(GameSceneListener):
                 fife.ScreenPoint(event.getX(), event.getY()), layer
             )
             func(scr_point, event.getButton())
+        if event.getButton() == fife.MouseEvent.MIDDLE:
+            current_map = application.current_map
+            if self.old_mouse_pos is None or current_map is None:
+                return
+            cur_mouse_pos = fife.DoublePoint(event.getX(), event.getY())
+            offset = cur_mouse_pos - self.old_mouse_pos
+            offset /= 2
+            offset.rotate(current_map.camera.getRotation())
+            self.old_mouse_pos = cur_mouse_pos
+            print offset.getX()
+            print offset.getY()
+            current_map.move_camera((offset.getX(), offset.getY()))
 
     def mouseMoved(self, event):  # pylint: disable=C0103,W0221
         """Called when the mouse was moved.
