@@ -305,5 +305,6 @@ if __name__ == '__main__':
     VIEW = GameSceneView(APP)
     CONTROLLER = EditorController(VIEW, APP)
     APP.push_mode(CONTROLLER)
+    CONTROLLER.listener.setup_cegui()
     APP.setup()
     APP.run()

@@ -529,6 +529,9 @@ class ObjectToolbar(ToolbarPage):
         mode.listener.add_callback("mouse_pressed",
                                    self.cb_map_clicked,
                                    self.get_map_clicked_kwargs)
+        mode.listener.add_callback("mouse_dragged",
+                                   self.cb_map_clicked,
+                                   self.get_map_clicked_kwargs)
 
     def deactivate(self):
         """Called when the page gets deactivated"""

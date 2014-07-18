@@ -33,8 +33,9 @@
                         <Property name="Visible" value="False" />
                     </AutoWindow>
                 </Window>
-                <Window type="GridLayoutContainer" name="GridLayoutContainer" >
-                    <Property name="Area" value="{{0.2,0},{0.000520867,0},{0.8,0},{0.094,0}}" />
+                <Window type="DefaultWindow" name="MiddleArea" >
+                    <Property name="Area" value="{{0.2,0},{0.000520867,0},{0.8,0},{0.94,0}}" />
+                    <Property name="MousePassThroughEnabled" value="True" />
                 </Window>
                 <Window type="TaharezLook/FrameWindow" name="FrameWindow" >
                     <Property name="Area" value="{{0.8,0},{0,0},{1,0},{0.94,0}}" />

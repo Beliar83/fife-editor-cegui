@@ -22,15 +22,25 @@
 
 from fife import fife
 from fife_rpg.game_scene import GameSceneListener, GameSceneController
+import PyCEGUI
 
 
 class EditorListener(GameSceneListener):
 
     """The Listener for the editor controller"""
+
     def __init__(self, engine, gamecontroller=None):
         GameSceneListener.__init__(self, engine, gamecontroller)
         self.callbacks = {}
         self.callbacks["mouse_pressed"] = []
+        self.callbacks["mouse_dragged"] = []
+        self.middle_container = None
+
+    def setup_cegui(self):
+        """Sets up cegui events for the listener"""
+        main_container = self.gamecontroller.application.main_container
+        self.middle_container = main_container.getChild("MiddleContainer"
+                                                        "/MiddleArea")
 
     def add_callback(self, cb_type, cb_func, cb_kwargs=None):
         """Adds a function to call when a event with the type is called
@@ -63,6 +73,41 @@ class EditorListener(GameSceneListener):
                 fife.ScreenPoint(event.getX(), event.getY()), layer
             )
             func(scr_point, event.getButton())
+
+    def mouseDragged(self, event):  # pylint: disable=C0103,W0221
+        """Called when the mouse is moved while a button is being pressed.
+
+        Args:
+            event: The mouse event
+        """
+        application = self.gamecontroller.application
+        for callback_data in self.callbacks["mouse_dragged"]:
+            func = callback_data["func"]
+            kwargs = callback_data["kwargs"]
+            if kwargs is None:
+                raise RuntimeError("The callback needs keywords args,"
+                                   "but they are not set")
+            kwargs = kwargs()
+            if "layer" not in kwargs.keys() or kwargs["layer"] is None:
+                continue
+            layer = kwargs["layer"]
+            scr_point = application.screen_coords_to_map_coords(
+                fife.ScreenPoint(event.getX(), event.getY()), layer
+            )
+            func(scr_point, event.getButton())
+
+    def mouseMoved(self, event):  # pylint: disable=C0103,W0221
+        """Called when the mouse was moved.
+
+        Args:
+            event: The mouse event
+        """
+        GameSceneListener.mouseMoved(self, event)
+        x_pos, y_pos = event.getX(), event.getY()
+        vec = PyCEGUI.Vector2f(x_pos, y_pos)
+        if (self.middle_container is None or
+                not self.middle_container.isHit(vec)):
+            pass
 
 
 class EditorController(GameSceneController):
