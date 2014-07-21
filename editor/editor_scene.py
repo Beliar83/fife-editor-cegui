@@ -144,7 +144,6 @@ class EditorController(GameSceneController):
 
     def __init__(self, view, application, outliner=None, listener=None):
         listener = listener or EditorListener(application.engine, self)
-        listener.is_outlined = True
         GameSceneController.__init__(self, view, application,
                                      outliner, listener)
         # self.outliner.outline_data = (173, 255, 47, 2)
