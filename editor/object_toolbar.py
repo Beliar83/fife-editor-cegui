@@ -12,10 +12,10 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-""" Contains the namespaces toolbar
+""" Contains the objects toolbar
 
-.. module:: toolbarpage
-    :synopsis: Contains the namespaces toolbar
+.. module:: object_toolbar
+    :synopsis: Contains the objects toolbar
 
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
@@ -243,7 +243,7 @@ def parse_animation_atlas(animation, root_path):
 
 class ObjectToolbar(ToolbarPage):
 
-    """A toolbar for displaying and placing static namespaces on a map"""
+    """A toolbar for displaying and placing static objects on a map"""
     DEFAULT_ALPHA = 0.75
     HIGHLIGHT_ALPHA = 1.0
 
