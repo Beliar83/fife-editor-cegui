@@ -576,8 +576,7 @@ class ObjectToolbar(ToolbarPage):
 
             button: The button that was clicked
         """
-        self.last_instance = None
-        self.last_mouse_pos = None
+        self.clean_mouse_instance()
         if self.selected_layer is None or not self.is_active:
             return
         if button == fife.MouseEvent.MIDDLE:
@@ -602,6 +601,15 @@ class ObjectToolbar(ToolbarPage):
         kwargs["layer"] = self.selected_layer
         return kwargs
 
+    def clean_mouse_instance(self):
+        """Removes the instance that was created by mouse movement"""
+        if self.last_instance is not None:
+            last_loc = self.last_instance.getLocation()
+            last_layer = last_loc.getLayer()
+            last_layer.deleteInstance(self.last_instance)
+        self.last_instance = None
+        self.last_mouse_pos = None
+
     def cb_map_moved(self, location):
         """Called when a the mouse was moved over the map
 
@@ -610,6 +618,7 @@ class ObjectToolbar(ToolbarPage):
             location: A fife.Location with the the position the mouse is on the
             map
         """
+        self.clean_mouse_instance()
         if self.selected_layer is None or not self.is_active:
             return
         namespace, name = self.selected_object
@@ -617,14 +626,6 @@ class ObjectToolbar(ToolbarPage):
             return
         layer = self.editor.current_map.get_layer(self.selected_layer)
         coords = location.getLayerCoordinates()
-        if self.last_mouse_pos is not None:
-            last_coords = self.last_mouse_pos.getLayerCoordinates()
-            if last_coords == coords:
-                return
-            if self.last_instance is not None:
-                last_loc = self.last_instance.getLocation()
-                last_layer = last_loc.getLayer()
-                last_layer.deleteInstance(self.last_instance)
         self.last_mouse_pos = location
         fife_model = self.editor.engine.getModel()
         map_object = fife_model.getObject(name, namespace)
