@@ -495,7 +495,7 @@ class ObjectToolbar(ToolbarPage):
                 if name not in self.images:
                     image = wmgr.createWindow(
                         "TaharezLook/StaticImage", name)
-                    image.setTooltipText(identifier)
+                    image.setTooltipText(name)
                     if int(obj["static"]) == 0:
                         f_action = obj["actions"].keys()[0]
                         f_action_def = obj["actions"][f_action]
