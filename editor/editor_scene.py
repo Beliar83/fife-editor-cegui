@@ -22,12 +22,13 @@
 
 from fife import fife
 from fife_rpg.game_scene import GameSceneListener, GameSceneController
-import PyCEGUI
 
 
 class EditorListener(GameSceneListener, fife.IKeyListener):
 
     """The Listener for the editor controller"""
+
+    DRAG_SPEED = 0.2
 
     def __init__(self, engine, gamecontroller=None):
         GameSceneListener.__init__(self, engine, gamecontroller)
@@ -116,7 +117,7 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
                 return
             cur_mouse_pos = fife.DoublePoint(event.getX(), event.getY())
             offset = cur_mouse_pos - self.old_mouse_pos
-            offset /= 2
+            offset *= self.DRAG_SPEED
             offset.rotate(current_map.camera.getRotation())
             self.old_mouse_pos = cur_mouse_pos
             current_map.move_camera_by((offset.getX(), offset.getY()))
