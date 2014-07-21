@@ -115,11 +115,13 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
             current_map = application.current_map
             if self.old_mouse_pos is None or current_map is None:
                 return
+            cursor = application.engine.getCursor()
+            cursor.setPosition(int(self.old_mouse_pos.getX()),
+                               int(self.old_mouse_pos.getY()))
             cur_mouse_pos = fife.DoublePoint(event.getX(), event.getY())
             offset = cur_mouse_pos - self.old_mouse_pos
             offset *= self.DRAG_SPEED
             offset.rotate(current_map.camera.getRotation())
-            self.old_mouse_pos = cur_mouse_pos
             current_map.move_camera_by((offset.getX(), offset.getY()))
 
     def mouseMoved(self, event):  # pylint: disable=C0103,W0221
