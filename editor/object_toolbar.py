@@ -529,14 +529,11 @@ class ObjectToolbar(ToolbarPage):
         self.is_active = True
         mode = self.editor.current_mode
         mode.listener.add_callback("mouse_pressed",
-                                   self.cb_map_clicked,
-                                   self.get_map_clicked_kwargs)
+                                   self.cb_map_clicked)
         mode.listener.add_callback("mouse_dragged",
-                                   self.cb_map_clicked,
-                                   self.get_map_clicked_kwargs)
+                                   self.cb_map_clicked)
         mode.listener.add_callback("mouse_moved",
-                                   self.cb_map_moved,
-                                   self.get_map_clicked_kwargs)
+                                   self.cb_map_moved)
 
     def deactivate(self):
         """Called when the page gets deactivated"""
@@ -566,13 +563,13 @@ class ObjectToolbar(ToolbarPage):
             self.layers_combo.addItem(item)
             self.layers.append(item)
 
-    def cb_map_clicked(self, location, button):
-        """Called when a position on the map was clicked
+    def cb_map_clicked(self, click_point, button):
+        """Called when a position on the screen was clicked
 
         Args:
 
-            location: A fife.Location with the the position that was clicked on
-            the map
+            click_point: A fife.ScreenPoint with the the position that was
+            clicked on the screen
 
             button: The button that was clicked
         """
@@ -585,6 +582,10 @@ class ObjectToolbar(ToolbarPage):
         if namespace is None and button == fife.MouseEvent.LEFT:
             return
         layer = self.editor.current_map.get_layer(self.selected_layer)
+        location = self.editor.screen_coords_to_map_coords(
+            click_point, self.selected_layer
+        )
+
         for instance in layer.getInstancesAt(location):
             layer.deleteInstance(instance)
         if button == fife.MouseEvent.RIGHT:
@@ -595,12 +596,6 @@ class ObjectToolbar(ToolbarPage):
         instance = layer.createInstance(map_object, coords)
         fife.InstanceVisual.create(instance)
 
-    def get_map_clicked_kwargs(self):
-        """Returns keyword args for the map clicked callback"""
-        kwargs = {}
-        kwargs["layer"] = self.selected_layer
-        return kwargs
-
     def clean_mouse_instance(self):
         """Removes the instance that was created by mouse movement"""
         if self.last_instance is not None:
@@ -610,13 +605,13 @@ class ObjectToolbar(ToolbarPage):
         self.last_instance = None
         self.last_mouse_pos = None
 
-    def cb_map_moved(self, location):
+    def cb_map_moved(self, click_point):
         """Called when a the mouse was moved over the map
 
         Args:
 
-            location: A fife.Location with the the position the mouse is on the
-            map
+            click_point: A fife.ScreenPoint with the the position the mouse is
+            on the screen
         """
         self.clean_mouse_instance()
         if self.selected_layer is None or not self.is_active:
@@ -625,6 +620,9 @@ class ObjectToolbar(ToolbarPage):
         if namespace is None:
             return
         layer = self.editor.current_map.get_layer(self.selected_layer)
+        location = self.editor.screen_coords_to_map_coords(
+            click_point, self.selected_layer
+        )
         coords = location.getLayerCoordinates()
         self.last_mouse_pos = location
         fife_model = self.editor.engine.getModel()

@@ -72,21 +72,10 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
         self.callbacks[cb_type].append({"func": cb_func, "kwargs": cb_kwargs})
 
     def mousePressed(self, event):  # pylint: disable=W0221
-        application = self.gamecontroller.application
         for callback_data in self.callbacks["mouse_pressed"]:
             func = callback_data["func"]
-            kwargs = callback_data["kwargs"]
-            if kwargs is None:
-                raise RuntimeError("The callback needs keywords args,"
-                                   "but they are not set")
-            kwargs = kwargs()
-            if "layer" not in kwargs.keys() or kwargs["layer"] is None:
-                continue
-            layer = kwargs["layer"]
-            scr_point = application.screen_coords_to_map_coords(
-                fife.ScreenPoint(event.getX(), event.getY()), layer
-            )
-            func(scr_point, event.getButton())
+            click_point = fife.ScreenPoint(event.getX(), event.getY())
+            func(click_point, event.getButton())
 
         self.old_mouse_pos = fife.DoublePoint(event.getX(), event.getY())
 
@@ -99,18 +88,8 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
         application = self.gamecontroller.application
         for callback_data in self.callbacks["mouse_dragged"]:
             func = callback_data["func"]
-            kwargs = callback_data["kwargs"]
-            if kwargs is None:
-                raise RuntimeError("The callback needs keywords args,"
-                                   "but they are not set")
-            kwargs = kwargs()
-            if "layer" not in kwargs.keys() or kwargs["layer"] is None:
-                continue
-            layer = kwargs["layer"]
-            scr_point = application.screen_coords_to_map_coords(
-                fife.ScreenPoint(event.getX(), event.getY()), layer
-            )
-            func(scr_point, event.getButton())
+            click_point = fife.ScreenPoint(event.getX(), event.getY())
+            func(click_point, event.getButton())
         if event.getButton() == fife.MouseEvent.MIDDLE:
             current_map = application.current_map
             if self.old_mouse_pos is None or current_map is None:
@@ -130,21 +109,10 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
         Args:
             event: The mouse event
         """
-        application = self.gamecontroller.application
         for callback_data in self.callbacks["mouse_moved"]:
             func = callback_data["func"]
-            kwargs = callback_data["kwargs"]
-            if kwargs is None:
-                raise RuntimeError("The callback needs keywords args,"
-                                   "but they are not set")
-            kwargs = kwargs()
-            if "layer" not in kwargs.keys() or kwargs["layer"] is None:
-                continue
-            layer = kwargs["layer"]
-            scr_point = application.screen_coords_to_map_coords(
-                fife.ScreenPoint(event.getX(), event.getY()), layer
-            )
-            func(scr_point)
+            click_point = fife.ScreenPoint(event.getX(), event.getY())
+            func(click_point)
         GameSceneListener.mouseMoved(self, event)
 
     def keyPressed(self, event):  # pylint: disable=C0103,W0221
