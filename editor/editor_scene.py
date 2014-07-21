@@ -35,6 +35,7 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
         self.callbacks = {}
         self.callbacks["mouse_pressed"] = []
         self.callbacks["mouse_dragged"] = []
+        self.callbacks["mouse_moved"] = []
         self.middle_container = None
         self.old_mouse_pos = None
 
@@ -119,6 +120,29 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
             offset.rotate(current_map.camera.getRotation())
             self.old_mouse_pos = cur_mouse_pos
             current_map.move_camera_by((offset.getX(), offset.getY()))
+
+    def mouseMoved(self, event):  # pylint: disable=C0103,W0221
+        """Called when the mouse was moved.
+
+        Args:
+            event: The mouse event
+        """
+        application = self.gamecontroller.application
+        for callback_data in self.callbacks["mouse_moved"]:
+            func = callback_data["func"]
+            kwargs = callback_data["kwargs"]
+            if kwargs is None:
+                raise RuntimeError("The callback needs keywords args,"
+                                   "but they are not set")
+            kwargs = kwargs()
+            if "layer" not in kwargs.keys() or kwargs["layer"] is None:
+                continue
+            layer = kwargs["layer"]
+            scr_point = application.screen_coords_to_map_coords(
+                fife.ScreenPoint(event.getX(), event.getY()), layer
+            )
+            func(scr_point)
+        GameSceneListener.mouseMoved(self, event)
 
     def keyPressed(self, event):  # pylint: disable=C0103,W0221
         """Called when a key was pressed
