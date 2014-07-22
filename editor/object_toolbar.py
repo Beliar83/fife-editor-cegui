@@ -268,6 +268,7 @@ class ObjectToolbar(ToolbarPage):
         label.setProperty("HorzFormatting", "LeftAligned")
         self.layers_combo = self.gui.createChild("TaharezLook/Combobox",
                                                  "LayerCombo")
+        self.layers_combo.setReadOnly(True)
         y_pos.d_scale = y_pos.d_scale + 0.02
         self.layers_combo.setPosition(pos)
         self.layers = []
@@ -557,6 +558,7 @@ class ObjectToolbar(ToolbarPage):
         self.layers_combo.resetList()
         self.layers = []
         layers = game_map.fife_map.getLayers()
+        self.layers_combo.setText("")
         for layer in layers:
             item = PyCEGUI.ListboxTextItem(layer.getId())
             item.setSelectionBrushImage("TaharezLook/MultiListSelectionBrush")
