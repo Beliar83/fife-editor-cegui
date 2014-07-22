@@ -72,6 +72,7 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
         self.callbacks[cb_type].append({"func": cb_func, "kwargs": cb_kwargs})
 
     def mousePressed(self, event):  # pylint: disable=W0221
+        self.middle_container.activate()
         for callback_data in self.callbacks["mouse_pressed"]:
             func = callback_data["func"]
             click_point = fife.ScreenPoint(event.getX(), event.getY())
@@ -85,6 +86,7 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
         Args:
             event: The mouse event
         """
+        self.middle_container.activate()
         application = self.gamecontroller.application
         for callback_data in self.callbacks["mouse_dragged"]:
             func = callback_data["func"]
