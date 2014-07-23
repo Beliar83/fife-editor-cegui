@@ -589,8 +589,10 @@ class ObjectToolbar(ToolbarPage):
         location = self.editor.screen_coords_to_map_coords(
             click_point, self.selected_layer
         )
-
+        world = self.editor.world
         for instance in layer.getInstancesAt(location):
+            if world.is_identifier_used(instance.getId()):
+                continue
             layer.deleteInstance(instance)
         if button == fife.MouseEvent.RIGHT:
             return
