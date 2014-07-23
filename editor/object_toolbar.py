@@ -297,6 +297,13 @@ class ObjectToolbar(ToolbarPage):
         self.editor.add_map_switch_callback(self.cb_map_changed)
         self.last_mouse_pos = None
         self.last_instance = None
+        mode = self.editor.current_mode
+        mode.listener.add_callback("mouse_pressed",
+                                   self.cb_map_clicked)
+        mode.listener.add_callback("mouse_dragged",
+                                   self.cb_map_clicked)
+        mode.listener.add_callback("mouse_moved",
+                                   self.cb_map_moved)
 
     @property
     def selected_layer(self):
@@ -528,13 +535,6 @@ class ObjectToolbar(ToolbarPage):
     def activate(self):
         """Called when the page gets activated"""
         self.is_active = True
-        mode = self.editor.current_mode
-        mode.listener.add_callback("mouse_pressed",
-                                   self.cb_map_clicked)
-        mode.listener.add_callback("mouse_dragged",
-                                   self.cb_map_clicked)
-        mode.listener.add_callback("mouse_moved",
-                                   self.cb_map_moved)
 
     def deactivate(self):
         """Called when the page gets deactivated"""
