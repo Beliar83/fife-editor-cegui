@@ -540,8 +540,10 @@ class ObjectToolbar(ToolbarPage):
         """Called when the page gets deactivated"""
         namespace, name = self.selected_object
         if namespace is not None:
-            self.images[namespace][name].setAlpha(self.DEFAULT_ALPHA)
+            identifier = ".".join((namespace, name))
+            self.images[identifier].setAlpha(self.DEFAULT_ALPHA)
         self.selected_object = [None, None]
+        self.clean_mouse_instance()
         self.is_active = False
 
     def cb_map_changed(self, old_map_name, new_map_name):
@@ -615,6 +617,8 @@ class ObjectToolbar(ToolbarPage):
             click_point: A fife.ScreenPoint with the the position the mouse is
             on the screen
         """
+        if not self.is_active:
+            return
         self.clean_mouse_instance()
         if self.selected_layer is None or not self.is_active:
             return
