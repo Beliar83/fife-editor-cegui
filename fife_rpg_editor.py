@@ -38,7 +38,6 @@ from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
 
 from editor.filebrowser import FileBrowser
 from editor.object_toolbar import ObjectToolbar
-from editor.basic_toolbar import BasicToolbar
 from editor.editor_scene import EditorController
 
 
@@ -140,14 +139,6 @@ class EditorApplication(RPGApplicationCEGUI):
 
     def create_toolbars(self):
         """Creates the editors toolbars"""
-        new_toolbar = BasicToolbar(self)
-        if new_toolbar.name in self.toolbars:
-            raise RuntimeError("Toolbar with name %s already exists" %
-                               (new_toolbar.name))
-        self.toolbar.setTabHeight(PyCEGUI.UDim(0, -1))
-        self.toolbars[new_toolbar.name] = new_toolbar
-        gui = new_toolbar.gui
-        self.toolbar.addTab(gui)
         new_toolbar = ObjectToolbar(self)
         if new_toolbar.name in self.toolbars:
             raise RuntimeError("Toolbar with name %s already exists" %
@@ -155,6 +146,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.toolbar.setTabHeight(PyCEGUI.UDim(0, -1))
         self.toolbars[new_toolbar.name] = new_toolbar
         gui = new_toolbar.gui
+        # gui.show()
         self.toolbar.addTab(gui)
         self.toolbar.setSelectedTabAtIndex(0)
 
@@ -306,7 +298,6 @@ class EditorApplication(RPGApplicationCEGUI):
         new_tab = self.toolbar.getTabContentsAtIndex(index)
         new_toolbar = self.toolbars[new_tab.getText()]
         new_toolbar.activate()
-        self.old_toolbar_index = index
 
 if __name__ == '__main__':
     SETTING = Setting(app_name="frpg-editor", settings_file="./settings.xml")
