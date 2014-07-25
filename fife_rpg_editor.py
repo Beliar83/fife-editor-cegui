@@ -146,7 +146,6 @@ class EditorApplication(RPGApplicationCEGUI):
         self.toolbar.setTabHeight(PyCEGUI.UDim(0, -1))
         self.toolbars[new_toolbar.name] = new_toolbar
         gui = new_toolbar.gui
-        # gui.show()
         self.toolbar.addTab(gui)
         self.toolbar.setSelectedTabAtIndex(0)
 
@@ -298,6 +297,7 @@ class EditorApplication(RPGApplicationCEGUI):
         new_tab = self.toolbar.getTabContentsAtIndex(index)
         new_toolbar = self.toolbars[new_tab.getText()]
         new_toolbar.activate()
+        self.old_toolbar_index = index
 
 if __name__ == '__main__':
     SETTING = Setting(app_name="frpg-editor", settings_file="./settings.xml")
