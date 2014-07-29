@@ -35,7 +35,6 @@ from fife_rpg.game_scene import GameSceneView
 from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
 # pylint: enable=unused-import
 
-
 from editor.filebrowser import FileBrowser
 from editor.object_toolbar import ObjectToolbar
 from editor.editor_scene import EditorController
@@ -74,10 +73,26 @@ class EditorApplication(RPGApplicationCEGUI):
         self.editor_window = window_manager.loadLayoutFromFile(
             "editor_window.layout")
         self.main_container = self.editor_window.getChild("MainContainer")
-        self.toolbar = self.main_container.getChild("MiddleContainer/Toolbar")
+        middle_container = self.main_container.getChild("MiddleContainer")
+        self.toolbar = middle_container.getChild("Toolbar")
         self.toolbar.subscribeEvent(PyCEGUI.TabControl.EventSelectionChanged,
                                     self.cb_tb_page_changed)
         self.old_toolbar_index = 0
+        right_area = middle_container.getChild("RightArea")
+        right_area_container = right_area.createChild(
+            "VerticalLayoutContainer",
+            "right_area_container")
+        layer_label = right_area_container.createChild(
+            "TaharezLook/StaticText",
+            "layer_label")
+        layer_label.setHeight(PyCEGUI.UDim(0.05, 0.0))
+        layer_label.setText("Layers")
+        self.listbox = right_area_container.createChild("TaharezLook/Listbox",
+                                                        "Listbox")
+        self.listbox.setHeight(PyCEGUI.UDim(0.1, 0.0))
+        self.listbox.setMultiselectEnabled(True)
+        self.listbox.subscribeEvent(PyCEGUI.Listbox.EventSelectionChanged,
+                                    self.cb_layer_selection_changed)
         cegui_system.getDefaultGUIContext().setRootWindow(
             self.editor_window)
         self.toolbars = {}
@@ -283,6 +298,15 @@ class EditorApplication(RPGApplicationCEGUI):
         """Callback when a map from the menu was clicked"""
         try:
             self.switch_map(args.window.getUserData())
+            self.listbox.resetList()
+            layers = self.current_map.fife_map.getLayers()
+            for layer in layers:
+                item = PyCEGUI.ListboxTextItem(layer.getId())
+                item.setSelectionBrushImage("TaharezLook/"
+                                            "MultiListSelectionBrush")
+                self.listbox.addItem(item)
+                item.setSelected(True)
+
         except Exception as error:
             print error
             raise
@@ -298,6 +322,14 @@ class EditorApplication(RPGApplicationCEGUI):
         new_toolbar = self.toolbars[new_tab.getText()]
         new_toolbar.activate()
         self.old_toolbar_index = index
+
+    def cb_layer_selection_changed(self, args):
+        """Called when the layer selection in the listbox changed"""
+        layers = self.current_map.fife_map.getLayers()
+        for layer in layers:
+            listitem = self.listbox.findItemWithText(layer.getId(), None)
+            is_selected = listitem.isSelected()
+            layer.setInstancesVisible(is_selected)
 
 if __name__ == '__main__':
     SETTING = Setting(app_name="frpg-editor", settings_file="./settings.xml")

@@ -37,7 +37,7 @@
                     <Property name="Area" value="{{0.2,0},{0.000520867,0},{0.8,0},{0.94,0}}" />
                     <Property name="MousePassThroughEnabled" value="True" />
                 </Window>
-                <Window type="TaharezLook/FrameWindow" name="FrameWindow" >
+                <Window type="TaharezLook/FrameWindow" name="RightArea" >
                     <Property name="Area" value="{{0.8,0},{0,0},{1,0},{0.94,0}}" />
                     <Property name="FrameEnabled" value="False" />
                     <Property name="RollUpEnabled" value="False" />
