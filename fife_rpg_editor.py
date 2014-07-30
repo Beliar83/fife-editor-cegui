@@ -330,9 +330,6 @@ class EditorApplication(RPGApplicationCEGUI):
             listitem = self.listbox.findItemWithText(layer.getId(), None)
             is_selected = listitem.isSelected()
             layer.setInstancesVisible(is_selected)
-        # HACK: Move the camera to update the instances
-        self.current_map.move_camera_by((0, 1))
-        self.current_map.move_camera_by((0, -1))
 
 if __name__ == '__main__':
     SETTING = Setting(app_name="frpg-editor", settings_file="./settings.xml")
