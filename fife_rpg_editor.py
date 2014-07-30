@@ -82,14 +82,14 @@ class EditorApplication(RPGApplicationCEGUI):
         right_area_container = right_area.createChild(
             "VerticalLayoutContainer",
             "right_area_container")
-        layer_label = right_area_container.createChild(
-            "TaharezLook/StaticText",
-            "layer_label")
-        layer_label.setHeight(PyCEGUI.UDim(0.05, 0.0))
-        layer_label.setText("Layers")
-        self.listbox = right_area_container.createChild("TaharezLook/Listbox",
-                                                        "Listbox")
-        self.listbox.setHeight(PyCEGUI.UDim(0.1, 0.0))
+        layer_box = right_area_container.createChild("TaharezLook/GroupBox",
+                                                     "layer_box")
+        layer_box.setText("Layers")
+        layer_box.setHeight(PyCEGUI.UDim(0.175, 0.0))
+        layer_box.setWidth(PyCEGUI.UDim(1.0, 0.0))
+        self.listbox = layer_box.createChild("TaharezLook/Listbox", "Listbox")
+        self.listbox.setHeight(PyCEGUI.UDim(0.99, 0.0))
+        self.listbox.setWidth(PyCEGUI.UDim(0.99, 0.0))
         self.listbox.setMultiselectEnabled(True)
         self.listbox.subscribeEvent(PyCEGUI.Listbox.EventSelectionChanged,
                                     self.cb_layer_selection_changed)
