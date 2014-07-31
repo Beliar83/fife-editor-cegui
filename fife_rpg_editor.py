@@ -37,6 +37,7 @@ from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
 
 from editor.filebrowser import FileBrowser
 from editor.object_toolbar import ObjectToolbar
+from editor.basic_toolbar import BasicToolbar
 from editor.editor_scene import EditorController
 from editor.property_editor import PropertyEditor
 
@@ -163,6 +164,14 @@ class EditorApplication(RPGApplicationCEGUI):
 
     def create_toolbars(self):
         """Creates the editors toolbars"""
+        new_toolbar = BasicToolbar(self)
+        if new_toolbar.name in self.toolbars:
+            raise RuntimeError("Toolbar with name %s already exists" %
+                               (new_toolbar.name))
+        self.toolbar.setTabHeight(PyCEGUI.UDim(0, -1))
+        self.toolbars[new_toolbar.name] = new_toolbar
+        gui = new_toolbar.gui
+        self.toolbar.addTab(gui)
         new_toolbar = ObjectToolbar(self)
         if new_toolbar.name in self.toolbars:
             raise RuntimeError("Toolbar with name %s already exists" %
