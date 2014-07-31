@@ -601,6 +601,7 @@ class ObjectToolbar(ToolbarPage):
         coords = location.getLayerCoordinates()
         instance = layer.createInstance(map_object, coords)
         fife.InstanceVisual.create(instance)
+        self.editor.set_selected_object(instance)
 
     def clean_mouse_instance(self):
         """Removes the instance that was created by mouse movement"""

@@ -38,6 +38,7 @@ from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
 from editor.filebrowser import FileBrowser
 from editor.object_toolbar import ObjectToolbar
 from editor.editor_scene import EditorController
+from editor.property_editor import PropertyEditor
 
 
 class EditorApplication(RPGApplicationCEGUI):
@@ -87,17 +88,25 @@ class EditorApplication(RPGApplicationCEGUI):
         layer_box.setText("Layers")
         layer_box.setHeight(PyCEGUI.UDim(0.175, 0.0))
         layer_box.setWidth(PyCEGUI.UDim(1.0, 0.0))
+
         self.listbox = layer_box.createChild("TaharezLook/Listbox", "Listbox")
         self.listbox.setHeight(PyCEGUI.UDim(0.99, 0.0))
         self.listbox.setWidth(PyCEGUI.UDim(0.99, 0.0))
         self.listbox.setMultiselectEnabled(True)
         self.listbox.subscribeEvent(PyCEGUI.Listbox.EventSelectionChanged,
                                     self.cb_layer_selection_changed)
+        property_editor_size = PyCEGUI.USize(PyCEGUI.UDim(1.0, 0),
+                                             PyCEGUI.UDim(0.825, 0))
+        self.property_editor = PropertyEditor(right_area_container)
+        self.property_editor.set_size(property_editor_size)
+        self.property_editor.add_value_changed_callback(self.cb_value_changed)
+
         cegui_system.getDefaultGUIContext().setRootWindow(
             self.editor_window)
         self.toolbars = {}
         self.filebrowser = FileBrowser(self.engine)
         self.main_container.layout()
+        self.selected_object = None
 
     def __loadData(self):  # pylint: disable=no-self-use, invalid-name
         """Load gui datafiles"""
@@ -330,6 +339,93 @@ class EditorApplication(RPGApplicationCEGUI):
             listitem = self.listbox.findItemWithText(layer.getId(), None)
             is_selected = listitem.isSelected()
             layer.setInstancesVisible(is_selected)
+
+    def update_property_editor(self):
+        """Update the property editor"""
+        property_editor = self.property_editor
+        property_editor.clear_properties()
+        identifier = self.selected_object.getId()
+        world = self.world
+        if world.is_identifier_used(identifier):
+            print ""
+        else:
+            property_editor.add_property(
+                "Instance", "Identifier",
+                ("text", identifier))
+            property_editor.add_property(
+                "Instance", "CostId",
+                ("text", self.selected_object.getCostId()))
+            property_editor.add_property(
+                "Instance", "Cost",
+                ("text", self.selected_object.getCost()))
+            property_editor.add_property(
+                "Instance", "Blocking",
+                ("check", self.selected_object.isBlocking()))
+            property_editor.add_property(
+                "Instance", "Rotation",
+                ("text", self.selected_object.getRotation()))
+            visual = self.selected_object.get2dGfxVisual()
+            property_editor.add_property(
+                "Instance", "StackPosition",
+                ("text",  visual.getStackPosition()))
+
+    def set_selected_object(self, obj):
+        """Sets the selected object of the editor
+
+        Args:
+
+            obj: The new object
+        """
+        self.selected_object = obj
+        self.update_property_editor()
+
+    def cb_value_changed(self, section, property_name, value):
+        """Called when the value of a property changed
+
+        Args:
+
+            section: The section of the property
+
+            property_name: The name of the property
+
+            value: The new value of the property
+        """
+        identifier = self.selected_object.getId()
+        world = self.world
+        if world.is_identifier_used(identifier):
+            pass
+        else:
+            if section != "Instance":
+                return
+            if property_name == "Identifier":
+                self.selected_object.setId(value)
+            elif property_name == "CostId":
+                cur_cost = self.selected_object.getCost()
+                try:
+                    value = value.encode()
+                    self.selected_object.setCost(value, cur_cost)
+                except UnicodeEncodeError:
+                    print "The CostId has to be an ascii value"
+            elif property_name == "Cost":
+                cur_cost_id = self.selected_object.getCostId()
+                try:
+                    self.selected_object.setCost(cur_cost_id, float(value))
+                except ValueError:
+                    pass
+            elif property_name == "Blocking":
+                self.selected_object.setBlocking(value)
+            elif property_name == "Rotation":
+                try:
+                    self.selected_object.setRotation(int(value))
+                except ValueError:
+                    pass
+            elif property_name == "StackPosition":
+                try:
+                    visual = self.selected_object.get2dGfxVisual()
+                    visual.setStackPosition(int(value))
+                except ValueError:
+                    pass
+        self.update_property_editor()
 
 if __name__ == '__main__':
     SETTING = Setting(app_name="frpg-editor", settings_file="./settings.xml")
