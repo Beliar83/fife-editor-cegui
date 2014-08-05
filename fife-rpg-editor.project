@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project CEGUIDefaultResolution="1024x768" CEGUIVersion="1.0" baseDirectory="." fontsPath="gui/fonts" imagesetsPath="gui/imagesets" layoutsPath="gui/layouts" looknfeelsPath="gui/looksnfeels" schemesPath="gui/schemes" version="CEED Project 1" xmlSchemasPath="gui/xml_schemas">
     <Items>
-        <Item path="gui/fonts/DejaVuSans-10.font" type="file" />
-        <Item path="gui/fonts/DejaVuSans-12.font" type="file" />
-        <Item path="gui/fonts/DejaVuSans-14.font" type="file" />
-        <Item path="gui/layouts/editor_window.layout" type="file" />
-        <Item path="gui/layouts/filebrowser.layout" type="file" />
         <Item path="gui/layouts/toolbar_page.layout" type="file" />
+        <Item path="gui/layouts/filebrowser.layout" type="file" />
+        <Item path="gui/layouts/editor_window.layout" type="file" />
+        <Item path="gui/fonts/DejaVuSans-14.font" type="file" />
+        <Item path="gui/fonts/DejaVuSans-12.font" type="file" />
+        <Item path="gui/fonts/DejaVuSans-10.font" type="file" />
+        <Item path="gui/layouts/list_editor.layout" type="file" />
     </Items>
 </Project>

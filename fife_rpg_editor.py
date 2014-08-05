@@ -3,6 +3,7 @@
 #   it under the terms of the GNU General Public License as published by
 #   the Free Software Foundation, either version 3 of the License, or
 #   (at your option) any later version.
+import yaml
 
 #   This program is distributed in the hope that it will be useful,
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -31,6 +32,7 @@ from fife_rpg.actions import ActionManager
 from fife_rpg.systems import SystemManager
 from fife_rpg.behaviours import BehaviourManager
 from fife_rpg.game_scene import GameSceneView
+from fife_rpg.helpers import DoublePointYaml, DoublePoint3DYaml
 # pylint: disable=unused-import
 from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
 # pylint: enable=unused-import
@@ -355,8 +357,29 @@ class EditorApplication(RPGApplicationCEGUI):
         property_editor.clear_properties()
         identifier = self.selected_object.getId()
         world = self.world
+        components = ComponentManager.get_components()
         if world.is_identifier_used(identifier):
-            print ""
+            entity = world.get_entity(identifier)
+            for comp_name, component in components.iteritems():
+                com_data = getattr(entity, comp_name)
+                if com_data:
+                    for field in component.saveable_fields:
+                        value = getattr(com_data, field)
+                        if isinstance(value, DoublePointYaml):
+                            pos = (value.x, value.y)
+                            property_editor.add_property(
+                                comp_name, field,
+                                ("point", pos))
+                        elif isinstance(value, DoublePoint3DYaml):
+                            pos = (value.x, value.y, value.z)
+                            property_editor.add_property(
+                                comp_name, field,
+                                ("point3d", pos))
+                        else:
+                            str_val = yaml.dump(value).split('\n')[0]
+                            property_editor.add_property(
+                                comp_name, field,
+                                ("text", str_val))
         else:
             property_editor.add_property(
                 "Instance", "Identifier",
@@ -402,7 +425,15 @@ class EditorApplication(RPGApplicationCEGUI):
         identifier = self.selected_object.getId()
         world = self.world
         if world.is_identifier_used(identifier):
-            pass
+            entity = world.get_entity(identifier)
+            com_data = getattr(entity, section)
+            try:
+                if isinstance(value, basestring):
+                    value = yaml.load(value)
+                setattr(com_data, property_name, value)
+                self.update_agents(self.current_map)
+            except ValueError:
+                pass
         else:
             if section != "Instance":
                 return
