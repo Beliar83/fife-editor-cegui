@@ -432,7 +432,7 @@ class EditorApplication(RPGApplicationCEGUI):
                     value = yaml.load(value)
                 setattr(com_data, property_name, value)
                 self.update_agents(self.current_map)
-            except ValueError:
+            except (ValueError, yaml.parser.ParserError):
                 pass
         else:
             if section != "Instance":
