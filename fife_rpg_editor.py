@@ -3,7 +3,6 @@
 #   it under the terms of the GNU General Public License as published by
 #   the Free Software Foundation, either version 3 of the License, or
 #   (at your option) any later version.
-import yaml
 
 #   This program is distributed in the hope that it will be useful,
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -22,7 +21,7 @@ import yaml
 """
 
 import os
-
+import yaml
 import PyCEGUI
 from fife.extensions.fife_settings import Setting
 from fife_rpg import RPGApplicationCEGUI
@@ -42,6 +41,7 @@ from editor.object_toolbar import ObjectToolbar
 from editor.basic_toolbar import BasicToolbar
 from editor.editor_scene import EditorController
 from editor.property_editor import PropertyEditor
+from editor.messagebox import MessageBox
 
 
 class EditorApplication(RPGApplicationCEGUI):
@@ -140,6 +140,7 @@ class EditorApplication(RPGApplicationCEGUI):
                                                 "FilePopup")
         file_new = file_popup.createChild("TaharezLook/MenuItem", "FileNew")
         file_new.setText(_("New Project"))
+        file_new.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_new)
         file_open = file_popup.createChild("TaharezLook/MenuItem", "FileOpen")
         file_open.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_open)
         file_open.setText(_("Open Project"))
@@ -283,6 +284,15 @@ class EditorApplication(RPGApplicationCEGUI):
         """Callback when cllose was clicked in the file menu"""
         # TODO: Ask to save project/files
         self.clear()
+
+    def cb_new(self, args):
+        """Callback when new was clicked in the file menu"""
+        message = "Creating a new project is not yet implemented"
+        message_box = MessageBox("Not Implemented", message,
+                                 MessageBox.BUTTONS.OK)
+        message_box.show(self.editor_window)
+        while message_box.return_value is None:
+            self.engine.pump()
 
     def cb_open(self, args):
         """Callback when open was clicked in the file menu"""
