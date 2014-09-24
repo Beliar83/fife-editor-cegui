@@ -41,7 +41,6 @@ from editor.basic_toolbar import BasicToolbar
 from editor.editor_scene import EditorController
 from editor.property_editor import PropertyEditor
 from editor.messagebox import MessageBox
-from editor.project_settings import ProjectSettings
 
 
 class EditorApplication(RPGApplicationCEGUI):
@@ -70,7 +69,6 @@ class EditorApplication(RPGApplicationCEGUI):
         self.project_source = None
         self.project_dir = None
         self.file_close = None
-        self.file_p_settings = None
         self.view_maps_menu = None
 
         self.__loadData()
@@ -150,12 +148,6 @@ class EditorApplication(RPGApplicationCEGUI):
         file_close.setText(_("Close Project"))
         file_close.setEnabled(False)
         self.file_close = file_close
-        file_p_settings = file_popup.createChild(
-            "TaharezLook/MenuItem", "FilePSettings")
-        file_p_settings.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
-                                       self.cb_project_settings)
-        file_p_settings.setText(_("Project settings"))
-        self.file_p_settings = file_p_settings
         file_quit = file_popup.createChild("TaharezLook/MenuItem", "FileQuit")
         file_quit.setText(_("Quit"))
         file_quit.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_quit)
@@ -266,12 +258,6 @@ class EditorApplication(RPGApplicationCEGUI):
             else:
                 item.setText("   " + game_map)
 
-    def load_project_settings(self):
-        """Loads the settings file"""
-        project_settings = self.project.getAllSettings("fife-rpg")
-        del project_settings["ProjectName"]
-        self.settings.setAllSettings("fife-rpg", project_settings)
-
     def _pump(self):
         """
         Application pump.
@@ -338,12 +324,6 @@ class EditorApplication(RPGApplicationCEGUI):
                 # TODO: Offer to convert to fife-rpg project
                 print _("%s is not a valid fife-rpg project")
         print _("project loaded")
-
-    def cb_project_settings(self, args):
-        """Callback when project settings was clicked in the file menu"""
-        values = ProjectSettings().show_modal(self.editor_window,
-                                              self.engine.pump)
-        print values
 
     def cb_map_switch(self, args):
         """Callback when a map from the menu was clicked"""
