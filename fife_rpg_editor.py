@@ -36,12 +36,12 @@ from fife_rpg.helpers import DoublePointYaml, DoublePoint3DYaml
 from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
 # pylint: enable=unused-import
 
-from editor.filebrowser import FileBrowser
 from editor.object_toolbar import ObjectToolbar
 from editor.basic_toolbar import BasicToolbar
 from editor.editor_scene import EditorController
 from editor.property_editor import PropertyEditor
 from editor.messagebox import MessageBox
+from editor.project_settings import ProjectSettings
 
 
 class EditorApplication(RPGApplicationCEGUI):
@@ -70,6 +70,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.project_source = None
         self.project_dir = None
         self.file_close = None
+        self.file_p_settings = None
         self.view_maps_menu = None
 
         self.__loadData()
@@ -107,7 +108,6 @@ class EditorApplication(RPGApplicationCEGUI):
         cegui_system.getDefaultGUIContext().setRootWindow(
             self.editor_window)
         self.toolbars = {}
-        self.filebrowser = FileBrowser(self.engine)
         self.main_container.layout()
         self.selected_object = None
 
@@ -150,6 +150,12 @@ class EditorApplication(RPGApplicationCEGUI):
         file_close.setText(_("Close Project"))
         file_close.setEnabled(False)
         self.file_close = file_close
+        file_p_settings = file_popup.createChild(
+            "TaharezLook/MenuItem", "FilePSettings")
+        file_p_settings.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                                       self.cb_project_settings)
+        file_p_settings.setText(_("Project settings"))
+        self.file_p_settings = file_p_settings
         file_quit = file_popup.createChild("TaharezLook/MenuItem", "FileQuit")
         file_quit.setText(_("Quit"))
         file_quit.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_quit)
@@ -296,12 +302,21 @@ class EditorApplication(RPGApplicationCEGUI):
 
     def cb_open(self, args):
         """Callback when open was clicked in the file menu"""
-        self.filebrowser.extension_filter = ["xml", ]
-        self.filebrowser.show(self.editor_window)
-        while self.filebrowser.return_value is None:
-            self.engine.pump()
-        if self.filebrowser.return_value:
-            self.current_project_file = self.filebrowser.selected_file
+        # Based on code from unknown-horizons
+        try:
+            import Tkinter
+            import tkFileDialog
+            window = Tkinter.Tk()
+            window.wm_withdraw()
+            selected_file = tkFileDialog.askopenfilename(
+                filetypes=[("fife-rpg project", ".xml",)],
+                title="Open project")
+        except ImportError:
+            # tkinter may be missing
+            selected_file = ""
+
+        if selected_file:
+            self.current_project_file = selected_file
             if self.load_project(self.current_project_file):
                 self.reset_maps_menu()
                 try:
@@ -323,6 +338,12 @@ class EditorApplication(RPGApplicationCEGUI):
                 # TODO: Offer to convert to fife-rpg project
                 print _("%s is not a valid fife-rpg project")
         print _("project loaded")
+
+    def cb_project_settings(self, args):
+        """Callback when project settings was clicked in the file menu"""
+        values = ProjectSettings().show_modal(self.editor_window,
+                                              self.engine.pump)
+        print values
 
     def cb_map_switch(self, args):
         """Callback when a map from the menu was clicked"""
