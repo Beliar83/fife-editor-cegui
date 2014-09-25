@@ -40,7 +40,6 @@ from editor.object_toolbar import ObjectToolbar
 from editor.basic_toolbar import BasicToolbar
 from editor.editor_scene import EditorController
 from editor.property_editor import PropertyEditor
-from editor.messagebox import MessageBox
 
 
 class EditorApplication(RPGApplicationCEGUI):
