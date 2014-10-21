@@ -40,6 +40,7 @@ from editor.object_toolbar import ObjectToolbar
 from editor.basic_toolbar import BasicToolbar
 from editor.editor_scene import EditorController
 from editor.property_editor import PropertyEditor
+from editor.project_settings import ProjectSettings
 
 
 class EditorApplication(RPGApplicationCEGUI):
@@ -68,6 +69,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.project_source = None
         self.project_dir = None
         self.file_close = None
+        self.file_p_settings = None
         self.view_maps_menu = None
 
         self.__loadData()
@@ -147,6 +149,13 @@ class EditorApplication(RPGApplicationCEGUI):
         file_close.setText(_("Close Project"))
         file_close.setEnabled(False)
         self.file_close = file_close
+        file_p_settings = file_popup.createChild(
+            "TaharezLook/MenuItem", "FilePSettings")
+        file_p_settings.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                                       self.cb_project_settings)
+        file_p_settings.setText(_("Project settings"))
+        file_p_settings.setEnabled(False)
+        self.file_p_settings = file_p_settings
         file_quit = file_popup.createChild("TaharezLook/MenuItem", "FileQuit")
         file_quit.setText(_("Quit"))
         file_quit.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_quit)
@@ -205,6 +214,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.project_dir = None
         self.project = None
         self.file_close.setEnabled(False)
+        self.file_p_settings.setEnabled(False)
         self.reset_maps_menu()
 
     def load_project(self, filepath):
@@ -223,15 +233,17 @@ class EditorApplication(RPGApplicationCEGUI):
         settings.load(filepath)
         if "fife-rpg" in settings.getModuleNameList():
             self.project = settings
-            project_dir = str(os.path.split(filepath)[0])
+            project_dir = str(os.path.normpath(os.path.split(filepath)[0]))
             self.engine.getVFS().addNewSource(project_dir)
             self.project_source = project_dir
+            self.project_dir = project_dir
             self.load_project_settings()
             try:
                 self.load_maps()
             except:  # pylint: disable=bare-except
                 pass
             self.file_close.setEnabled(True)
+            self.file_p_settings.setEnabled(True)
             return True
         return False
 
@@ -257,6 +269,12 @@ class EditorApplication(RPGApplicationCEGUI):
             else:
                 item.setText("   " + game_map)
 
+    def load_project_settings(self):
+        """Loads the settings file"""
+        project_settings = self.project.getAllSettings("fife-rpg")
+        del project_settings["ProjectName"]
+        self.settings.setAllSettings("fife-rpg", project_settings)
+
     def _pump(self):
         """
         Application pump.
@@ -278,12 +296,11 @@ class EditorApplication(RPGApplicationCEGUI):
 
     def cb_new(self, args):
         """Callback when new was clicked in the file menu"""
-        message = "Creating a new project is not yet implemented"
-        message_box = MessageBox("Not Implemented", message,
-                                 MessageBox.BUTTONS.OK)
-        message_box.show(self.editor_window)
-        while message_box.return_value is None:
-            self.engine.pump()
+        import Tkinter
+        import tkMessageBox
+        window = Tkinter.Tk()
+        window.wm_withdraw()
+        tkMessageBox.showinfo("Not Implemented", "Not Implemeted")
 
     def cb_open(self, args):
         """Callback when open was clicked in the file menu"""
@@ -323,6 +340,25 @@ class EditorApplication(RPGApplicationCEGUI):
                 # TODO: Offer to convert to fife-rpg project
                 print _("%s is not a valid fife-rpg project")
         print _("project loaded")
+
+    def cb_project_settings(self, args):
+        """Callback when project settings was clicked in the file menu"""
+        settings = self.project.getAllSettings("fife-rpg")
+        dialog = ProjectSettings(self,
+                                 settings,
+                                 self.project_dir
+                                 )
+        values = dialog.show_modal(self.editor_window, self.engine.pump)
+        if not dialog.return_value:
+            return
+        for key, value in values.iteritems():
+            self.project.set("fife-rpg", key, value)
+
+        ignore_keys = ("Actions", "Behaviours", "Systems", "Components")
+        deleted_keys = [x for x in settings.keys()
+                        if x not in values.keys() and x not in ignore_keys]
+        for key in deleted_keys:
+            self.project.remove("fife-rpg", key)
 
     def cb_map_switch(self, args):
         """Callback when a map from the menu was clicked"""
