@@ -19,7 +19,7 @@ from abc import ABCMeta, abstractmethod
 import PyCEGUI
 
 
-class Dialog(object):
+class Dialog(object):  # pylint: disable=abstract-class-not-used
     """Class that displays an empty dialog"""
 
     __metaclass__ = ABCMeta
@@ -123,7 +123,14 @@ class Dialog(object):
         self.window.setModalState(True)
         while self.return_value is None:
             proc_func()
-            self.__ok_btn.setDisabled(not self.validate())
+            if self.editor.quitRequested:
+                return None
+            is_valid = False
+            try:
+                is_valid = self.validate()
+            except Exception as error:  # pylint: disable=broad-except
+                print error
+            self.__ok_btn.setDisabled(not is_valid)
         if self.return_value:
             return self.get_values()
 
