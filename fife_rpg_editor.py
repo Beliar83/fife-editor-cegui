@@ -143,6 +143,11 @@ class EditorApplication(RPGApplicationCEGUI):
         file_open = file_popup.createChild("TaharezLook/MenuItem", "FileOpen")
         file_open.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_open)
         file_open.setText(_("Open Project"))
+        file_save = file_popup.createChild("TaharezLook/MenuItem", "FileSave")
+        file_save.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_save)
+        file_save.setText(_("Save Project"))
+        file_save.setEnabled(False)
+        self.file_save = file_save
         file_close = file_popup.createChild(
             "TaharezLook/MenuItem", "FileClose")
         file_close.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_close)
@@ -213,6 +218,7 @@ class EditorApplication(RPGApplicationCEGUI):
             self.project_source = None
         self.project_dir = None
         self.project = None
+        self.file_save.setEnabled(False)
         self.file_close.setEnabled(False)
         self.file_p_settings.setEnabled(False)
         self.reset_maps_menu()
@@ -243,6 +249,7 @@ class EditorApplication(RPGApplicationCEGUI):
             except:  # pylint: disable=bare-except
                 pass
             self.file_close.setEnabled(True)
+            self.file_save.setEnabled(True)
             self.file_p_settings.setEnabled(True)
             return True
         return False
@@ -301,6 +308,10 @@ class EditorApplication(RPGApplicationCEGUI):
         window = Tkinter.Tk()
         window.wm_withdraw()
         tkMessageBox.showinfo("Not Implemented", "Not Implemeted")
+
+    def cb_save(self, args):
+        """Callback when save was clicked in the file menu"""
+        self.project.save()
 
     def cb_open(self, args):
         """Callback when open was clicked in the file menu"""
