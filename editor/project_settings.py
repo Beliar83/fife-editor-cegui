@@ -17,7 +17,8 @@ import os
 import PyCEGUI
 
 from .dialog import Dialog
-from .common import cb_cut_copy_paste, is_dir_path_valid
+from .common import (cb_cut_copy_paste, is_dir_path_valid, select_path,
+                     ask_create_path)
 
 
 class ProjectSettings(Dialog):
@@ -555,34 +556,18 @@ class ProjectSettings(Dialog):
         if not is_dir_path_valid(abspath):
             return None
         if not os.path.exists(abspath):
-            import Tkinter
-            import tkMessageBox
-            window = Tkinter.Tk()
-            window.wm_withdraw()
-            answer = tkMessageBox.askyesno(
-                _("Create path"),
-                _("Path does not exist, create it? "
-                  "(Must be manually deleted if changed later)"))
-            if answer:
-                os.makedirs(abspath)
-            else:
+            if not ask_create_path(abspath):
                 return None
         return new_path
 
     def cb_agent_path_browse_clicked(self, args):
         """Callback for click on the browse button of the agent path"""
-        import Tkinter
-        import tkFileDialog
-        window = Tkinter.Tk()
-        window.wm_withdraw()
         initialdir = (self.agt_path_editor.getText().strip() or
                       self.project_dir)
         if not os.path.isabs(initialdir):
             initialdir = os.path.join(self.project_dir, initialdir)
         initialdir = os.path.normpath(initialdir)
-        selected_path = tkFileDialog.askdirectory(
-            title="Select Agent Object Path",
-            initialdir=initialdir)
+        selected_path = select_path("Select Agent Object Path", initialdir)
         if not selected_path:
             return True
         checked_path = self.check_agent_path(selected_path)

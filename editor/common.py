@@ -99,3 +99,27 @@ def is_dir_path_valid(path):
                 except OSError:
                     pass
         os.chdir(old_cwd)
+
+
+def select_path(title, initialdir=None):
+    """Show a message browse dialog"""
+    import Tkinter
+    import tkFileDialog
+    window = Tkinter.Tk()
+    window.wm_withdraw()
+    return tkFileDialog.askdirectory(title=title, initialdir=initialdir)
+
+
+def ask_create_path(path):
+    import Tkinter
+    import tkMessageBox
+    window = Tkinter.Tk()
+    window.wm_withdraw()
+    answer = tkMessageBox.askyesno(
+        _("Create path"),
+        _("Path does not exist, create it? "
+            "(Must be manually deleted if changed later)"))
+    if answer:
+        os.makedirs(path)
+        return True
+    return False
