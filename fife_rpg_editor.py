@@ -351,12 +351,14 @@ class EditorApplication(RPGApplicationCEGUI):
 
     def cb_open(self, args):
         """Callback when open was clicked in the file menu"""
+        import Tkinter
+        import tkMessageBox
+        import tkFileDialog
+        window = Tkinter.Tk()
+        window.wm_withdraw()
+
         # Based on code from unknown-horizons
         try:
-            import Tkinter
-            import tkFileDialog
-            window = Tkinter.Tk()
-            window.wm_withdraw()
             selected_file = tkFileDialog.askopenfilename(
                 filetypes=[("fife-rpg project", ".xml",)],
                 title="Open project")
@@ -374,9 +376,6 @@ class EditorApplication(RPGApplicationCEGUI):
                     print _("%s is not a valid fife or fife-rpg project" %
                             selected_file)
                     return
-                import tkMessageBox
-                window = Tkinter.Tk()
-                window.wm_withdraw()
                 answer = tkMessageBox.askyesno(
                     _("Convert project"),
                     _("%s is not a fife-rpg project. Convert it? " %
@@ -409,7 +408,9 @@ class EditorApplication(RPGApplicationCEGUI):
                         os.remove(conv_file)
                     os.rename(selected_file, conv_file)
                     os.rename(bak_file, selected_file)
-        print _("project loaded")
+                    return
+        tkMessageBox.showinfo(_("Project loaded"),
+                              _("Project successfully loaded"))
 
     def cb_project_settings(self, args):
         """Callback when project settings was clicked in the file menu"""
