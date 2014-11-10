@@ -320,6 +320,35 @@ class EditorApplication(RPGApplicationCEGUI):
         """Callback when save was clicked in the file menu"""
         self.project.save()
 
+    def try_load_project(self, file_name):
+        """Try to load the specified file as a project
+
+        Args:
+
+            file_name: The file to load
+        """
+        loaded = self.load_project(file_name)
+        if loaded:
+            self.current_project_file = file_name
+            self.reset_maps_menu()
+            try:
+                self.load_combined()
+            except:  # pylint: disable=bare-except
+                self.load_combined("combined.yaml")
+            self.register_components()
+            self.register_actions()
+            self.register_systems()
+            self.register_behaviours()
+            self.create_world()
+            try:
+                self.world.read_object_db()
+                self.world.import_agent_objects()
+                self.world.load_and_create_entities()
+            except:  # pylint: disable=bare-except
+                pass
+            return True
+        return False
+
     def cb_open(self, args):
         """Callback when open was clicked in the file menu"""
         # Based on code from unknown-horizons
@@ -336,27 +365,50 @@ class EditorApplication(RPGApplicationCEGUI):
             selected_file = ""
 
         if selected_file:
-            if self.load_project(selected_file):
-                self.current_project_file = selected_file
-                self.reset_maps_menu()
+            loaded = self.try_load_project(selected_file)
+            if not loaded:
+                project = SimpleXMLSerializer(selected_file)
                 try:
-                    self.load_combined()
-                except:  # pylint: disable=bare-except
-                    self.load_combined("combined.yaml")
-                self.register_components()
-                self.register_actions()
-                self.register_systems()
-                self.register_behaviours()
-                self.create_world()
-                try:
-                    self.world.read_object_db()
-                    self.world.import_agent_objects()
-                    self.world.load_and_create_entities()
-                except:  # pylint: disable=bare-except
-                    pass
-            else:
-                # TODO: Offer to convert to fife-rpg project
-                print _("%s is not a valid fife-rpg project")
+                    project.load()
+                except (InvalidFormat, ET.ParseError):
+                    print _("%s is not a valid fife or fife-rpg project" %
+                            selected_file)
+                    return
+                import tkMessageBox
+                window = Tkinter.Tk()
+                window.wm_withdraw()
+                answer = tkMessageBox.askyesno(
+                    _("Convert project"),
+                    _("%s is not a fife-rpg project. Convert it? " %
+                      selected_file))
+                if not answer:
+                    return
+                bak_file = "%s.bak" % selected_file
+                project.save(bak_file)
+                settings = {}
+                settings["ProjectName"] = project.get("FIFE", "WindowTitle",
+                                                      "")
+                dialog = ProjectSettings(self,
+                                         settings,
+                                         os.path.dirname(selected_file)
+                                         )
+                values = dialog.show_modal(self.editor_window,
+                                           self.engine.pump)
+                if not dialog.return_value:
+                    return
+                update_settings(project, settings, values)
+                project.save()
+                if not self.try_load_project(selected_file):
+                    tkMessageBox.showerror("Load Error",
+                                           "There was a problem loading the "
+                                           "converted project. Reverting. "
+                                           "Converted file will be stored as "
+                                           "original_file.converted")
+                    conv_file = "%s.converted" % selected_file
+                    if os.path.exists(conv_file):
+                        os.remove(conv_file)
+                    os.rename(selected_file, conv_file)
+                    os.rename(bak_file, selected_file)
         print _("project loaded")
 
     def cb_project_settings(self, args):
@@ -369,14 +421,7 @@ class EditorApplication(RPGApplicationCEGUI):
         values = dialog.show_modal(self.editor_window, self.engine.pump)
         if not dialog.return_value:
             return
-        for key, value in values.iteritems():
-            self.project.set("fife-rpg", key, value)
-
-        ignore_keys = ("Actions", "Behaviours", "Systems", "Components")
-        deleted_keys = [x for x in settings.keys()
-                        if x not in values.keys() and x not in ignore_keys]
-        for key in deleted_keys:
-            self.project.remove("fife-rpg", key)
+        update_settings(self.project, settings, values)
 
     def cb_map_switch(self, args):
         """Callback when a map from the menu was clicked"""
@@ -530,6 +575,27 @@ class EditorApplication(RPGApplicationCEGUI):
                 except ValueError:
                     pass
         self.update_property_editor()
+
+
+def update_settings(project, settings, values):
+    """Update the fife-rpg settings of a project
+
+    Args:
+        project: The project to update
+
+        settings: The old fife-rpg settings
+
+        values: The new fife-rpg settings
+    """
+    for key, value in values.iteritems():
+        project.set("fife-rpg", key, value)
+
+    ignore_keys = "Actions", "Behaviours", "Systems", "Components"
+    deleted_keys = [x for x in settings.keys() if
+                    x not in values.keys() and x not in ignore_keys]
+    for key in deleted_keys:
+        project.remove("fife-rpg", key)
+
 
 if __name__ == '__main__':
     SETTING = Setting(app_name="frpg-editor", settings_file="./settings.xml")
