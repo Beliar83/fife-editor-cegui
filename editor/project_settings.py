@@ -555,9 +555,6 @@ class ProjectSettings(Dialog):
             abspath = os.path.join(self.project_dir, new_path)
         if not is_dir_path_valid(abspath):
             return None
-        if not os.path.exists(abspath):
-            if not ask_create_path(abspath):
-                return None
         return new_path
 
     def cb_agent_path_browse_clicked(self, args):
@@ -576,6 +573,12 @@ class ProjectSettings(Dialog):
             tkMessageBox.showerror(_("Invalid path"),
                                    _("%s is not a valid path") % selected_path)
             return True
+        abspath = checked_path
+        if not os.path.isabs(abspath):
+            abspath = os.path.join(self.project_dir, abspath)
+        if not os.path.exists(abspath):
+            if not ask_create_path(abspath):
+                return
         self.agt_path_editor.setText(checked_path)
 
     def cb_agent_path_accepted(self, args):
