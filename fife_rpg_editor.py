@@ -69,6 +69,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.project_source = None
         self.project_dir = None
         self.file_close = None
+        self.file_save = None
         self.file_p_settings = None
         self.view_maps_menu = None
 
@@ -297,7 +298,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.quit()
 
     def cb_close(self, args):
-        """Callback when cllose was clicked in the file menu"""
+        """Callback when close was clicked in the file menu"""
         # TODO: Ask to save project/files
         self.clear()
 
@@ -307,7 +308,7 @@ class EditorApplication(RPGApplicationCEGUI):
         import tkMessageBox
         window = Tkinter.Tk()
         window.wm_withdraw()
-        tkMessageBox.showinfo("Not Implemented", "Not Implemeted")
+        tkMessageBox.showinfo("Not Implemented", "Not Implemented")
 
     def cb_save(self, args):
         """Callback when save was clicked in the file menu"""
