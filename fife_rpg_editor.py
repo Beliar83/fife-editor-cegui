@@ -23,9 +23,12 @@
 import os
 import yaml
 import PyCEGUI
+
 from fife.extensions.fife_settings import Setting
 from fife_rpg import RPGApplicationCEGUI
-from fife.extensions.serializers.simplexml import SimpleXMLSerializer
+from fife.extensions.serializers import ET
+from fife.extensions.serializers.simplexml import (SimpleXMLSerializer,
+                                                   InvalidFormat)
 from fife_rpg.components import ComponentManager
 from fife_rpg.actions import ActionManager
 from fife_rpg.systems import SystemManager
@@ -237,7 +240,10 @@ class EditorApplication(RPGApplicationCEGUI):
         except Exception as error:  # pylint: disable=broad-except
             print error
         settings = SimpleXMLSerializer()
-        settings.load(filepath)
+        try:
+            settings.load(filepath)
+        except (InvalidFormat, ET.ParseError):
+            return False
         if "fife-rpg" in settings.getModuleNameList():
             self.project = settings
             project_dir = str(os.path.normpath(os.path.split(filepath)[0]))
@@ -330,8 +336,8 @@ class EditorApplication(RPGApplicationCEGUI):
             selected_file = ""
 
         if selected_file:
-            self.current_project_file = selected_file
-            if self.load_project(self.current_project_file):
+            if self.load_project(selected_file):
+                self.current_project_file = selected_file
                 self.reset_maps_menu()
                 try:
                     self.load_combined()
