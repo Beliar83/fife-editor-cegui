@@ -102,7 +102,14 @@ def is_dir_path_valid(path):
 
 
 def select_path(title, initialdir=None):
-    """Show a message browse dialog"""
+    """Show a message browse dialog
+
+    Args:
+
+        title: What is displayed in the title of the dialog
+
+        initialdir: The directory the dialog starts in
+    """
     import Tkinter
     import tkFileDialog
     window = Tkinter.Tk()
@@ -111,6 +118,13 @@ def select_path(title, initialdir=None):
 
 
 def ask_create_path(path):
+    """Ask to create a nonexistent path
+
+    Args:
+
+        path: The path that should be created - Will not be checked if really
+        nonexistent.
+    """
     import Tkinter
     import tkMessageBox
     window = Tkinter.Tk()
