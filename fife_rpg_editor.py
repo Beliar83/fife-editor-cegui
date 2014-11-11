@@ -409,8 +409,8 @@ class EditorApplication(RPGApplicationCEGUI):
                     os.rename(selected_file, conv_file)
                     os.rename(bak_file, selected_file)
                     return
-        tkMessageBox.showinfo(_("Project loaded"),
-                              _("Project successfully loaded"))
+            tkMessageBox.showinfo(_("Project loaded"),
+                                  _("Project successfully loaded"))
 
     def cb_project_settings(self, args):
         """Callback when project settings was clicked in the file menu"""
