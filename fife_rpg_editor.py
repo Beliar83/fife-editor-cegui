@@ -44,6 +44,20 @@ from editor.basic_toolbar import BasicToolbar
 from editor.editor_scene import EditorController
 from editor.property_editor import PropertyEditor
 from editor.project_settings import ProjectSettings
+from editor.new_project import NewProject
+
+
+BASIC_SETTINGS = """<?xml version='1.0' encoding='UTF-8'?>
+<Settings>
+    <Module name="FIFE">
+        <Setting name="FullScreen" type="bool"> False </Setting>
+        <Setting name="PlaySounds" type="bool"> True </Setting>
+        <Setting name="RenderBackend" type="str"> OpenGL </Setting>
+        <Setting name="ScreenResolution" type="str">1024x768</Setting>
+        <Setting name="Lighting" type="int"> 0 </Setting>
+    </Module>
+</Settings>
+"""
 
 
 class EditorApplication(RPGApplicationCEGUI):
@@ -314,7 +328,35 @@ class EditorApplication(RPGApplicationCEGUI):
         import tkMessageBox
         window = Tkinter.Tk()
         window.wm_withdraw()
-        tkMessageBox.showinfo("Not Implemented", "Not Implemented")
+        dialog = NewProject(self)
+        values = dialog.show_modal(self.editor_window, self.engine.pump)
+        if not dialog.return_value:
+            return
+        new_project_path = values["ProjectPath"]
+        settings_path = os.path.join(new_project_path, "settings-dist.xml")
+        if (os.path.exists(settings_path)
+                or os.path.exists(os.path.join(new_project_path,
+                                               "settings.xml"))):
+            answer = tkMessageBox.askyesno(
+                _("Project file exists"),
+                _("There is already a settings.xml or settings-dist.xml file. "
+                  "If you create a new project the settings-dist.xml will "
+                  "be overwritten. If you want to convert a project open it "
+                  "instead. Continue with creating a new project?"))
+            if not answer:
+                return
+            os.remove(settings_path)
+        settings_file = file(settings_path, "w")
+        settings_file.write(BASIC_SETTINGS)
+        settings_file.close()
+        project = SimpleXMLSerializer(settings_path)
+        project.load()
+        settings = {}
+        update_settings(project, settings, values)
+        project.save()
+        self.try_load_project(settings_path)
+        tkMessageBox.showinfo(_("Project created"),
+                              _("Project successfully created"))
 
     def cb_save(self, args):
         """Callback when save was clicked in the file menu"""
