@@ -471,13 +471,14 @@ class EditorApplication(RPGApplicationCEGUI):
         try:
             self.switch_map(args.window.getUserData())
             self.listbox.resetList()
-            layers = self.current_map.fife_map.getLayers()
-            for layer in layers:
-                item = PyCEGUI.ListboxTextItem(layer.getId())
-                item.setSelectionBrushImage("TaharezLook/"
-                                            "MultiListSelectionBrush")
-                self.listbox.addItem(item)
-                item.setSelected(True)
+            if self.current_map:
+                layers = self.current_map.fife_map.getLayers()
+                for layer in layers:
+                    item = PyCEGUI.ListboxTextItem(layer.getId())
+                    item.setSelectionBrushImage("TaharezLook/"
+                                                "MultiListSelectionBrush")
+                    self.listbox.addItem(item)
+                    item.setSelected(True)
 
         except Exception as error:
             print error
