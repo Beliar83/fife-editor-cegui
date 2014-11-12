@@ -25,11 +25,14 @@ import yaml
 import PyCEGUI
 
 from fife.extensions.fife_settings import Setting
+from fife.fife import MapSaver
 from fife_rpg import RPGApplicationCEGUI
 from fife.extensions.serializers import ET
 from fife.extensions.serializers.simplexml import (SimpleXMLSerializer,
                                                    InvalidFormat)
+from fife.extensions.serializers.xml_loader_tools import root_subfile
 from fife_rpg.components import ComponentManager
+from fife_rpg.components.agent import Agent
 from fife_rpg.actions import ActionManager
 from fife_rpg.systems import SystemManager
 from fife_rpg.behaviours import BehaviourManager
@@ -127,6 +130,9 @@ class EditorApplication(RPGApplicationCEGUI):
         self.toolbars = {}
         self.main_container.layout()
         self.selected_object = None
+        self.import_ref_count = {}
+        self.changed_maps = []
+        self.add_map_load_callback(self.cb_map_loaded)
 
     def __loadData(self):  # pylint: disable=no-self-use, invalid-name
         """Load gui datafiles"""
@@ -222,6 +228,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self._actions = {}
         self._systems = {}
         self._behaviours = {}
+        self.changed_maps = []
         ComponentManager.clear_components()
         ComponentManager.clear_checkers()
         ActionManager.clear_actions()
@@ -265,6 +272,8 @@ class EditorApplication(RPGApplicationCEGUI):
             self.project_source = project_dir
             self.project_dir = project_dir
             self.load_project_settings()
+            self.import_ref_count = {}
+            self.changed_maps = []
             try:
                 self.load_maps()
             except:  # pylint: disable=bare-except
@@ -302,6 +311,84 @@ class EditorApplication(RPGApplicationCEGUI):
         project_settings = self.project.getAllSettings("fife-rpg")
         del project_settings["ProjectName"]
         self.settings.setAllSettings("fife-rpg", project_settings)
+
+    def increase_refcount(self, filename, map_name=None):
+        """Increase reference count for a file on a map
+
+        Args:
+
+            filename: The filename the reference counter is for
+
+            Map: The map the reference counter is for
+        """
+        map_name = map_name or self.current_map.name
+        if map_name not in self.import_ref_count:
+            self.import_ref_count[map_name] = {}
+        ref_count = self.import_ref_count[map_name]
+        if filename in ref_count:
+            ref_count[filename] += 1
+        else:
+            ref_count[filename] = 1
+
+    def decrease_refcount(self, filename, map_name=None):
+        """Decrease reference count for a file on a map
+
+        Args:
+
+            filename: The filename the reference counter is for
+
+            Map: The map the reference counter is for
+        """
+        map_name = map_name or self.current_map.name
+        ref_count = self.import_ref_count[map_name]
+        if filename in ref_count:
+            ref_count[filename] -= 1
+            if ref_count[filename] <= 0:
+                del ref_count[filename]
+
+    def save_map(self, map_name=None):
+        """Save the current state of the map
+
+        Args:
+
+            map_name: Name of the map to save
+        """
+        old_tab = self.toolbar.getTabContentsAtIndex(self.old_toolbar_index)
+        toolbar = self.toolbars[old_tab.getText()]
+        toolbar.deactivate()
+        if map_name:
+            if map_name in self.maps:
+                game_map = self.maps[map_name]
+            else:
+                return
+        else:
+            if self.current_map:
+                game_map = self.current_map
+                map_name = game_map.name
+            else:
+                return
+        map_entities = game_map.entities.copy()
+        for entity in map_entities:
+            agent = getattr(entity, Agent.registered_as)
+            agent.new_map = ""
+        game_map.update_entities_fife()
+        fife_map = game_map.fife_map
+        filename = fife_map.getFilename()
+        old_dir = os.getcwd()
+        os.chdir(self.project_dir)
+        import_list = [root_subfile(filename, i) for
+                       i in self.import_ref_count[map_name].iterkeys()]
+        saver = MapSaver()
+        saver.save(fife_map, filename, import_list)
+        os.chdir(old_dir)
+        for entity in map_entities:
+            agent = getattr(entity, Agent.registered_as)
+            agent.map = map_name
+        game_map.update_entities()
+        self.update_agents(game_map)
+        toolbar.activate()
+        if map_name in self.changed_maps:
+            self.changed_maps.remove(map_name)
 
     def _pump(self):
         """
@@ -361,6 +448,8 @@ class EditorApplication(RPGApplicationCEGUI):
     def cb_save(self, args):
         """Callback when save was clicked in the file menu"""
         self.project.save()
+        for map_name in self.changed_maps:
+            self.save_map(map_name)
 
     def try_load_project(self, file_name):
         """Try to load the specified file as a project
@@ -619,6 +708,16 @@ class EditorApplication(RPGApplicationCEGUI):
                 except ValueError:
                     pass
         self.update_property_editor()
+
+    def cb_map_loaded(self, game_map):
+        """Callback for when a map was loaded"""
+
+        fife_map = game_map.fife_map
+        for layer in fife_map.getLayers():
+            for instance in layer.getInstances():
+                filename = instance.getObject().getFilename()
+                map_name = game_map.name
+                self.increase_refcount(filename, map_name)
 
 
 def update_settings(project, settings, values):
