@@ -132,6 +132,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.selected_object = None
         self.import_ref_count = {}
         self.changed_maps = []
+        self._project_cleared_callbacks = []
         self.add_map_load_callback(self.cb_map_loaded)
 
     def __loadData(self):  # pylint: disable=no-self-use, invalid-name
@@ -248,6 +249,8 @@ class EditorApplication(RPGApplicationCEGUI):
         self.file_close.setEnabled(False)
         self.file_p_settings.setEnabled(False)
         self.reset_maps_menu()
+        for callback in self._project_cleared_callbacks:
+            callback()
 
     def load_project(self, filepath):
         """Tries to load a project
@@ -394,6 +397,27 @@ class EditorApplication(RPGApplicationCEGUI):
         toolbar.activate()
         if map_name in self.changed_maps:
             self.changed_maps.remove(map_name)
+
+    def add_project_clear_callback(self, callback):
+        """Adds a callback function which gets called after the 'clear' method
+        was called.
+
+        Args:
+            callback: The function to add
+        """
+        if callback not in self._project_cleared_callbacks:
+            self._project_cleared_callbacks.append(callback)
+
+    def remove_project_clear_callback(self, callback):
+        """Removes a callback function that got called after the 'clear'
+        method was called.
+
+        Args:
+            callback: The function to remove
+        """
+        if callback in self._project_cleared_callbacks:
+            index = self._project_cleared_callbacks.index(callback)
+            del self._project_cleared_callbacks[index]
 
     def _pump(self):
         """
