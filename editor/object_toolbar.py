@@ -597,6 +597,9 @@ class ObjectToolbar(ToolbarPage):
             self.editor.decrease_refcount(filename)
             layer.deleteInstance(instance)
 
+        if map_name not in self.editor.changed_maps:
+            self.editor.changed_maps.append(map_name)
+
         if button == fife.MouseEvent.RIGHT:
             return
         fife_model = self.editor.engine.getModel()
@@ -608,8 +611,6 @@ class ObjectToolbar(ToolbarPage):
         fife.InstanceVisual.create(instance)
         self.editor.set_selected_object(instance)
         map_name = self.editor.current_map.name
-        if map_name not in self.editor.changed_maps:
-            self.editor.changed_maps.append(map_name)
 
     def clean_mouse_instance(self):
         """Removes the instance that was created by mouse movement"""
