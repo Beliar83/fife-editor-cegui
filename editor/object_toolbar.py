@@ -291,8 +291,8 @@ class ObjectToolbar(ToolbarPage):
         size.d_height.d_scale = size.d_height.d_scale - y_pos.d_scale
         size.d_width.d_offset = size.d_width.d_offset - x_adjust
         items_panel.setSize(size)
-        self.items = items_panel.createChild("VerticalLayoutContainer",
-                                             "Items")
+        self.items_panel = items_panel
+        self.items = None
         self.have_objects_changed = False
         self.editor.add_map_switch_callback(self.cb_map_changed)
         self.last_mouse_pos = None
@@ -304,6 +304,7 @@ class ObjectToolbar(ToolbarPage):
                                    self.cb_map_clicked)
         mode.listener.add_callback("mouse_moved",
                                    self.cb_map_moved)
+        self.editor.add_project_clear_callback(self.cb_project_closed)
 
     @property
     def selected_layer(self):
@@ -647,3 +648,16 @@ class ObjectToolbar(ToolbarPage):
         map_object = fife_model.getObject(name, namespace)
         self.last_instance = layer.createInstance(map_object, coords)
         fife.InstanceVisual.create(self.last_instance)
+
+    def cb_project_closed(self):
+        """Called when the current project was closed"""
+        self.namespaces = {}
+        self.images = {}
+        self.selected_object = [None, None]
+        self.layers = None
+        self.layers_combo.resetList()
+        self.layers_combo.setText("")
+        if self.items:
+            self.items_panel.destroyChild(self.items)
+        self.items = self.items_panel.createChild("VerticalLayoutContainer",
+                                                  "Items")
