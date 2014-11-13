@@ -579,6 +579,8 @@ class EditorApplication(RPGApplicationCEGUI):
 
     def cb_map_switch(self, args):
         """Callback when a map from the menu was clicked"""
+        if not self.project_dir:
+            return
         try:
             old_dir = os.getcwd()
             os.chdir(self.project_dir)
