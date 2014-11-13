@@ -275,7 +275,10 @@ class EditorApplication(RPGApplicationCEGUI):
             self.import_ref_count = {}
             self.changed_maps = []
             try:
+                old_dir = os.getcwd()
+                os.chdir(self.project_dir)
                 self.load_maps()
+                os.chdir(old_dir)
             except:  # pylint: disable=bare-except
                 pass
             self.file_close.setEnabled(True)
@@ -310,7 +313,8 @@ class EditorApplication(RPGApplicationCEGUI):
         """Loads the settings file"""
         project_settings = self.project.getAllSettings("fife-rpg")
         del project_settings["ProjectName"]
-        self.settings.setAllSettings("fife-rpg", project_settings)
+        for setting, value in project_settings.iteritems():
+            self.settings.set("fife-rpg", setting, value)
 
     def increase_refcount(self, filename, map_name=None):
         """Increase reference count for a file on a map
@@ -462,21 +466,38 @@ class EditorApplication(RPGApplicationCEGUI):
         if loaded:
             self.current_project_file = file_name
             self.reset_maps_menu()
+            old_dir = os.getcwd()
+            os.chdir(self.project_dir)
             try:
-                self.load_combined()
-            except:  # pylint: disable=bare-except
-                self.load_combined("combined.yaml")
-            self.register_components()
-            self.register_actions()
-            self.register_systems()
-            self.register_behaviours()
-            self.create_world()
-            try:
-                self.world.read_object_db()
-                self.world.import_agent_objects()
-                self.world.load_and_create_entities()
-            except:  # pylint: disable=bare-except
-                pass
+                try:
+                    self.load_combined()
+                except:  # pylint: disable=bare-except
+                    self.load_combined("combined.yaml")
+                try:
+                    self.register_components()
+                except ValueError:
+                    pass
+                try:
+                    self.register_actions()
+                except ValueError:
+                    pass
+                try:
+                    self.register_systems()
+                except ValueError:
+                    pass
+                try:
+                    self.register_behaviours()
+                except ValueError:
+                    pass
+                self.create_world()
+                try:
+                    self.world.read_object_db()
+                    self.world.import_agent_objects()
+                    self.world.load_and_create_entities()
+                except:  # pylint: disable=bare-except
+                    pass
+            finally:
+                os.chdir(old_dir)
             return True
         return False
 
@@ -558,7 +579,12 @@ class EditorApplication(RPGApplicationCEGUI):
     def cb_map_switch(self, args):
         """Callback when a map from the menu was clicked"""
         try:
-            self.switch_map(args.window.getUserData())
+            old_dir = os.getcwd()
+            os.chdir(self.project_dir)
+            try:
+                self.switch_map(args.window.getUserData())
+            finally:
+                os.chdir(old_dir)
             self.listbox.resetList()
             if self.current_map:
                 layers = self.current_map.fife_map.getLayers()
