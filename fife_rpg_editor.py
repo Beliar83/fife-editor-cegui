@@ -229,6 +229,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self._systems = {}
         self._behaviours = {}
         self.changed_maps = []
+        self.listbox.resetList()
         ComponentManager.clear_components()
         ComponentManager.clear_checkers()
         ActionManager.clear_actions()
