@@ -251,6 +251,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.reset_maps_menu()
         for callback in self._project_cleared_callbacks:
             callback()
+        self.view_maps_menu.closePopupMenu()
 
     def load_project(self, filepath):
         """Tries to load a project
@@ -603,6 +604,7 @@ class EditorApplication(RPGApplicationCEGUI):
 
     def cb_map_switch(self, args):
         """Callback when a map from the menu was clicked"""
+        self.view_maps_menu.closePopupMenu()
         if not self.project_dir:
             return
         try:
