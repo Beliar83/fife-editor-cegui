@@ -92,6 +92,8 @@ class EditorApplication(RPGApplicationCEGUI):
         self.file_save = None
         self.file_p_settings = None
         self.view_maps_menu = None
+        self.save_maps_popup = None
+        self.save_popup = None
 
         self.__loadData()
         window_manager = PyCEGUI.WindowManager.getSingleton()
@@ -169,10 +171,30 @@ class EditorApplication(RPGApplicationCEGUI):
         file_open.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_open)
         file_open.setText(_("Open Project"))
         file_save = file_popup.createChild("TaharezLook/MenuItem", "FileSave")
-        file_save.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_save)
-        file_save.setText(_("Save Project"))
+        file_save.setText(_("Save") + "  ")
         file_save.setEnabled(False)
+        file_save.setAutoPopupTimeout(0.5)
+        save_popup = file_save.createChild("TaharezLook/PopupMenu",
+                                           "SavePopup")
+        self.save_popup = save_popup
+        save_all = save_popup.createChild("TaharezLook/MenuItem",
+                                          "FileSaveAll")
+        save_all.setText(_("All"))
+        save_all.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                                self.cb_save_all)
         self.file_save = file_save
+        save_project = save_popup.createChild("TaharezLook/MenuItem",
+                                              "FileSaveProject")
+        save_project.setText(_("Project"))
+        save_project.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                                    self.cb_save_project)
+        save_maps = save_popup.createChild("TaharezLook/MenuItem",
+                                           "FileSaveMaps")
+        save_maps.setText(_("Maps") + "  ")
+        save_maps.setAutoPopupTimeout(0.5)
+        save_maps_popup = save_maps.createChild("TaharezLook/PopupMenu",
+                                                "SaveMapsPopup")
+        self.save_maps_popup = save_maps_popup
         file_close = file_popup.createChild(
             "TaharezLook/MenuItem", "FileClose")
         file_close.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_close)
@@ -252,6 +274,8 @@ class EditorApplication(RPGApplicationCEGUI):
         for callback in self._project_cleared_callbacks:
             callback()
         self.view_maps_menu.closePopupMenu()
+        self.save_popup.closePopupMenu()
+        self.save_maps_popup.closePopupMenu()
 
     def load_project(self, filepath):
         """Tries to load a project
@@ -303,6 +327,12 @@ class EditorApplication(RPGApplicationCEGUI):
             item.setText("+" + _("No Map"))
         else:
             item.setText("   " + _("No Map"))
+        self.save_maps_popup.resetList()
+        item = self.save_maps_popup.createChild("TaharezLook/MenuItem",
+                                                "All")
+        item.setText(_("All"))
+        item.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                            self.cb_save_maps_all)
         for game_map in self.maps.iterkeys():
             item = menu.createChild("TaharezLook/MenuItem", game_map)
             item.setUserData(game_map)
@@ -313,6 +343,12 @@ class EditorApplication(RPGApplicationCEGUI):
                 item.setText("+" + game_map)
             else:
                 item.setText("   " + game_map)
+            item = self.save_maps_popup.createChild("TaharezLook/MenuItem",
+                                                    game_map)
+            item.setText(game_map)
+            item.setUserData(game_map)
+            item.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                                self.cb_save_map)
 
     def load_project_settings(self):
         """Loads the settings file"""
@@ -475,11 +511,34 @@ class EditorApplication(RPGApplicationCEGUI):
         tkMessageBox.showinfo(_("Project created"),
                               _("Project successfully created"))
 
-    def cb_save(self, args):
-        """Callback when save was clicked in the file menu"""
-        self.project.save()
+    def save_all_maps(self):
+        """Save the edited status of all maps"""
         for map_name in self.changed_maps:
             self.save_map(map_name)
+
+    def cb_save_all(self, args):
+        """Callback when save->all was clicked in the file menu"""
+        self.project.save()
+        self.save_all_maps()
+        self.save_popup.closePopupMenu()
+
+    def cb_save_project(self, args):
+        """Callback when save->project was clicked in the file menu"""
+        self.project.save()
+        self.save_popup.closePopupMenu()
+
+    def cb_save_maps_all(self, args):
+        """Callback when save->maps->all was clicked in the file menu"""
+        self.save_all_maps()
+        self.save_popup.closePopupMenu()
+        self.save_maps_popup.closePopupMenu()
+
+    def cb_save_map(self, args):
+        """Callback when save->maps->map_name was clicked in the file menu"""
+        map_name = args.window.getUserData()
+        self.save_map(map_name)
+        self.save_popup.closePopupMenu()
+        self.save_maps_popup.closePopupMenu()
 
     def try_load_project(self, file_name):
         """Try to load the specified file as a project
