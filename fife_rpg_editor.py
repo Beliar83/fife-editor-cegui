@@ -196,7 +196,7 @@ class EditorApplication(RPGApplicationCEGUI):
         view_popup = self.view_menu.createChild("TaharezLook/PopupMenu",
                                                 "FilePopup")
         view_maps = view_popup.createChild("TaharezLook/MenuItem", "ViewMaps")
-        view_maps.setText(_("Maps"))
+        view_maps.setText(_("Maps") + "  ")
         self.view_maps_menu = view_maps.createChild("TaharezLook/PopupMenu",
                                                     "ViewMapsMenu")
         view_maps.setAutoPopupTimeout(0.5)
