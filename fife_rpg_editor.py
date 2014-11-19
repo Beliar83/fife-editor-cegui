@@ -38,6 +38,7 @@ from fife_rpg.systems import SystemManager
 from fife_rpg.behaviours import BehaviourManager
 from fife_rpg.game_scene import GameSceneView
 from fife_rpg.helpers import DoublePointYaml, DoublePoint3DYaml
+from fife_rpg.map import Map as GameMap
 # pylint: disable=unused-import
 from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
 # pylint: enable=unused-import
@@ -121,8 +122,18 @@ class EditorApplication(RPGApplicationCEGUI):
         self.listbox.setMultiselectEnabled(True)
         self.listbox.subscribeEvent(PyCEGUI.Listbox.EventSelectionChanged,
                                     self.cb_layer_selection_changed)
+        self.show_agents_check = right_area_container.createChild("TaharezLook"
+                                                                  "/Checkbox",
+                                                                  "show_agents"
+                                                                  )
+        self.show_agents_check.setText(_("Show Entities"))
+        self.show_agents_check.setSelected(True)
+        self.show_agents_check.subscribeEvent(
+            PyCEGUI.ToggleButton.EventSelectStateChanged,
+            self.cb_show_agent_selection_changed
+        )
         property_editor_size = PyCEGUI.USize(PyCEGUI.UDim(1.0, 0),
-                                             PyCEGUI.UDim(0.825, 0))
+                                             PyCEGUI.UDim(0.780, 0))
         self.property_editor = PropertyEditor(right_area_container)
         self.property_editor.set_size(property_editor_size)
         self.property_editor.add_value_changed_callback(self.cb_value_changed)
@@ -136,6 +147,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.changed_maps = []
         self._project_cleared_callbacks = []
         self.add_map_load_callback(self.cb_map_loaded)
+        self.map_entities = None
 
     def __loadData(self):  # pylint: disable=no-self-use, invalid-name
         """Load gui datafiles"""
@@ -253,6 +265,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self._behaviours = {}
         self.changed_maps = []
         self.listbox.resetList()
+        self.map_entities = None
         ComponentManager.clear_components()
         ComponentManager.clear_checkers()
         ActionManager.clear_actions()
@@ -664,6 +677,9 @@ class EditorApplication(RPGApplicationCEGUI):
     def cb_map_switch(self, args):
         """Callback when a map from the menu was clicked"""
         self.view_maps_menu.closePopupMenu()
+        if self.map_entities:
+            self.show_map_entities(self.current_map.name)
+            self.map_entities = None
         if not self.project_dir:
             return
         try:
@@ -682,7 +698,8 @@ class EditorApplication(RPGApplicationCEGUI):
                                                 "MultiListSelectionBrush")
                     self.listbox.addItem(item)
                     item.setSelected(True)
-
+                if not self.show_agents_check.isSelected():
+                    self.hide_map_entities(self.current_map.name)
         except Exception as error:
             print error
             raise
@@ -832,6 +849,51 @@ class EditorApplication(RPGApplicationCEGUI):
                 filename = instance.getObject().getFilename()
                 map_name = game_map.name
                 self.increase_refcount(filename, map_name)
+
+    def hide_map_entities(self, map_name):
+        """Hides the entities of all maps
+
+        Args:
+
+            map_name: The name of the map
+        """
+        game_map = self.maps[map_name]
+        is_map_instance = isinstance(game_map, GameMap)
+        if not is_map_instance:
+            return
+        map_entities = game_map.entities.copy()
+        for entity in map_entities:
+            agent = getattr(entity, Agent.registered_as)
+            agent.new_map = ""
+        self.map_entities = map_entities
+        game_map.update_entities_fife()
+
+    def show_map_entities(self, map_name):
+        """Unhide the entities of the given map
+
+        Args:
+
+            map_name: The name of the map
+        """
+        game_map = self.maps[map_name]
+        is_map_instance = isinstance(game_map, GameMap)
+        if not is_map_instance:
+            return
+        map_entities = self.map_entities
+        for entity in map_entities:
+            agent = getattr(entity, Agent.registered_as)
+            agent.map = map_name
+        game_map.update_entities()
+        self.update_agents(game_map)
+
+    def cb_show_agent_selection_changed(self, args):
+        """Called when the "Show Entities" checkbox was changed"""
+        if self.current_map is None:
+            return
+        if self.show_agents_check.isSelected():
+            self.show_map_entities(self.current_map.name)
+        else:
+            self.hide_map_entities(self.current_map.name)
 
 
 def update_settings(project, settings, values):
