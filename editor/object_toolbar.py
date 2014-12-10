@@ -334,14 +334,25 @@ class ObjectToolbar(ToolbarPage):
 
     def update_contents(self):
         """Update the contents of the toolbar page"""
-        if self.have_objects_changed:
+        if self.have_objects_changed and self.is_active:
+            import Tkinter
+            window = Tkinter.Tk()
+            # iconify window instead of closing
+            window.protocol("WM_DELETE_WINDOW", window.iconify)
+            window.attributes("-topmost", 1, "-disabled", 1)
+            window.title("Unknown Horizons")
+            window.maxsize(300, 150)
+            label = Tkinter.Label(window, padx=10,
+                                  text=_("Updating Objects"))
+            label.pack(side="right")
+            window.deiconify()
+            window.update()
             self.update_images()
+            window.destroy()
         ToolbarPage.update_contents(self)
 
     def update_images(self):
         """Update the contents of the toolbar page"""
-        if not self.is_active:
-            return
         self.have_objects_changed = False
         self.namespaces = {}
         vec2f = PyCEGUI.Vector2f
