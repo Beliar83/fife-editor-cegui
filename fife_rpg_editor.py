@@ -425,6 +425,8 @@ class EditorApplication(RPGApplicationCEGUI):
                 map_name = game_map.name
             else:
                 return
+        if not isinstance(game_map, GameMap):
+            return
         map_entities = game_map.entities.copy()
         for entity in map_entities:
             agent = getattr(entity, Agent.registered_as)
