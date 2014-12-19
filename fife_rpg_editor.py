@@ -37,8 +37,9 @@ from fife_rpg.actions import ActionManager
 from fife_rpg.systems import SystemManager
 from fife_rpg.behaviours import BehaviourManager
 from fife_rpg.game_scene import GameSceneView
-from fife_rpg.helpers import DoublePointYaml, DoublePoint3DYaml
+from fife_rpg import helpers
 from fife_rpg.map import Map as GameMap
+from fife_rpg.entities import RPGEntity
 # pylint: disable=unused-import
 from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
 # pylint: enable=unused-import
@@ -95,6 +96,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.view_maps_menu = None
         self.save_maps_popup = None
         self.save_popup = None
+        self.save_entities_popup = None
 
         self.__loadData()
         window_manager = PyCEGUI.WindowManager.getSingleton()
@@ -148,6 +150,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self._project_cleared_callbacks = []
         self.add_map_load_callback(self.cb_map_loaded)
         self.map_entities = None
+        self.entities = {}
 
     def __loadData(self):  # pylint: disable=no-self-use, invalid-name
         """Load gui datafiles"""
@@ -207,6 +210,11 @@ class EditorApplication(RPGApplicationCEGUI):
         save_maps_popup = save_maps.createChild("TaharezLook/PopupMenu",
                                                 "SaveMapsPopup")
         self.save_maps_popup = save_maps_popup
+        save_entities = save_popup.createChild("TaharezLook/MenuItem",
+                                               "FileSaveEntities")
+        save_entities.setText(_("Entities"))
+        save_entities.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                                     self.cb_save_entities)
         file_close = file_popup.createChild(
             "TaharezLook/MenuItem", "FileClose")
         file_close.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_close)
@@ -471,6 +479,89 @@ class EditorApplication(RPGApplicationCEGUI):
             index = self._project_cleared_callbacks.index(callback)
             del self._project_cleared_callbacks[index]
 
+    def entity_constructor(self, loader, node):
+        """Constructs an Entity from a yaml node
+
+        Args:
+            loader: A yaml BaseConstructor
+
+            node: The yaml node
+
+        Returns:
+            The created Entity
+        """
+        entity_dict = loader.construct_mapping(node, deep=True)
+        entity = self.world.entity_constructor(loader, node)
+        self.entities[entity.identifier] = entity_dict
+        return entity
+
+    def load_entities(self):
+        """Load and store the entities of the current project"""
+        if self.project is None:
+            return
+        entities_file_name = self.project.get("fife-rpg", "EntitiesFile",
+                                              "objects/entities.yaml")
+        vfs = self.engine.getVFS()
+        yaml.add_constructor('!Entity', self.entity_constructor,
+                             yaml.SafeLoader)
+
+        entities_file = vfs.open(entities_file_name)
+        entities = yaml.safe_load_all(entities_file)
+        try:
+            while entities.next():
+                entities.next()
+        except StopIteration:
+            pass
+
+    def entity_representer(self, dumper, data):
+        """Creates a yaml node representing an entity
+
+        Args:
+            dumper: A yaml BaseRepresenter
+
+            data: The Entity
+
+        Returns:
+            The created node
+        """
+        old_entity_dict = self.entities[data.identifier]
+        template = None
+        if "Template" in old_entity_dict:
+            template = old_entity_dict["Template"]
+        entity_dict = self.world.create_entity_dictionary(data)
+        if template is not None:
+            components = entity_dict["Components"]
+            entity_dict["Template"] = template
+            template_dict = {}
+            self.world.update_from_template(template_dict, template)
+            for component, fields in template_dict.iteritems():
+                if component not in components:
+                    continue
+                for field, value in fields.iteritems():
+                    if field not in components[component]:
+                        continue
+                    if components[component][field] == value:
+                        del components[component][field]
+                if not components[component]:
+                    del components[component]
+            entity_dict["Components"] = components
+        entity_node = dumper.represent_mapping(u"!Entity", entity_dict)
+        return entity_node
+
+    def save_entities(self):
+        """Save all entities to the entity file"""
+        yaml.add_representer(RPGEntity, self.entity_representer)
+        entities_file_name = self.project.get("fife-rpg", "EntitiesFile",
+                                              "objects/entities.yaml")
+        old_wd = os.getcwd()
+        os.chdir(self.project_dir)
+        try:
+            entities_file = file(entities_file_name, "w")
+            entities = self.world[RPGEntity].entities
+            helpers.dump_entities(entities, entities_file)
+        finally:
+            os.chdir(old_wd)
+
     def _pump(self):
         """
         Application pump.
@@ -535,6 +626,7 @@ class EditorApplication(RPGApplicationCEGUI):
         """Callback when save->all was clicked in the file menu"""
         self.project.save()
         self.save_all_maps()
+        self.save_entities()
         self.save_popup.closePopupMenu()
 
     def cb_save_project(self, args):
@@ -554,6 +646,10 @@ class EditorApplication(RPGApplicationCEGUI):
         self.save_map(map_name)
         self.save_popup.closePopupMenu()
         self.save_maps_popup.closePopupMenu()
+
+    def cb_save_entities(self, args):
+        """Callback when save->entities was clicked in the file menu"""
+        self.save_entities()
 
     def try_load_project(self, file_name):
         """Try to load the specified file as a project
@@ -593,7 +689,7 @@ class EditorApplication(RPGApplicationCEGUI):
                 try:
                     self.world.read_object_db()
                     self.world.import_agent_objects()
-                    self.world.load_and_create_entities()
+                    self.load_entities()
                 except:  # pylint: disable=bare-except
                     pass
             finally:
@@ -740,12 +836,12 @@ class EditorApplication(RPGApplicationCEGUI):
                 if com_data:
                     for field in component.saveable_fields:
                         value = getattr(com_data, field)
-                        if isinstance(value, DoublePointYaml):
+                        if isinstance(value, helpers.DoublePointYaml):
                             pos = (value.x, value.y)
                             property_editor.add_property(
                                 comp_name, field,
                                 ("point", pos))
-                        elif isinstance(value, DoublePoint3DYaml):
+                        elif isinstance(value, helpers.DoublePoint3DYaml):
                             pos = (value.x, value.y, value.z)
                             property_editor.add_property(
                                 comp_name, field,
