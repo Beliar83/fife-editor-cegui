@@ -81,6 +81,7 @@ class EditorApplication(RPGApplicationCEGUI):
             self.menubar = PyCEGUI.Menubar()
             self.file_menu = PyCEGUI.MenuItem()
             self.view_menu = PyCEGUI.MenuItem()
+            self.project_menu = PyCEGUI.MenuItem()
             self.toolbar = PyCEGUI.TabControl()
         cegui_system = PyCEGUI.System.getSingleton()
         cegui_system.getDefaultGUIContext().setDefaultTooltipType(
@@ -90,13 +91,16 @@ class EditorApplication(RPGApplicationCEGUI):
         self.project = None
         self.project_source = None
         self.project_dir = None
+        self.file_menu = None
         self.file_close = None
         self.file_save = None
         self.file_p_settings = None
+        self.view_menu = None
         self.view_maps_menu = None
         self.save_maps_popup = None
         self.save_popup = None
         self.save_entities_popup = None
+        self.project_menu = None
 
         self.__loadData()
         window_manager = PyCEGUI.WindowManager.getSingleton()
@@ -221,13 +225,6 @@ class EditorApplication(RPGApplicationCEGUI):
         file_close.setText(_("Close Project"))
         file_close.setEnabled(False)
         self.file_close = file_close
-        file_p_settings = file_popup.createChild(
-            "TaharezLook/MenuItem", "FilePSettings")
-        file_p_settings.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
-                                       self.cb_project_settings)
-        file_p_settings.setText(_("Project settings"))
-        file_p_settings.setEnabled(False)
-        self.file_p_settings = file_p_settings
         file_quit = file_popup.createChild("TaharezLook/MenuItem", "FileQuit")
         file_quit.setText(_("Quit"))
         file_quit.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_quit)
@@ -242,6 +239,18 @@ class EditorApplication(RPGApplicationCEGUI):
         self.view_maps_menu = view_maps.createChild("TaharezLook/PopupMenu",
                                                     "ViewMapsMenu")
         view_maps.setAutoPopupTimeout(0.5)
+        self.project_menu = self.menubar.createChild("TaharezLook/MenuItem",
+                                                     "Project")
+        self.project_menu.setText(_("Project"))
+        project_popup = self.project_menu.createChild("TaharezLook/PopupMenu",
+                                                      "ProjectPopup")
+        file_p_settings = project_popup.createChild(
+            "TaharezLook/MenuItem", "ProjectSettings")
+        file_p_settings.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                                       self.cb_project_settings)
+        file_p_settings.setText(_("Settings"))
+        file_p_settings.setEnabled(False)
+        self.file_p_settings = file_p_settings
 
     def create_toolbars(self):
         """Creates the editors toolbars"""
