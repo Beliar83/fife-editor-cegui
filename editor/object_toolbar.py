@@ -253,8 +253,10 @@ class ObjectToolbar(ToolbarPage):
 
         self.namespaces = {}
         self.images = {}
+        self.image_directions = {}
         self.selected_object = [None, None]
         self.is_active = False
+        self.cur_rotation = 0
         x_adjust = 5
         pos = self.gui.getPosition()
         y_pos = pos.d_y
@@ -304,6 +306,8 @@ class ObjectToolbar(ToolbarPage):
                                    self.cb_map_clicked)
         mode.listener.add_callback("mouse_moved",
                                    self.cb_map_moved)
+        mode.listener.add_callback("key_pressed",
+                                   self.cb_key_pressed)
         self.editor.add_project_clear_callback(self.cb_project_closed)
 
     @property
@@ -331,6 +335,7 @@ class ObjectToolbar(ToolbarPage):
             self.images[old_identifier].setAlpha(self.DEFAULT_ALPHA)
         self.images[identifier].setAlpha(self.HIGHLIGHT_ALPHA)
         self.selected_object = obj_data
+        self.cur_rotation = self.image_directions[identifier][0]
 
     def update_contents(self):
         """Update the contents of the toolbar page"""
@@ -516,10 +521,12 @@ class ObjectToolbar(ToolbarPage):
                     image = wmgr.createWindow(
                         "TaharezLook/StaticImage", name)
                     image.setTooltipText(name)
+                    directions = None
                     if int(obj["static"]) == 0:
                         f_action = obj["actions"].keys()[0]
                         f_action_def = obj["actions"][f_action]
                         f_dir = f_action_def.keys()[0]
+                        directions = f_action_def.keys()
                         img_name = ".".join([name,
                                              f_action,
                                              str(f_dir),
@@ -527,11 +534,13 @@ class ObjectToolbar(ToolbarPage):
                         image.setProperty("Image", img_name)
                     elif int(obj["static"]) == 1:
                         f_dir = obj["directions"][0]
+                        directions = obj["directions"]
                         img_name = ".".join([name,
                                              str(f_dir)])
                         image.setProperty("Image", img_name)
                     self.items.addChild(image)
                     self.images[name] = image
+                    self.image_directions[name] = sorted(directions)
                     image.setAlpha(self.DEFAULT_ALPHA)
                     image.user_data = [namespace, identifier]
                     image.subscribeEvent(PyCEGUI.Window.EventMouseClick,
@@ -619,6 +628,7 @@ class ObjectToolbar(ToolbarPage):
         map_object = fife_model.getObject(name, namespace)
         coords = location.getLayerCoordinates()
         instance = layer.createInstance(map_object, coords)
+        instance.setRotation(self.cur_rotation)
         filename = instance.getObject().getFilename()
         self.editor.increase_refcount(filename)
         fife.InstanceVisual.create(instance)
@@ -659,6 +669,22 @@ class ObjectToolbar(ToolbarPage):
         map_object = fife_model.getObject(name, namespace)
         self.last_instance = layer.createInstance(map_object, coords)
         fife.InstanceVisual.create(self.last_instance)
+        self.last_instance.setRotation(self.cur_rotation)
+
+    def cb_key_pressed(self, event):
+        """Called when a key was pressed"""
+        if event.getKey().getValue() == fife.Key.R:
+            namespace, name = self.selected_object
+            if namespace is not None:
+                identifier = ".".join((namespace, name))
+                directions = self.image_directions[identifier]
+                new_index = directions.index(self.cur_rotation) + 1
+                if new_index < len(directions):
+                    self.cur_rotation = directions[new_index]
+                else:
+                    self.cur_rotation = directions[0]
+                if self.last_instance is not None:
+                    self.last_instance.setRotation(self.cur_rotation)
 
     def cb_project_closed(self):
         """Called when the current project was closed"""

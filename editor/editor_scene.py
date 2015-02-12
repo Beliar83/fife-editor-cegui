@@ -37,6 +37,7 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
         self.callbacks["mouse_pressed"] = []
         self.callbacks["mouse_dragged"] = []
         self.callbacks["mouse_moved"] = []
+        self.callbacks["key_pressed"] = []
         self.middle_container = None
         self.old_mouse_pos = None
 
@@ -124,6 +125,9 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
 
             event: The key event
         """
+        for callback_data in self.callbacks["key_pressed"]:
+            func = callback_data["func"]
+            func(event)
         if event.getKey().getValue() == fife.Key.SPACE:
             application = self.gamecontroller.application
             if application.current_map is None:
