@@ -25,7 +25,7 @@ import yaml
 import PyCEGUI
 
 from fife.extensions.fife_settings import Setting
-from fife.fife import MapSaver
+from fife.fife import MapSaver, MapLoader
 from fife_rpg import RPGApplicationCEGUI
 from fife.extensions.serializers import ET
 from fife.extensions.serializers.simplexml import (SimpleXMLSerializer,
@@ -101,6 +101,8 @@ class EditorApplication(RPGApplicationCEGUI):
         self.save_popup = None
         self.save_entities_popup = None
         self.project_menu = None
+        self.file_import = None
+        self.import_popup = None
 
         self.__loadData()
         window_manager = PyCEGUI.WindowManager.getSingleton()
@@ -155,6 +157,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.add_map_load_callback(self.cb_map_loaded)
         self.map_entities = None
         self.entities = {}
+        self._objects_imported_callbacks = []
 
     def __loadData(self):  # pylint: disable=no-self-use, invalid-name
         """Load gui datafiles"""
@@ -189,6 +192,20 @@ class EditorApplication(RPGApplicationCEGUI):
         file_open = file_popup.createChild("TaharezLook/MenuItem", "FileOpen")
         file_open.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_open)
         file_open.setText(_("Open Project"))
+        file_import = file_popup.createChild(
+            "TaharezLook/MenuItem", "FileImport")
+        file_import.setText(_("Import") + "  ")
+        file_import.setEnabled(False)
+        file_import.setAutoPopupTimeout(0.5)
+        self.file_import = file_import
+        import_popup = file_import.createChild("TaharezLook/PopupMenu",
+                                               "ImportPopup")
+        self.import_popup = import_popup
+        import_objects = import_popup.createChild("TaharezLook/MenuItem",
+                                                  "FileImportObjects")
+        import_objects.setText(_("Objects"))
+        import_objects.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                                      self.cb_import_objects)
         file_save = file_popup.createChild("TaharezLook/MenuItem", "FileSave")
         file_save.setText(_("Save") + "  ")
         file_save.setEnabled(False)
@@ -298,6 +315,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.project_dir = None
         self.project = None
         self.file_save.setEnabled(False)
+        self.file_import.setEnabled(False)
         self.file_close.setEnabled(False)
         self.file_p_settings.setEnabled(False)
         self.reset_maps_menu()
@@ -305,6 +323,7 @@ class EditorApplication(RPGApplicationCEGUI):
             callback()
         self.view_maps_menu.closePopupMenu()
         self.save_popup.closePopupMenu()
+        self.import_popup.closePopupMenu()
         self.save_maps_popup.closePopupMenu()
 
     def load_project(self, filepath):
@@ -342,6 +361,7 @@ class EditorApplication(RPGApplicationCEGUI):
                 pass
             self.file_close.setEnabled(True)
             self.file_save.setEnabled(True)
+            self.file_import.setEnabled(True)
             self.file_p_settings.setEnabled(True)
             return True
         return False
@@ -487,6 +507,27 @@ class EditorApplication(RPGApplicationCEGUI):
         if callback in self._project_cleared_callbacks:
             index = self._project_cleared_callbacks.index(callback)
             del self._project_cleared_callbacks[index]
+
+    def add_objects_imported_callback(self, callback):
+        """Adds a callback function which gets called after objects where
+        imported.
+
+        Args:
+            callback: The function to add
+        """
+        if callback not in self._objects_imported_callbacks:
+            self._objects_imported_callbacks.append(callback)
+
+    def remove_objects_imported_callback(self, callback):
+        """Removes a callback function that got called after objects where
+        imported.
+
+        Args:
+            callback: The function to remove
+        """
+        if callback in self._objects_imported_callbacks:
+            index = self._objects_imported_callbacks.index(callback)
+            del self._objects_imported_callbacks[index]
 
     def entity_constructor(self, loader, node):
         """Constructs an Entity from a yaml node
@@ -1001,6 +1042,34 @@ class EditorApplication(RPGApplicationCEGUI):
             self.show_map_entities(self.current_map.name)
         else:
             self.hide_map_entities(self.current_map.name)
+
+    def cb_import_objects(self, args):
+        """Callback when objects was clicked in the file->import menu"""
+        self.import_popup.closePopupMenu()
+        import Tkinter
+        import tkFileDialog
+        window = Tkinter.Tk()
+        window.wm_withdraw()
+
+        # Based on code from unknown-horizons
+        try:
+            selected_file = tkFileDialog.askopenfilename(
+                filetypes=[("fife object definition", ".xml",)],
+                initialdir=self.project_dir,
+                title="import objects")
+        except ImportError:
+            # tkinter may be missing
+            selected_file = ""
+
+        if selected_file:
+            selected_file = os.path.relpath(selected_file, self.project_dir)
+            loader = MapLoader(self.engine.getModel(),
+                               self.engine.getVFS(),
+                               self.engine.getImageManager(),
+                               self.engine.getRenderBackend())
+            loader.loadImportFile(selected_file.encode())
+            for callback in self._objects_imported_callbacks:
+                callback()
 
 
 def update_settings(project, settings, values):

@@ -309,6 +309,7 @@ class ObjectToolbar(ToolbarPage):
         mode.listener.add_callback("key_pressed",
                                    self.cb_key_pressed)
         self.editor.add_project_clear_callback(self.cb_project_closed)
+        self.editor.add_objects_imported_callback(self.cb_objects_imported)
 
     @property
     def selected_layer(self):
@@ -698,3 +699,7 @@ class ObjectToolbar(ToolbarPage):
             self.items_panel.destroyChild(self.items)
         self.items = self.items_panel.createChild("VerticalLayoutContainer",
                                                   "Items")
+
+    def cb_objects_imported(self):
+        """Called when objects where imported to the project"""
+        self.have_objects_changed = True
