@@ -56,7 +56,8 @@
         <PropertyDefinition name="PushedImage" initialValue="" redrawOnWrite="true" type="Image"/>
         <PropertyDefinition name="DisabledImage" initialValue="" redrawOnWrite="true" type="Image"/>
         <PropertyDefinition name="VertImageFormatting" initialValue="Stretched" redrawOnWrite="true" type="VerticalFormatting" />
-        <PropertyDefinition name="HorzImageFormatting" initialValue="Stretched" redrawOnWrite="true" type="HorizontalFormatting" />  
+        <PropertyDefinition name="HorzImageFormatting" initialValue="Stretched" redrawOnWrite="true" type="HorizontalFormatting" />
+        <PropertyDefinition name="HorzImageFormatting" initialValue="Stretched" redrawOnWrite="true" type="HorizontalFormatting" />
         <Property name="Size" value="{{0, 96}, {0, 32}}" />
         <ImagerySection name="label">
             <TextComponent>
@@ -2759,16 +2760,16 @@
                 <Section section="label" />
             </Layer>
         </StateImagery>
-        
+
         <AnimationDefinition name="FadeIn" duration="0.33" replayMode="once">
             <Affector property="Alpha" interpolator="float">
                 <KeyFrame position="0" sourceProperty="Alpha" />
                 <KeyFrame position="0.33" value="1" progression="linear" />
             </Affector>
-            
+
             <Subscription event="TooltipActive" action="Start" />
         </AnimationDefinition>
-        
+
         <AnimationDefinition name="FadeOut" duration="0.33" replayMode="once">
             <Affector property="Alpha" interpolator="float">
                 <KeyFrame position="0" sourceProperty="Alpha" />
@@ -2778,7 +2779,7 @@
                 <KeyFrame position="0" sourceProperty="Visible" />
                 <KeyFrame position="0.33" value="false" progression="discrete" />
             </Affector>
-            
+
             <Subscription event="TooltipInactive" action="Start" />
         </AnimationDefinition>
     </WidgetLook>
@@ -4147,7 +4148,116 @@
             </Layer>
         </StateImagery>
     </WidgetLook>
-
+    <WidgetLook name="TaharezLook/CheckListboxItem">
+        <PropertyDefinition name="TextColour" initialValue="FFFFFFFF" redrawOnWrite="true" />
+        <PropertyDefinition name="SelectedTextColour" initialValue="FF000000" redrawOnWrite="true" />
+        <PropertyDefinition name="SelectionBrush" initialValue="TaharezLook/ListboxSelectionBrush" redrawOnWrite="true" type="Image"/>
+        <PropertyDefinition name="SelectionColour" initialValue="FF3030FF" redrawOnWrite="true" />
+        <Property name="Selectable" value="True" />
+        <NamedArea name="ContentSize">
+            <Area>
+                <Dim type="LeftEdge" >
+                    <AbsoluteDim value="0" />
+                </Dim>
+                <Dim type="TopEdge" >
+                    <AbsoluteDim value="0" />
+                </Dim>
+                <Dim type="Width" >
+                    <FontDim type="HorzExtent" padding="6" />
+                </Dim>
+                <Dim type="Height" >
+                    <FontDim type="LineSpacing" />
+                </Dim>
+            </Area>
+        </NamedArea>
+        <Child type ="TaharezLook/Checkbox" nameSuffix="__auto__checkbox">
+            <Area>
+                <Dim type="LeftEdge">
+                    <UnifiedDim scale="0" type="LeftEdge" />
+                    <AbsoluteDim value="3" />
+                </Dim>
+                <Dim type="TopEdge">
+                    <UnifiedDim scale="0" type="TopEdge" />
+                </Dim>
+                <Dim type="Width">
+                    <AbsoluteDim value="13" />
+                </Dim>
+                <Dim type="Height">
+                    <UnifiedDim scale="1" type="Height"/>
+                </Dim>
+            </Area>
+        </Child>
+        <ImagerySection name="label">
+            <TextComponent>
+                <Area>
+                    <Dim type="TopEdge">
+                        <AbsoluteDim value="0" />
+                    </Dim>
+                    <Dim type="LeftEdge">
+                        <AbsoluteDim value="18" />
+                    </Dim>
+                    <Dim type="RightEdge">
+                        <UnifiedDim scale="1" offset="-3" type="RightEdge" />
+                    </Dim>
+                    <Dim type="BottomEdge">
+                        <UnifiedDim scale="1" type="BottomEdge" />
+                    </Dim>
+                </Area>
+            </TextComponent>
+        </ImagerySection>
+        <ImagerySection name="selection">
+            <ImageryComponent>
+                <Area>
+                    <Dim type="TopEdge">
+                        <AbsoluteDim value="0" />
+                    </Dim>
+                    <Dim type="LeftEdge">
+                        <AbsoluteDim value="0" />
+                    </Dim>
+                    <Dim type="RightEdge">
+                        <UnifiedDim scale="1" type="RightEdge" />
+                    </Dim>
+                    <Dim type="BottomEdge">
+                        <UnifiedDim scale="1" type="BottomEdge" />
+                    </Dim>
+                </Area>
+                <ImageProperty name="SelectionBrush" />
+                <ColourProperty name="SelectionColour" />
+                <VertFormat type="Stretched" />
+                <HorzFormat type="Stretched" />
+            </ImageryComponent>
+        </ImagerySection>
+        <StateImagery name="Enabled">
+             <Layer>
+                  <Section section="label">
+                      <ColourProperty name="TextColour" />
+                  </Section>
+             </Layer>
+        </StateImagery>
+        <StateImagery name="Disabled">
+             <Layer>
+                  <Section section="label">
+                      <ColourProperty name="TextColour" />
+                  </Section>
+             </Layer>
+        </StateImagery>
+        <StateImagery name="SelectedEnabled">
+            <Layer>
+                <Section section="selection" />
+                <Section section="label">
+                     <ColourProperty name="SelectedTextColour" />
+                </Section>
+            </Layer>
+        </StateImagery>
+        <StateImagery name="SelectedDisabled">
+            <Layer>
+                <Section section="selection" />
+                <Section section="label">
+                    <ColourProperty name="SelectedTextColour" />
+                </Section>
+            </Layer>
+        </StateImagery>
+    </WidgetLook>
 
 </Falagard>
 

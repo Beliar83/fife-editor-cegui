@@ -263,25 +263,9 @@ class ObjectToolbar(ToolbarPage):
         x_pos = PyCEGUI.UDim(0, x_adjust)
         width = PyCEGUI.UDim(0.9, 0.0)
         label = self.gui.createChild("TaharezLook/Label",
-                                     "LayersLabel")
-        label.setText(_("Layer"))
-        label.setWidth(width)
-        label.setXPosition(x_pos)
-        label.setProperty("HorzFormatting", "LeftAligned")
-        self.layers_combo = self.gui.createChild("TaharezLook/Combobox",
-                                                 "LayerCombo")
-        self.layers_combo.setReadOnly(True)
-        y_pos.d_scale = y_pos.d_scale + 0.02
-        self.layers_combo.setPosition(pos)
-        self.layers = []
-        self.layers_combo.setWidth(width)
-        self.layers_combo.setXPosition(x_pos)
-        label = self.gui.createChild("TaharezLook/Label",
                                      "ObjectsLabel")
         label.setText(_("Objects"))
         label.setWidth(width)
-        y_pos.d_scale = y_pos.d_scale + 0.04
-        label.setYPosition(y_pos)
         label.setXPosition(x_pos)
         label.setProperty("HorzFormatting", "LeftAligned")
         items_panel = self.gui.createChild("TaharezLook/ScrollablePane",
@@ -310,14 +294,6 @@ class ObjectToolbar(ToolbarPage):
                                    self.cb_key_pressed)
         self.editor.add_project_clear_callback(self.cb_project_closed)
         self.editor.add_objects_imported_callback(self.cb_objects_imported)
-
-    @property
-    def selected_layer(self):
-        """Returns the selected layer in the combo box"""
-        item = self.layers_combo.getSelectedItem()
-        if item is not None:
-            return str(item.getText())
-        return None
 
     def image_clicked(self, args):
         """Called when the user clicked on an image
@@ -578,16 +554,6 @@ class ObjectToolbar(ToolbarPage):
                 new_map_name: Name of the map that was changed to
         """
         self.have_objects_changed = True
-        game_map = self.editor.maps[new_map_name]
-        self.layers_combo.resetList()
-        self.layers = []
-        layers = game_map.fife_map.getLayers()
-        self.layers_combo.setText("")
-        for layer in layers:
-            item = PyCEGUI.ListboxTextItem(layer.getId())
-            item.setSelectionBrushImage("TaharezLook/MultiListSelectionBrush")
-            self.layers_combo.addItem(item)
-            self.layers.append(item)
 
     def cb_map_clicked(self, click_point, button):
         """Called when a position on the screen was clicked
@@ -600,16 +566,16 @@ class ObjectToolbar(ToolbarPage):
             button: The button that was clicked
         """
         self.clean_mouse_instance()
-        if self.selected_layer is None or not self.is_active:
+        if self.editor.selected_layer is None or not self.is_active:
             return
         if button == fife.MouseEvent.MIDDLE:
             return
         namespace, name = self.selected_object
         if namespace is None and button == fife.MouseEvent.LEFT:
             return
-        layer = self.editor.current_map.get_layer(self.selected_layer)
+        layer = self.editor.current_map.get_layer(self.editor.selected_layer)
         location = self.editor.screen_coords_to_map_coords(
-            click_point, self.selected_layer
+            click_point, self.editor.selected_layer
         )
         world = self.editor.world
         for instance in layer.getInstancesAt(location):
@@ -655,14 +621,14 @@ class ObjectToolbar(ToolbarPage):
         if not self.is_active:
             return
         self.clean_mouse_instance()
-        if self.selected_layer is None or not self.is_active:
+        if self.editor.selected_layer is None or not self.is_active:
             return
         namespace, name = self.selected_object
         if namespace is None:
             return
-        layer = self.editor.current_map.get_layer(self.selected_layer)
+        layer = self.editor.current_map.get_layer(self.editor.selected_layer)
         location = self.editor.screen_coords_to_map_coords(
-            click_point, self.selected_layer
+            click_point, self.editor.selected_layer
         )
         coords = location.getLayerCoordinates()
         self.last_mouse_pos = location
@@ -692,9 +658,6 @@ class ObjectToolbar(ToolbarPage):
         self.namespaces = {}
         self.images = {}
         self.selected_object = [None, None]
-        self.layers = None
-        self.layers_combo.resetList()
-        self.layers_combo.setText("")
         if self.items:
             self.items_panel.destroyChild(self.items)
         self.items = self.items_panel.createChild("VerticalLayoutContainer",

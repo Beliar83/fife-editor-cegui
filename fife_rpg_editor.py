@@ -124,12 +124,11 @@ class EditorApplication(RPGApplicationCEGUI):
         layer_box.setHeight(PyCEGUI.UDim(0.175, 0.0))
         layer_box.setWidth(PyCEGUI.UDim(1.0, 0.0))
 
-        self.listbox = layer_box.createChild("TaharezLook/Listbox", "Listbox")
+        self.listbox = layer_box.createChild("TaharezLook/ItemListbox",
+                                             "Listbox")
+
         self.listbox.setHeight(PyCEGUI.UDim(0.99, 0.0))
         self.listbox.setWidth(PyCEGUI.UDim(0.99, 0.0))
-        self.listbox.setMultiselectEnabled(True)
-        self.listbox.subscribeEvent(PyCEGUI.Listbox.EventSelectionChanged,
-                                    self.cb_layer_selection_changed)
         self.show_agents_check = right_area_container.createChild("TaharezLook"
                                                                   "/Checkbox",
                                                                   "show_agents"
@@ -168,6 +167,14 @@ class EditorApplication(RPGApplicationCEGUI):
         PyCEGUI.FontManager.getSingleton().createFromFile("DejaVuSans-10.font")
         PyCEGUI.FontManager.getSingleton().createFromFile("DejaVuSans-12.font")
         PyCEGUI.FontManager.getSingleton().createFromFile("DejaVuSans-14.font")
+
+    @property
+    def selected_layer(self):
+        """Returns the currently selected layer"""
+        selected = self.listbox.getFirstSelectedItem()
+        if selected is not None:
+            return selected.getText().encode()
+        return None
 
     def setup(self):
         """Actions that should to be done with an active mode"""
@@ -841,13 +848,26 @@ class EditorApplication(RPGApplicationCEGUI):
             if self.current_map:
                 layers = self.current_map.fife_map.getLayers()
                 for layer in layers:
-                    item = PyCEGUI.ListboxTextItem(layer.getId())
-                    item.setSelectionBrushImage("TaharezLook/"
-                                                "MultiListSelectionBrush")
-                    self.listbox.addItem(item)
-                    item.setSelected(True)
+                    layer_name = layer.getId()
+                    item = self.listbox.createChild(
+                        "TaharezLook/CheckListboxItem",
+                        "layer_%s" % layer_name)
+                    checkbox = item.getChild(0)
+
+                    checkbox.setSelected(True)
+                    checkbox.subscribeEvent(
+                        PyCEGUI.ToggleButton.EventSelectStateChanged,
+                        # pylint:disable=cell-var-from-loop
+                        lambda args, layer=layer_name:
+                        # pylint:enable=cell-var-from-loop
+                        self.cb_layer_checkbox_changed(
+                            args, layer)
+                    )
+                    item.setText(layer_name)
+
                 if not self.show_agents_check.isSelected():
                     self.hide_map_entities(self.current_map.name)
+                self.listbox.performChildWindowLayout()
         except Exception as error:
             print error
             raise
@@ -864,13 +884,15 @@ class EditorApplication(RPGApplicationCEGUI):
         new_toolbar.activate()
         self.old_toolbar_index = index
 
-    def cb_layer_selection_changed(self, args):
-        """Called when the layer selection in the listbox changed"""
-        layers = self.current_map.fife_map.getLayers()
-        for layer in layers:
-            listitem = self.listbox.findItemWithText(layer.getId(), None)
-            is_selected = listitem.isSelected()
-            layer.setInstancesVisible(is_selected)
+    def cb_layer_checkbox_changed(self, args, layer_name):
+        """Called when a layer checkbox state was changed
+
+        Args:
+            layer_name: Name of the layer the checkbox is for
+        """
+        layer = self.current_map.fife_map.getLayer(layer_name)
+        is_selected = args.window.isSelected()
+        layer.setInstancesVisible(is_selected)
 
     def update_property_editor(self):
         """Update the property editor"""
@@ -1070,6 +1092,11 @@ class EditorApplication(RPGApplicationCEGUI):
             loader.loadImportFile(selected_file.encode())
             for callback in self._objects_imported_callbacks:
                 callback()
+
+    def cb_layerbox_item_click(self, args):
+        """Callback when an item was clicked in the layerbox"""
+        pass
+        args.window.setSelected(True)
 
 
 def update_settings(project, settings, values):
