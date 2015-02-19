@@ -1093,11 +1093,6 @@ class EditorApplication(RPGApplicationCEGUI):
             for callback in self._objects_imported_callbacks:
                 callback()
 
-    def cb_layerbox_item_click(self, args):
-        """Callback when an item was clicked in the layerbox"""
-        pass
-        args.window.setSelected(True)
-
 
 def update_settings(project, settings, values):
     """Update the fife-rpg settings of a project
