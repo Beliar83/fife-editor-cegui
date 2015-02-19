@@ -26,6 +26,7 @@ import PyCEGUI
 
 from fife.extensions.fife_settings import Setting
 from fife.fife import MapSaver, MapLoader
+from fife.fife import InstanceRenderer
 from fife_rpg import RPGApplicationCEGUI
 from fife.extensions.serializers import ET
 from fife.extensions.serializers.simplexml import (SimpleXMLSerializer,
@@ -944,6 +945,24 @@ class EditorApplication(RPGApplicationCEGUI):
                 "Instance", "StackPosition",
                 ("text",  visual.getStackPosition()))
 
+    def highlight_selected_object(self):
+        """Adds an outline to the currently selected object"""
+        if self.selected_object is None:
+            return
+        game_map = self.current_map
+        if game_map:
+            renderer = InstanceRenderer.getInstance(game_map.camera)
+            renderer.addOutlined(self.selected_object, 255, 255, 0, 1)
+
+    def reset_selected_hightlight(self):
+        """Removes the outline to the currently selected object"""
+        if self.selected_object is None:
+            return
+        game_map = self.current_map
+        if game_map:
+            renderer = InstanceRenderer.getInstance(game_map.camera)
+            renderer.removeOutlined(self.selected_object)
+
     def set_selected_object(self, obj):
         """Sets the selected object of the editor
 
@@ -951,7 +970,9 @@ class EditorApplication(RPGApplicationCEGUI):
 
             obj: The new object
         """
+        self.reset_selected_hightlight()
         self.selected_object = obj
+        self.highlight_selected_object()
         self.update_property_editor()
 
     def cb_value_changed(self, section, property_name, value):

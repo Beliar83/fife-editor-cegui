@@ -21,6 +21,7 @@
 """
 
 from fife import fife
+
 from fife_rpg.game_scene import GameSceneListener, GameSceneController
 
 
@@ -117,6 +118,9 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
             click_point = fife.ScreenPoint(event.getX(), event.getY())
             func(click_point)
         GameSceneListener.mouseMoved(self, event)
+        controller = self.gamecontroller
+        if controller is not None:
+            controller.application.highlight_selected_object()
 
     def keyPressed(self, event):  # pylint: disable=C0103,W0221
         """Called when a key was pressed
