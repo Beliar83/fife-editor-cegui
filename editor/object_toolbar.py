@@ -568,7 +568,8 @@ class ObjectToolbar(ToolbarPage):
         self.clean_mouse_instance()
         if self.editor.selected_layer is None or not self.is_active:
             return
-        if button == fife.MouseEvent.MIDDLE:
+        if (button == fife.MouseEvent.MIDDLE or
+                button == fife.MouseEvent.UNKNOWN_BUTTON):
             return
         namespace, name = self.selected_object
         if namespace is None and button == fife.MouseEvent.LEFT:
