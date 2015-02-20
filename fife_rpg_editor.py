@@ -481,8 +481,11 @@ class EditorApplication(RPGApplicationCEGUI):
         filename = fife_map.getFilename()
         old_dir = os.getcwd()
         os.chdir(self.project_dir)
-        import_list = [root_subfile(filename, i) for
-                       i in self.import_ref_count[map_name].iterkeys()]
+        if map_name in self.import_ref_count:
+            import_list = [root_subfile(filename, i) for
+                           i in self.import_ref_count[map_name].iterkeys()]
+        else:
+            import_list = []
         saver = MapSaver()
         saver.save(fife_map, filename, import_list)
         os.chdir(old_dir)
