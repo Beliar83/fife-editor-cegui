@@ -25,8 +25,9 @@ import yaml
 import PyCEGUI
 
 from fife.extensions.fife_settings import Setting
-from fife.fife import MapSaver, MapLoader
 from fife.fife import InstanceRenderer
+from fife.fife import MapSaver, MapLoader
+from fife.fife import Rect
 from fife_rpg import RPGApplicationCEGUI
 from fife.extensions.serializers import ET
 from fife.extensions.serializers.simplexml import (SimpleXMLSerializer,
@@ -50,6 +51,9 @@ from editor.basic_toolbar import BasicToolbar
 from editor.editor_scene import EditorController
 from editor.property_editor import PropertyEditor
 from editor.project_settings import ProjectSettings
+from editor.edit_map import MapOptions
+from editor.edit_layer import LayerOptions
+from editor.edit_camera import CameraOptions
 from editor.new_project import NewProject
 
 
@@ -82,6 +86,7 @@ class EditorApplication(RPGApplicationCEGUI):
             self.menubar = PyCEGUI.Menubar()
             self.file_menu = PyCEGUI.MenuItem()
             self.view_menu = PyCEGUI.MenuItem()
+            self.edit_menu = PyCEGUI.MenuItem()
             self.project_menu = PyCEGUI.MenuItem()
             self.toolbar = PyCEGUI.TabControl()
         cegui_system = PyCEGUI.System.getSingleton()
@@ -96,6 +101,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.file_close = None
         self.file_save = None
         self.file_p_settings = None
+        self.edit_menu = None
         self.view_menu = None
         self.view_maps_menu = None
         self.save_maps_popup = None
@@ -104,6 +110,8 @@ class EditorApplication(RPGApplicationCEGUI):
         self.project_menu = None
         self.file_import = None
         self.import_popup = None
+        self.edit_add = None
+        self.add_popup = None
 
         self.__loadData()
         window_manager = PyCEGUI.WindowManager.getSingleton()
@@ -253,12 +261,34 @@ class EditorApplication(RPGApplicationCEGUI):
         file_quit = file_popup.createChild("TaharezLook/MenuItem", "FileQuit")
         file_quit.setText(_("Quit"))
         file_quit.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_quit)
+
+        # Edit Menu
+
+        self.edit_menu = self.menubar.createChild("TaharezLook/MenuItem",
+                                                  "Edit")
+        self.edit_menu.setText(_("Edit"))
+        edit_popup = self.edit_menu.createChild("TaharezLook/PopupMenu",
+                                                "EditPopup")
+        edit_add = edit_popup.createChild("TaharezLook/MenuItem",
+                                          "Edit/Add")
+        edit_add.setText(_("Add") + "  ")
+        add_popup = edit_add.createChild("TaharezLook/PopupMenu",
+                                         "Edit/AddPopup")
+        self.add_popup = add_popup
+        add_map = add_popup.createChild("TaharezLook/MenuItem",
+                                        "Edit/Add/Map")
+        add_map.setText(_("Map"))
+        add_map.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_add_map)
+
+        self.edit_add = edit_add
+        self.edit_add.setEnabled(False)
+
         # View Menu
         self.view_menu = self.menubar.createChild("TaharezLook/MenuItem",
                                                   "View")
         self.view_menu.setText(_("View"))
         view_popup = self.view_menu.createChild("TaharezLook/PopupMenu",
-                                                "FilePopup")
+                                                "ViewPopup")
         view_maps = view_popup.createChild("TaharezLook/MenuItem", "ViewMaps")
         view_maps.setText(_("Maps") + "  ")
         self.view_maps_menu = view_maps.createChild("TaharezLook/PopupMenu",
@@ -326,6 +356,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.file_import.setEnabled(False)
         self.file_close.setEnabled(False)
         self.file_p_settings.setEnabled(False)
+        self.edit_add.setEnabled(False)
         self.reset_maps_menu()
         for callback in self._project_cleared_callbacks:
             callback()
@@ -371,6 +402,7 @@ class EditorApplication(RPGApplicationCEGUI):
             self.file_save.setEnabled(True)
             self.file_import.setEnabled(True)
             self.file_p_settings.setEnabled(True)
+            self.edit_add.setEnabled(True)
             return True
         return False
 
@@ -479,6 +511,12 @@ class EditorApplication(RPGApplicationCEGUI):
         game_map.update_entities_fife()
         fife_map = game_map.fife_map
         filename = fife_map.getFilename()
+        if not filename:
+            maps_path = self.settings.get(
+                "fife-rpg", "MapsPath", "maps")
+            filename = os.path.join(self.project_dir, maps_path,
+                                    "%s.xml" % map_name)
+
         old_dir = os.getcwd()
         os.chdir(self.project_dir)
         if map_name in self.import_ref_count:
@@ -1116,6 +1154,70 @@ class EditorApplication(RPGApplicationCEGUI):
             loader.loadImportFile(selected_file.encode())
             for callback in self._objects_imported_callbacks:
                 callback()
+
+    def cb_add_map(self, args):
+        """Callback when Map was clicked in the edit->Add menu"""
+        import Tkinter
+        import tkMessageBox
+
+        self.add_popup.closePopupMenu()
+        dialog = MapOptions(self)
+        values = dialog.show_modal(self.editor_window,
+                                   self.engine.pump)
+        if not dialog.return_value:
+            return
+        map_name = values["MapName"]
+        model = self.engine.getModel()
+        fife_map = None
+        try:
+            fife_map = model.createMap(map_name)
+        except RuntimeError as error:
+            window = Tkinter.Tk()
+            window.wm_withdraw()
+            tkMessageBox.showerror("Could not create map",
+                                   "Creation of the map failed with the "
+                                   "following FIFE Error: %s" % str(error))
+            return
+        grid_types = ["square", "hexagonal"]
+        dialog = LayerOptions(self, grid_types)
+        values = dialog.show_modal(self.editor_window,
+                                   self.engine.pump)
+        if not dialog.return_value:
+            model.deleteMap(fife_map)
+            return
+
+        layer_name = values["LayerName"]
+
+        cell_grid = model.getCellGrid(values["GridType"])
+        layer = fife_map.createLayer(layer_name, cell_grid)
+
+        resolution = self.settings.get("FIFE", "ScreenResolution",
+                                       "1024x768")
+        width, height = [int(s) for s in resolution.lower().split("x")]
+        viewport = Rect(0, 0, width, height)
+
+        camera_name = self.settings.get(
+            "fife-rpg", "Camera", "main")
+        camera = fife_map.addCamera(camera_name, layer, viewport)
+
+        dialog = CameraOptions(self, camera)
+        values = dialog.show_modal(self.editor_window,
+                                   self.engine.pump)
+        if not dialog.return_value:
+            model.deleteMap(fife_map)
+            return
+        camera.setId(values["CameraName"])
+        camera.setViewPort(values["ViewPort"])
+        camera.setRotation(values["Rotation"])
+        camera.setTilt(values["Tilt"])
+        cid = values["CellImageDimensions"]
+        camera.setCellImageDimensions(cid.x, cid.y)
+        renderer = InstanceRenderer.getInstance(camera)
+        renderer.activateAllLayers(fife_map)
+        game_map = GameMap(fife_map, map_name, camera_name, {}, self)
+
+        self.add_map(map_name, game_map)
+        self.reset_maps_menu()
 
 
 def update_settings(project, settings, values):
