@@ -12,8 +12,13 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Contains classes and functions for an empty dialog"""
+"""Contains classes and functions for an empty dialog
 
+.. module:: dialog
+    :synopsis: Classes and functions for an empty dialog
+
+.. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
+"""
 from abc import ABCMeta, abstractmethod
 
 import PyCEGUI

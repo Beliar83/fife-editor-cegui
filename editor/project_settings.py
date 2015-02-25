@@ -10,7 +10,13 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Contains classes and functions for a the project settings"""
+"""Contains classes and functions for a the project settings
+
+.. module:: project_settings
+    :synopsis: Classes and functions for a the project settings
+
+.. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
+"""
 
 import os
 

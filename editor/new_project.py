@@ -10,7 +10,14 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Contains classes and functions for a new project dialog"""
+"""Contains classes and functions for a new project dialog
+
+.. module:: new_project
+    :synopsis: Classes and functions for a new project dialog
+
+.. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
+"""
+
 import os
 
 import PyCEGUI

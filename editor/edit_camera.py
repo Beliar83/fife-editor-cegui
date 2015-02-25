@@ -10,7 +10,13 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Contains classes and functions for a map options dialog"""
+"""Contains classes and functions for a map options dialog
+
+.. module:: edit_camera
+    :synopsis: Classes and functions for a map options dialog
+
+.. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
+"""
 
 import PyCEGUI
 from fife.fife import Rect, Point

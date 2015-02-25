@@ -10,7 +10,13 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>
 
-"""Common functions, callbacks and other things"""
+"""Common functions, callbacks and other things
+
+.. module:: common
+    :synopsis: Common functions, callbacks and other things
+
+.. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
+"""
 
 import os
 
