@@ -54,7 +54,8 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
 
     def setup_cegui(self):
         """Sets up cegui events for the listener"""
-        main_container = self.gamecontroller.application.main_container
+        app = self.gamecontroller.application
+        main_container = app.editor_gui.main_container
         self.middle_container = main_container.getChild("MiddleContainer"
                                                         "/MiddleArea")
 

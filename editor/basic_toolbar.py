@@ -20,7 +20,6 @@
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
 
-import PyCEGUI
 from fife_rpg.game_scene import BaseOutliner
 
 from .toolbarpage import ToolbarPage
@@ -66,7 +65,7 @@ class BasicToolbar(ToolbarPage):
 
             button: The button that was clicked
         """
-        if self.editor.selected_layer is None or not self.is_active:
+        if self.editor.editor_gui.selected_layer is None or not self.is_active:
             return
         game_map = self.editor.current_map
         if game_map:
@@ -97,7 +96,7 @@ class BasicToolbarOutliner(BaseOutliner):
         """
         for instance in instances:
             inst_layer = instance.getLocationRef().getLayer().getId()
-            if self.toolbar.editor.selected_layer == inst_layer:
+            if self.toolbar.editor.editor_gui.selected_layer == inst_layer:
                 self.last_instance = instance
                 return ((instance, (255, 255, 255, 1)),)
         self.last_instance = None

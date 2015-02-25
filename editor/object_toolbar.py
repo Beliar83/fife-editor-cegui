@@ -566,7 +566,7 @@ class ObjectToolbar(ToolbarPage):
             button: The button that was clicked
         """
         self.clean_mouse_instance()
-        if self.editor.selected_layer is None or not self.is_active:
+        if self.editor.editor_gui.selected_layer is None or not self.is_active:
             return
         if (button == fife.MouseEvent.MIDDLE or
                 button == fife.MouseEvent.UNKNOWN_BUTTON):
@@ -574,9 +574,10 @@ class ObjectToolbar(ToolbarPage):
         namespace, name = self.selected_object
         if namespace is None and button == fife.MouseEvent.LEFT:
             return
-        layer = self.editor.current_map.get_layer(self.editor.selected_layer)
+        layer = self.editor.current_map.get_layer(
+            self.editor.editor_gui.selected_layer)
         location = self.editor.screen_coords_to_map_coords(
-            click_point, self.editor.selected_layer
+            click_point, self.editor.editor_gui.selected_layer
         )
         world = self.editor.world
         for instance in layer.getInstancesAt(location):
@@ -622,14 +623,15 @@ class ObjectToolbar(ToolbarPage):
         if not self.is_active:
             return
         self.clean_mouse_instance()
-        if self.editor.selected_layer is None or not self.is_active:
+        if self.editor.editor_gui.selected_layer is None or not self.is_active:
             return
         namespace, name = self.selected_object
         if namespace is None:
             return
-        layer = self.editor.current_map.get_layer(self.editor.selected_layer)
+        layer = self.editor.current_map.get_layer(
+            self.editor.editor_gui.selected_layer)
         location = self.editor.screen_coords_to_map_coords(
-            click_point, self.editor.selected_layer
+            click_point, self.editor.editor_gui.selected_layer
         )
         coords = location.getLayerCoordinates()
         self.last_mouse_pos = location
