@@ -28,8 +28,8 @@ class MapOptions(Dialog):
 
     """Class that displays a map options dialog"""
 
-    def __init__(self, editor, game_map=None):
-        Dialog.__init__(self, editor)
+    def __init__(self, app, game_map=None):
+        Dialog.__init__(self, app)
         self.m_name_editor = None
         self.game_map = game_map
 

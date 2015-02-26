@@ -31,9 +31,9 @@ class ProjectSettings(Dialog):
 
     """Class that displays a project settings dialog"""
 
-    def __init__(self, editor, project_settings, project_dir):
+    def __init__(self, app, project_settings, project_dir):
         """Constructor"""
-        Dialog.__init__(self, editor)
+        Dialog.__init__(self, app)
         self.d_camera_editor = None
         self.agt_path_editor = None
         self.agt_path_cb = None

@@ -247,9 +247,9 @@ class ObjectToolbar(ToolbarPage):
     DEFAULT_ALPHA = 0.75
     HIGHLIGHT_ALPHA = 1.0
 
-    def __init__(self, editor):
+    def __init__(self, app):
 
-        ToolbarPage.__init__(self, editor, "Objects")
+        ToolbarPage.__init__(self, app, "Objects")
 
         self.namespaces = {}
         self.images = {}
@@ -280,10 +280,10 @@ class ObjectToolbar(ToolbarPage):
         self.items_panel = items_panel
         self.items = None
         self.have_objects_changed = False
-        self.editor.add_map_switch_callback(self.cb_map_changed)
+        self.app.add_map_switch_callback(self.cb_map_changed)
         self.last_mouse_pos = None
         self.last_instance = None
-        mode = self.editor.current_mode
+        mode = self.app.current_mode
         mode.listener.add_callback("mouse_pressed",
                                    self.cb_map_clicked)
         mode.listener.add_callback("mouse_dragged",
@@ -292,8 +292,8 @@ class ObjectToolbar(ToolbarPage):
                                    self.cb_map_moved)
         mode.listener.add_callback("key_pressed",
                                    self.cb_key_pressed)
-        self.editor.add_project_clear_callback(self.cb_project_closed)
-        self.editor.add_objects_imported_callback(self.cb_objects_imported)
+        self.app.add_project_clear_callback(self.cb_project_closed)
+        self.app.add_objects_imported_callback(self.cb_objects_imported)
 
     def image_clicked(self, args):
         """Called when the user clicked on an image
@@ -339,7 +339,7 @@ class ObjectToolbar(ToolbarPage):
         self.namespaces = {}
         vec2f = PyCEGUI.Vector2f
         sizef = PyCEGUI.Sizef
-        model = self.editor.engine.getModel()
+        model = self.app.engine.getModel()
         namespaces = model.getNamespaces()
         for namespace in namespaces:
             self.namespaces[namespace] = {}
@@ -352,7 +352,7 @@ class ObjectToolbar(ToolbarPage):
                 if identifier in self.images:
                     namespace_def[identifier] = {}
                     continue
-                project_dir = self.editor.project_source
+                project_dir = self.app.project_source
                 object_filename = fife_object.getFilename()
                 filename = os.path.join(project_dir, object_filename)
                 objects = parse_file(filename)
@@ -545,7 +545,7 @@ class ObjectToolbar(ToolbarPage):
         self.is_active = False
 
     def cb_map_changed(self, old_map_name, new_map_name):
-        """Called when the map of the editor changed
+        """Called when the map of the app changed
 
             Args:
 
@@ -566,7 +566,7 @@ class ObjectToolbar(ToolbarPage):
             button: The button that was clicked
         """
         self.clean_mouse_instance()
-        if self.editor.editor_gui.selected_layer is None or not self.is_active:
+        if self.app.editor_gui.selected_layer is None or not self.is_active:
             return
         if (button == fife.MouseEvent.MIDDLE or
                 button == fife.MouseEvent.UNKNOWN_BUTTON):
@@ -574,34 +574,34 @@ class ObjectToolbar(ToolbarPage):
         namespace, name = self.selected_object
         if namespace is None and button == fife.MouseEvent.LEFT:
             return
-        layer = self.editor.current_map.get_layer(
-            self.editor.editor_gui.selected_layer)
-        location = self.editor.screen_coords_to_map_coords(
-            click_point, self.editor.editor_gui.selected_layer
+        layer = self.app.current_map.get_layer(
+            self.app.editor_gui.selected_layer)
+        location = self.app.screen_coords_to_map_coords(
+            click_point, self.app.editor_gui.selected_layer
         )
-        world = self.editor.world
+        world = self.app.world
         for instance in layer.getInstancesAt(location):
             if world.is_identifier_used(instance.getId()):
                 continue
             filename = instance.getObject().getFilename()
-            self.editor.decrease_refcount(filename)
+            self.app.decrease_refcount(filename)
             layer.deleteInstance(instance)
 
-        map_name = self.editor.current_map.name
-        if map_name not in self.editor.changed_maps:
-            self.editor.changed_maps.append(map_name)
+        map_name = self.app.current_map.name
+        if map_name not in self.app.changed_maps:
+            self.app.changed_maps.append(map_name)
 
         if button == fife.MouseEvent.RIGHT:
             return
-        fife_model = self.editor.engine.getModel()
+        fife_model = self.app.engine.getModel()
         map_object = fife_model.getObject(name, namespace)
         coords = location.getLayerCoordinates()
         instance = layer.createInstance(map_object, coords)
         instance.setRotation(self.cur_rotation)
         filename = instance.getObject().getFilename()
-        self.editor.increase_refcount(filename)
+        self.app.increase_refcount(filename)
         fife.InstanceVisual.create(instance)
-        self.editor.set_selected_object(instance)
+        self.app.set_selected_object(instance)
 
     def clean_mouse_instance(self):
         """Removes the instance that was created by mouse movement"""
@@ -623,19 +623,19 @@ class ObjectToolbar(ToolbarPage):
         if not self.is_active:
             return
         self.clean_mouse_instance()
-        if self.editor.editor_gui.selected_layer is None or not self.is_active:
+        if self.app.editor_gui.selected_layer is None or not self.is_active:
             return
         namespace, name = self.selected_object
         if namespace is None:
             return
-        layer = self.editor.current_map.get_layer(
-            self.editor.editor_gui.selected_layer)
-        location = self.editor.screen_coords_to_map_coords(
-            click_point, self.editor.editor_gui.selected_layer
+        layer = self.app.current_map.get_layer(
+            self.app.editor_gui.selected_layer)
+        location = self.app.screen_coords_to_map_coords(
+            click_point, self.app.editor_gui.selected_layer
         )
         coords = location.getLayerCoordinates()
         self.last_mouse_pos = location
-        fife_model = self.editor.engine.getModel()
+        fife_model = self.app.engine.getModel()
         map_object = fife_model.getObject(name, namespace)
         self.last_instance = layer.createInstance(map_object, coords)
         fife.InstanceVisual.create(self.last_instance)

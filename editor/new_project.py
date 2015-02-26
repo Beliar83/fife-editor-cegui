@@ -31,9 +31,9 @@ class NewProject(ProjectSettings):
 
     """Class that displays new project dialog"""
 
-    def __init__(self, editor):
+    def __init__(self, app):
         """Constructor"""
-        ProjectSettings.__init__(self, editor, None, "")
+        ProjectSettings.__init__(self, app, None, "")
         self.project_path_editor = None
 
     def setup_dialog(self, root):

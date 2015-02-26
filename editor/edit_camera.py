@@ -29,8 +29,8 @@ class CameraOptions(Dialog):
 
     """Class that displays a map options dialog"""
 
-    def __init__(self, editor, camera=None):
-        Dialog.__init__(self, editor)
+    def __init__(self, app, camera=None):
+        Dialog.__init__(self, app)
         self.camera = camera
         self.c_name_editor = None
         self.c_vp_x_editor = None

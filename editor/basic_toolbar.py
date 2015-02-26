@@ -29,11 +29,11 @@ class BasicToolbar(ToolbarPage):
 
     """A toolbar for basic actions, like selecting objects"""
 
-    def __init__(self, editor):
-        ToolbarPage.__init__(self, editor, "Basic")
+    def __init__(self, app):
+        ToolbarPage.__init__(self, app, "Basic")
         self.is_active = False
         self.outliner = BasicToolbarOutliner(self)
-        mode = self.editor.current_mode
+        mode = self.app.current_mode
         mode.listener.add_callback("mouse_pressed",
                                    self.cb_map_clicked)
 
@@ -44,14 +44,14 @@ class BasicToolbar(ToolbarPage):
     def activate(self):
         """Called when the page gets activated"""
         self.is_active = True
-        mode = self.editor.current_mode
+        mode = self.app.current_mode
         mode.outliner = self.outliner
         mode.listener.is_outlined = True
 
     def deactivate(self):
         """Called when the page gets deactivated"""
         self.is_active = False
-        mode = self.editor.current_mode
+        mode = self.app.current_mode
         mode.outliner = None
         mode.listener.is_outlined = False
 
@@ -65,13 +65,13 @@ class BasicToolbar(ToolbarPage):
 
             button: The button that was clicked
         """
-        if self.editor.editor_gui.selected_layer is None or not self.is_active:
+        if self.app.editor_gui.selected_layer is None or not self.is_active:
             return
-        game_map = self.editor.current_map
+        game_map = self.app.current_map
         if game_map:
             instance = self.outliner.last_instance
             if instance is not None:
-                self.editor.set_selected_object(instance)
+                self.app.set_selected_object(instance)
 
 
 class BasicToolbarOutliner(BaseOutliner):
@@ -96,7 +96,7 @@ class BasicToolbarOutliner(BaseOutliner):
         """
         for instance in instances:
             inst_layer = instance.getLocationRef().getLayer().getId()
-            if self.toolbar.editor.editor_gui.selected_layer == inst_layer:
+            if self.toolbar.app.editor_gui.selected_layer == inst_layer:
                 self.last_instance = instance
                 return ((instance, (255, 255, 255, 1)),)
         self.last_instance = None

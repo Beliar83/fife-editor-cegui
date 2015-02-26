@@ -29,11 +29,11 @@ class Dialog(object):  # pylint: disable=abstract-class-not-used
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, editor):
+    def __init__(self, app):
         """Constructor"""
         self._retval = None
         self.window = None
-        self.editor = editor
+        self.app = app
         self.__area = None
         self.__dialog_title = None
         self.__ok_btn = None
@@ -128,7 +128,7 @@ class Dialog(object):  # pylint: disable=abstract-class-not-used
         self.window.setModalState(True)
         while self.return_value is None:
             proc_func()
-            if self.editor.quitRequested:
+            if self.app.quitRequested:
                 return None
             is_valid = False
             try:

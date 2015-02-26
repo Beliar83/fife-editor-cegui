@@ -28,11 +28,11 @@ class ToolbarPage(object):
     """The base class for toolbars, sets up the basic gui"""
 
     # pylint: disable=unused-argument
-    def __init__(self, editor, name, metaclass=ABCMeta):
+    def __init__(self, app, name, metaclass=ABCMeta):
         if False:  # FOR IDEs
             from fife_rpg_editor import EditorApplication
-            self.editor = EditorApplication(None)
-        self.editor = editor
+            self.app = EditorApplication(None)
+        self.app = app
         window_manager = PyCEGUI.WindowManager.getSingleton()
         self.name = name
         self.gui = window_manager.loadLayoutFromFile("toolbar_page.layout")

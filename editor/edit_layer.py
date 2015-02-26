@@ -28,8 +28,8 @@ class LayerOptions(Dialog):
 
     """Class that displays a layer options dialog"""
 
-    def __init__(self, editor, grid_types, layer=None):
-        Dialog.__init__(self, editor)
+    def __init__(self, app, grid_types, layer=None):
+        Dialog.__init__(self, app)
         self.layer = layer
         self.grid_types = grid_types
         self.l_name_editor = None
