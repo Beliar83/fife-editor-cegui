@@ -46,6 +46,7 @@ from fife_rpg.map import Map as GameMap
 from fife_rpg.entities import RPGEntity
 
 from editor.editor_gui import EditorGui
+from editor.editor import Editor
 from editor.editor_scene import EditorController
 from editor.project_settings import ProjectSettings
 
@@ -89,7 +90,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.entities = {}
         self._objects_imported_callbacks = []
         self.selected_object = None
-
+        self.editor = Editor(self.engine)
         self.editor_gui = EditorGui(self)
 
     def setup(self):
@@ -186,18 +187,8 @@ class EditorApplication(RPGApplicationCEGUI):
             print error
             raise
 
-    def import_object(self, filename):
-        """Imports an object from an object file
-
-        Args:
-
-            filenam: The object file to load
-        """
-        loader = MapLoader(self.engine.getModel(),
-                           self.engine.getVFS(),
-                           self.engine.getImageManager(),
-                           self.engine.getRenderBackend())
-        loader.loadImportFile(filename)
+    def objects_imported(self):
+        """Should be called when an object was imported"""
         for callback in self._objects_imported_callbacks:
             callback()
 
@@ -218,9 +209,8 @@ class EditorApplication(RPGApplicationCEGUI):
         ActionManager.clear_commands()
         SystemManager.clear_systems()
         BehaviourManager.clear_behaviours()
-        model = self.engine.getModel()
-        model.deleteObjects()
-        model.deleteMaps()
+        self.editor.delete_objects()
+        self.editor.delete_maps()
         if self.project_source is not None:
             self.engine.getVFS().removeSource(self.project_source)
             self.project_source = None

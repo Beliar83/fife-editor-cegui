@@ -46,10 +46,12 @@ class EditorGui(object):
 
     """Creates and handles the editor GUI"""
 
-    def __init__(self, editor):
-        if False:
+    def __init__(self, app):
+        if False:  # Only for IDEs
             from fife_rpg_editor import EditorApplication
-            self.editor = EditorApplication(None)
+            from .editor import Editor
+            self.app = EditorApplication(None)
+            self.editor = Editor(None)
             self.editor_window = PyCEGUI.DefaultWindow()
             self.main_container = PyCEGUI.VerticalLayoutContainer()
             self.menubar = PyCEGUI.Menubar()
@@ -76,7 +78,8 @@ class EditorGui(object):
         self.edit_add = None
         self.add_popup = None
 
-        self.editor = editor
+        self.app = app
+        self.editor = app.editor
 
         cegui_system = PyCEGUI.System.getSingleton()
         cegui_system.getDefaultGUIContext().setDefaultTooltipType(
@@ -126,7 +129,7 @@ class EditorGui(object):
             self.editor_window)
         self.toolbars = {}
         self.main_container.layout()
-        self.editor.add_project_clear_callback(self.cb_project_cleared)
+        self.app.add_project_clear_callback(self.cb_project_cleared)
 
     @property
     def selected_layer(self):
@@ -274,7 +277,7 @@ class EditorGui(object):
 
     def update_layerlist(self):
         """Update the layerlist to the layers of the current map"""
-        layers = self.editor.current_map.fife_map.getLayers()
+        layers = self.app.current_map.fife_map.getLayers()
         for layer in layers:
             layer_name = layer.getId()
             item = self.listbox.createChild(
@@ -292,7 +295,7 @@ class EditorGui(object):
 
     def create_toolbars(self):
         """Creates the editors toolbars"""
-        new_toolbar = BasicToolbar(self.editor)
+        new_toolbar = BasicToolbar(self.app)
         if new_toolbar.name in self.toolbars:
             raise RuntimeError("Toolbar with name %s already exists" %
                                (new_toolbar.name))
@@ -300,7 +303,7 @@ class EditorGui(object):
         self.toolbars[new_toolbar.name] = new_toolbar
         gui = new_toolbar.gui
         self.toolbar.addTab(gui)
-        new_toolbar = ObjectToolbar(self.editor)
+        new_toolbar = ObjectToolbar(self.app)
         if new_toolbar.name in self.toolbars:
             raise RuntimeError("Toolbar with name %s already exists" %
                                (new_toolbar.name))
@@ -319,8 +322,8 @@ class EditorGui(object):
         """Update the property editor"""
         property_editor = self.property_editor
         property_editor.clear_properties()
-        identifier = self.editor.selected_object.getId()
-        world = self.editor.world
+        identifier = self.app.selected_object.getId()
+        world = self.app.world
         components = ComponentManager.get_components()
         if world.is_identifier_used(identifier):
             entity = world.get_entity(identifier)
@@ -350,17 +353,17 @@ class EditorGui(object):
                 ("text", identifier))
             property_editor.add_property(
                 "Instance", "CostId",
-                ("text", self.editor.selected_object.getCostId()))
+                ("text", self.app.selected_object.getCostId()))
             property_editor.add_property(
                 "Instance", "Cost",
-                ("text", self.editor.selected_object.getCost()))
+                ("text", self.app.selected_object.getCost()))
             property_editor.add_property(
                 "Instance", "Blocking",
-                ("check", self.editor.selected_object.isBlocking()))
+                ("check", self.app.selected_object.isBlocking()))
             property_editor.add_property(
                 "Instance", "Rotation",
-                ("text", self.editor.selected_object.getRotation()))
-            visual = self.editor.selected_object.get2dGfxVisual()
+                ("text", self.app.selected_object.getRotation()))
+            visual = self.app.selected_object.get2dGfxVisual()
             property_editor.add_property(
                 "Instance", "StackPosition",
                 ("text",  visual.getStackPosition()))
@@ -372,7 +375,7 @@ class EditorGui(object):
         item = menu.createChild("TaharezLook/MenuItem", "NoMap")
         item.setUserData(None)
         item.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_map_switch)
-        if self.editor.current_map is None:
+        if self.app.current_map is None:
             item.setText("+" + _("No Map"))
         else:
             item.setText("   " + _("No Map"))
@@ -382,13 +385,13 @@ class EditorGui(object):
         item.setText(_("All"))
         item.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
                             self.cb_save_maps_all)
-        for game_map in self.editor.maps.iterkeys():
+        for game_map in self.app.maps.iterkeys():
             item = menu.createChild("TaharezLook/MenuItem", game_map)
             item.setUserData(game_map)
             item.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
                                 self.cb_map_switch)
-            if (self.editor.current_map is not None and
-                    self.editor.current_map.name is game_map):
+            if (self.app.current_map is not None and
+                    self.app.current_map.name is game_map):
                 item.setText("+" + game_map)
             else:
                 item.setText("   " + game_map)
@@ -416,18 +419,18 @@ class EditorGui(object):
         Args:
             layer_name: Name of the layer the checkbox is for
         """
-        layer = self.editor.current_map.fife_map.getLayer(layer_name)
+        layer = self.app.current_map.fife_map.getLayer(layer_name)
         is_selected = args.window.isSelected()
         layer.setInstancesVisible(is_selected)
 
     def cb_quit(self, args):
         """Callback when quit was clicked in the file menu"""
-        self.editor.quit()
+        self.app.quit()
 
     def cb_close(self, args):
         """Callback when close was clicked in the file menu"""
         # TODO: Ask to save project/files
-        self.editor.clear()
+        self.app.clear()
 
     def cb_new(self, args):
         """Callback when new was clicked in the file menu"""
@@ -435,9 +438,9 @@ class EditorGui(object):
         import tkMessageBox
         window = Tkinter.Tk()
         window.wm_withdraw()
-        dialog = NewProject(self.editor)
+        dialog = NewProject(self.app)
         values = dialog.show_modal(self.editor_window,
-                                   self.editor.engine.pump)
+                                   self.app.engine.pump)
         if not dialog.return_value:
             return
         new_project_path = values["ProjectPath"]
@@ -454,36 +457,36 @@ class EditorGui(object):
             if not answer:
                 return
             os.remove(settings_path)
-        self.editor.new_project(settings_path, values)
+        self.app.new_project(settings_path, values)
 
     def cb_save_all(self, args):
         """Callback when save->all was clicked in the file menu"""
-        self.editor.project.save()
-        self.editor.save_all_maps()
-        self.editor.save_entities()
+        self.app.project.save()
+        self.app.save_all_maps()
+        self.app.save_entities()
         self.save_popup.closePopupMenu()
 
     def cb_save_project(self, args):
         """Callback when save->project was clicked in the file menu"""
-        self.editor.project.save()
+        self.app.project.save()
         self.save_popup.closePopupMenu()
 
     def cb_save_maps_all(self, args):
         """Callback when save->maps->all was clicked in the file menu"""
-        self.editor.save_all_maps()
+        self.app.save_all_maps()
         self.save_popup.closePopupMenu()
         self.save_maps_popup.closePopupMenu()
 
     def cb_save_map(self, args):
         """Callback when save->maps->map_name was clicked in the file menu"""
         map_name = args.window.getUserData()
-        self.editor.save_map(map_name)
+        self.app.save_map(map_name)
         self.save_popup.closePopupMenu()
         self.save_maps_popup.closePopupMenu()
 
     def cb_save_entities(self, args):
         """Callback when save->entities was clicked in the file menu"""
-        self.editor.save_entities()
+        self.app.save_entities()
 
     def cb_open(self, args):
         """Callback when open was clicked in the file menu"""
@@ -501,7 +504,7 @@ class EditorGui(object):
             # tkinter may be missing
             selected_file = ""
         if selected_file:
-            loaded = self.editor.try_load_project(selected_file)
+            loaded = self.app.try_load_project(selected_file)
             if not loaded:
                 project = SimpleXMLSerializer(selected_file)
                 try:
@@ -516,8 +519,8 @@ class EditorGui(object):
                       selected_file))
                 if not answer:
                     return
-                bak_file = self.editor.convert_fife_project(selected_file)
-                if not self.editor.try_load_project(selected_file):
+                bak_file = self.app.convert_fife_project(selected_file)
+                if not self.app.try_load_project(selected_file):
                     tkMessageBox.showerror("Load Error",
                                            "There was a problem loading the "
                                            "converted project. Reverting. "
@@ -540,13 +543,13 @@ class EditorGui(object):
 
     def cb_project_settings(self, args):
         """Callback when project settings was clicked in the file menu"""
-        self.editor.edit_project_settings(self.editor.project_dir,
-                                          self.editor.project)
+        self.app.edit_project_settings(self.app.project_dir,
+                                       self.app.project)
 
     def cb_map_switch(self, args):
         """Callback when a map from the menu was clicked"""
         self.view_maps_menu.closePopupMenu()
-        self.editor.switch_map(args.window.getUserData())
+        self.app.switch_map(args.window.getUserData())
         self.reset_maps_menu()
 
     def cb_import_objects(self, args):
@@ -561,7 +564,7 @@ class EditorGui(object):
         try:
             selected_file = tkFileDialog.askopenfilename(
                 filetypes=[("fife object definition", ".xml",)],
-                initialdir=self.editor.project_dir,
+                initialdir=self.app.project_dir,
                 title="import objects")
         except ImportError:
             # tkinter may be missing
@@ -569,8 +572,9 @@ class EditorGui(object):
 
         if selected_file:
             selected_file = os.path.relpath(selected_file,
-                                            self.editor.project_dir)
-            self.editor.import_object(selected_file)
+                                            self.app.project_dir)
+            self.editor.import_object(selected_file.encode())
+            self.app.objects_imported()
 
     def cb_add_map(self, args):
         """Callback when Map was clicked in the edit->Add menu"""
@@ -578,16 +582,15 @@ class EditorGui(object):
         import tkMessageBox
 
         self.add_popup.closePopupMenu()
-        dialog = MapOptions(self.editor)
+        dialog = MapOptions(self.app)
         values = dialog.show_modal(self.editor_window,
-                                   self.editor.engine.pump)
+                                   self.app.engine.pump)
         if not dialog.return_value:
             return
         map_name = values["MapName"]
-        model = self.editor.engine.getModel()
         fife_map = None
         try:
-            fife_map = model.createMap(map_name)
+            fife_map = self.editor.create_map(map_name)
         except RuntimeError as error:
             window = Tkinter.Tk()
             window.wm_withdraw()
@@ -596,32 +599,32 @@ class EditorGui(object):
                                    "following FIFE Error: %s" % str(error))
             return
         grid_types = ["square", "hexagonal"]
-        dialog = LayerOptions(self.editor, grid_types)
+        dialog = LayerOptions(self.app, grid_types)
         values = dialog.show_modal(self.editor_window,
-                                   self.editor.engine.pump)
+                                   self.app.engine.pump)
         if not dialog.return_value:
-            model.deleteMap(fife_map)
+            self.editor.delete_map(fife_map)
             return
 
         layer_name = values["LayerName"]
 
-        cell_grid = model.getCellGrid(values["GridType"])
-        layer = fife_map.createLayer(layer_name, cell_grid)
+        cell_grid = values["GridType"]
+        layer = self.editor.create_layer(map_name, layer_name, cell_grid)
 
-        resolution = self.editor.settings.get("FIFE", "ScreenResolution",
-                                              "1024x768")
+        resolution = self.app.settings.get("FIFE", "ScreenResolution",
+                                           "1024x768")
         width, height = [int(s) for s in resolution.lower().split("x")]
         viewport = Rect(0, 0, width, height)
 
-        camera_name = self.editor.settings.get(
+        camera_name = self.app.settings.get(
             "fife-rpg", "Camera", "main")
         camera = fife_map.addCamera(camera_name, layer, viewport)
 
-        dialog = CameraOptions(self.editor, camera)
+        dialog = CameraOptions(self.app, camera)
         values = dialog.show_modal(self.editor_window,
-                                   self.editor.engine.pump)
+                                   self.app.engine.pump)
         if not dialog.return_value:
-            model.deleteMap(fife_map)
+            self.editor.delete_map(fife_map)
             return
         camera.setId(values["CameraName"])
         camera.setViewPort(values["ViewPort"])
@@ -633,7 +636,7 @@ class EditorGui(object):
         renderer.activateAllLayers(fife_map)
         game_map = GameMap(fife_map, map_name, camera_name, {}, self)
 
-        self.editor.add_map(map_name, game_map)
+        self.app.add_map(map_name, game_map)
         self.reset_maps_menu()
 
     def cb_project_cleared(self):
@@ -651,12 +654,12 @@ class EditorGui(object):
 
     def cb_show_agent_selection_changed(self, args):
         """Called when the "Show Entities" checkbox was changed"""
-        if self.editor.current_map is None:
+        if self.app.current_map is None:
             return
         if self.show_agents_check.isSelected():
-            self.editor.show_map_entities(self.editor.current_map.name)
+            self.app.show_map_entities(self.app.current_map.name)
         else:
-            self.editor.hide_map_entities(self.editor.current_map.name)
+            self.app.hide_map_entities(self.app.current_map.name)
 
     def cb_value_changed(self, section, property_name, value):
         """Called when the value of a property changed
@@ -669,8 +672,8 @@ class EditorGui(object):
 
             value: The new value of the property
         """
-        identifier = self.editor.selected_object.getId()
-        world = self.editor.world
+        identifier = self.app.selected_object.getId()
+        world = self.app.world
         if world.is_identifier_used(identifier):
             entity = world.get_entity(identifier)
             com_data = getattr(entity, section)
@@ -678,38 +681,38 @@ class EditorGui(object):
                 if isinstance(value, basestring):
                     value = yaml.load(value)
                 setattr(com_data, property_name, value)
-                self.editor.update_agents(self.editor.current_map)
+                self.app.update_agents(self.app.current_map)
             except (ValueError, yaml.parser.ParserError):
                 pass
         else:
             if section != "Instance":
                 return
             if property_name == "Identifier":
-                self.editor.selected_object.setId(value)
+                self.app.selected_object.setId(value)
             elif property_name == "CostId":
-                cur_cost = self.editor.selected_object.getCost()
+                cur_cost = self.app.selected_object.getCost()
                 try:
                     value = value.encode()
-                    self.editor.selected_object.setCost(value, cur_cost)
+                    self.app.selected_object.setCost(value, cur_cost)
                 except UnicodeEncodeError:
                     print "The CostId has to be an ascii value"
             elif property_name == "Cost":
-                cur_cost_id = self.editor.selected_object.getCostId()
+                cur_cost_id = self.app.selected_object.getCostId()
                 try:
-                    self.editor.selected_object.setCost(cur_cost_id,
-                                                        float(value))
+                    self.app.selected_object.setCost(cur_cost_id,
+                                                     float(value))
                 except ValueError:
                     pass
             elif property_name == "Blocking":
-                self.editor.selected_object.setBlocking(value)
+                self.app.selected_object.setBlocking(value)
             elif property_name == "Rotation":
                 try:
-                    self.editor.selected_object.setRotation(int(value))
+                    self.app.selected_object.setRotation(int(value))
                 except ValueError:
                     pass
             elif property_name == "StackPosition":
                 try:
-                    visual = self.editor.selected_object.get2dGfxVisual()
+                    visual = self.app.selected_object.get2dGfxVisual()
                     visual.setStackPosition(int(value))
                 except ValueError:
                     pass
