@@ -48,6 +48,8 @@ class EditorGui(object):
 
     def __init__(self, editor):
         if False:
+            from fife_rpg_editor import EditorApplication
+            self.editor = EditorApplication(None)
             self.editor_window = PyCEGUI.DefaultWindow()
             self.main_container = PyCEGUI.VerticalLayoutContainer()
             self.menubar = PyCEGUI.Menubar()
@@ -433,8 +435,8 @@ class EditorGui(object):
         import tkMessageBox
         window = Tkinter.Tk()
         window.wm_withdraw()
-        dialog = NewProject(self)
-        values = dialog.show_modal(self.editor.editor_window,
+        dialog = NewProject(self.editor)
+        values = dialog.show_modal(self.editor_window,
                                    self.editor.engine.pump)
         if not dialog.return_value:
             return
@@ -576,8 +578,8 @@ class EditorGui(object):
         import tkMessageBox
 
         self.add_popup.closePopupMenu()
-        dialog = MapOptions(self)
-        values = dialog.show_modal(self.editor.editor_window,
+        dialog = MapOptions(self.editor)
+        values = dialog.show_modal(self.editor_window,
                                    self.editor.engine.pump)
         if not dialog.return_value:
             return
@@ -594,8 +596,8 @@ class EditorGui(object):
                                    "following FIFE Error: %s" % str(error))
             return
         grid_types = ["square", "hexagonal"]
-        dialog = LayerOptions(self, grid_types)
-        values = dialog.show_modal(self.editor.editor_window,
+        dialog = LayerOptions(self.editor, grid_types)
+        values = dialog.show_modal(self.editor_window,
                                    self.editor.engine.pump)
         if not dialog.return_value:
             model.deleteMap(fife_map)
@@ -615,8 +617,8 @@ class EditorGui(object):
             "fife-rpg", "Camera", "main")
         camera = fife_map.addCamera(camera_name, layer, viewport)
 
-        dialog = CameraOptions(self, camera)
-        values = dialog.show_modal(self.editor.editor_window,
+        dialog = CameraOptions(self.editor, camera)
+        values = dialog.show_modal(self.editor_window,
                                    self.editor.engine.pump)
         if not dialog.return_value:
             model.deleteMap(fife_map)
