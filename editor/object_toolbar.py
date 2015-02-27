@@ -582,8 +582,7 @@ class ObjectToolbar(ToolbarPage):
         for instance in layer.getInstancesAt(location):
             if world.is_identifier_used(instance.getId()):
                 continue
-            filename = instance.getObject().getFilename()
-            self.app.decrease_refcount(filename)
+
             self.app.editor.delete_instance(instance)
 
         map_name = self.app.current_map.name
@@ -597,8 +596,6 @@ class ObjectToolbar(ToolbarPage):
         instance = self.app.editor.create_instance(layer, coords,
                                                    object_data)
         instance.setRotation(self.cur_rotation)
-        filename = instance.getObject().getFilename()
-        self.app.increase_refcount(filename)
         fife.InstanceVisual.create(instance)
         self.app.set_selected_object(instance)
 

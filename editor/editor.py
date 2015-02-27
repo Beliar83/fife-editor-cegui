@@ -35,6 +35,11 @@ class Editor(object):
                                            engine.getVFS(),
                                            engine.getImageManager(),
                                            engine.getRenderBackend())
+        self.__import_ref_count = {}
+
+    def reset_data(self):
+        """Resets the internal data of the editor instance"""
+        self.__import_ref_count = {}
 
     def create_map(self, identifier):
         """Creates a new map.
@@ -358,8 +363,12 @@ class Editor(object):
         if not isinstance(object_or_object_data, fife.Object):
             object_or_object_data = self.__model.getObject(
                 *object_or_object_data)
-        return layer_or_layer_data.createInstance(object_or_object_data,
-                                                  coords, identifier or "")
+        instance = layer_or_layer_data.createInstance(object_or_object_data,
+                                                      coords, identifier or "")
+        tmp_filename = instance.getObject().getFilename()
+        tmp_map_name = layer_or_layer_data.getMap().getId()
+        self.increase_refcount(tmp_filename, tmp_map_name)
+        return instance
 
     def delete_instance(self, instance_or_identifier,
                         layer_or_layer_data=None):
@@ -390,6 +399,9 @@ class Editor(object):
         else:
             tmp_location = instance_or_identifier.getLocation()
             layer_or_layer_data = tmp_location.getLayer()
+        filename = instance_or_identifier.getObject().getFilename()
+        map_name = layer_or_layer_data.getMap().getId()
+        self.decrease_refcount(filename, map_name)
         layer_or_layer_data.deleteInstance(instance_or_identifier)
 
     def delete_instances_of_map(self, map_or_identifier=None):
@@ -512,3 +524,49 @@ class Editor(object):
         for layer in layers:
             instances.append(self.get_instances_of_layer(layer))
         return instances
+
+    def increase_refcount(self, filename, map_name=None):
+        """Increase reference count for a file on a map
+
+        Args:
+
+            filename: The filename the reference counter is for
+
+            Map: The map the reference counter is for
+        """
+        if map_name not in self.__import_ref_count:
+            self.__import_ref_count[map_name] = {}
+        ref_count = self.__import_ref_count[map_name]
+        if filename in ref_count:
+            ref_count[filename] += 1
+        else:
+            ref_count[filename] = 1
+
+    def decrease_refcount(self, filename, map_name):
+        """Decrease reference count for a file on a map
+
+        Args:
+
+            filename: The filename the reference counter is for
+
+            Map: The map the reference counter is for
+        """
+        if map_name not in self.__import_ref_count:
+            return
+        ref_count = self.__import_ref_count[map_name]
+        if filename in ref_count:
+            ref_count[filename] -= 1
+            if ref_count[filename] <= 0:
+                del ref_count[filename]
+
+    def get_import_list(self, map_name):
+        """Returns the import files of the given map
+
+        Args:
+
+            map_name: The name of the map to the the imports for
+        """
+        if map_name in self.__import_ref_count:
+            return self.__import_ref_count[map_name].iterkeys()
+        else:
+            return []

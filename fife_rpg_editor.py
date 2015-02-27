@@ -29,7 +29,7 @@ from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
 
 from fife.extensions.fife_settings import Setting
 from fife.fife import InstanceRenderer
-from fife.fife import MapSaver, MapLoader
+from fife.fife import MapSaver
 from fife_rpg import RPGApplicationCEGUI
 from fife.extensions.serializers import ET
 from fife.extensions.serializers.simplexml import (SimpleXMLSerializer,
@@ -82,7 +82,6 @@ class EditorApplication(RPGApplicationCEGUI):
         self.project_dir = None
         self.editor_gui = None
 
-        self.import_ref_count = {}
         self.changed_maps = []
         self._project_cleared_callbacks = []
         self.add_map_load_callback(self.cb_map_loaded)
@@ -243,7 +242,6 @@ class EditorApplication(RPGApplicationCEGUI):
             self.project_source = project_dir
             self.project_dir = project_dir
             self.load_project_settings()
-            self.import_ref_count = {}
             self.changed_maps = []
             try:
                 old_dir = os.getcwd()
@@ -261,40 +259,6 @@ class EditorApplication(RPGApplicationCEGUI):
         del project_settings["ProjectName"]
         for setting, value in project_settings.iteritems():
             self.settings.set("fife-rpg", setting, value)
-
-    def increase_refcount(self, filename, map_name=None):
-        """Increase reference count for a file on a map
-
-        Args:
-
-            filename: The filename the reference counter is for
-
-            Map: The map the reference counter is for
-        """
-        map_name = map_name or self.current_map.name
-        if map_name not in self.import_ref_count:
-            self.import_ref_count[map_name] = {}
-        ref_count = self.import_ref_count[map_name]
-        if filename in ref_count:
-            ref_count[filename] += 1
-        else:
-            ref_count[filename] = 1
-
-    def decrease_refcount(self, filename, map_name=None):
-        """Decrease reference count for a file on a map
-
-        Args:
-
-            filename: The filename the reference counter is for
-
-            Map: The map the reference counter is for
-        """
-        map_name = map_name or self.current_map.name
-        ref_count = self.import_ref_count[map_name]
-        if filename in ref_count:
-            ref_count[filename] -= 1
-            if ref_count[filename] <= 0:
-                del ref_count[filename]
 
     def save_map(self, map_name=None):
         """Save the current state of the map
@@ -332,11 +296,8 @@ class EditorApplication(RPGApplicationCEGUI):
 
         old_dir = os.getcwd()
         os.chdir(self.project_dir)
-        if map_name in self.import_ref_count:
-            import_list = [root_subfile(filename, i) for
-                           i in self.import_ref_count[map_name].iterkeys()]
-        else:
-            import_list = []
+        import_list = [root_subfile(filename, i) for
+                       i in self.editor.get_import_list(fife_map.getId())]
         saver = MapSaver()
         saver.save(fife_map, filename, import_list)
         os.chdir(old_dir)
@@ -571,8 +532,8 @@ class EditorApplication(RPGApplicationCEGUI):
         for layer in fife_map.getLayers():
             for instance in layer.getInstances():
                 filename = instance.getObject().getFilename()
-                map_name = game_map.name
-                self.increase_refcount(filename, map_name)
+                map_name = fife_map.getId()
+                self.editor.increase_refcount(filename, map_name)
 
     def hide_map_entities(self, map_name):
         """Hides the entities of all maps
