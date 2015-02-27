@@ -325,3 +325,190 @@ class Editor(object):
             namespace: The name of the namespace
         """
         return self.__model.getObjects(namespace)
+
+    def create_instance(self, layer_or_layer_data, coords,
+                        object_or_object_data, identifier=None):
+        """Creates a new instance on the given layer at the given coords using
+        the given object.
+
+        Args:
+
+            layer_or_layer_data: The layer or a tuple with 2 items: The name
+            of the layer and the map of the layer as a string or an map
+            instance.
+
+            coords: The coordinates of the new instance.
+            fife.ModelCoordinate or fife.ExactModelCoordinate instance or
+            a 3 item tuple with number values.
+
+            object_or_object_data: Either a fife.Object instance or a tuple
+            with the name and namespace, in that order,
+            of the object to use for the instance.
+
+            identifier: The name of the new instance.
+        """
+        if not isinstance(layer_or_layer_data, fife.Layer):
+            layer_or_layer_data = self.get_layer(layer_or_layer_data[1],
+                                                 layer_or_layer_data[0])
+        try:
+            iter(coords)
+            coords = fife.ExactModelCoordinate(*coords)
+        except TypeError:
+            pass
+        if not isinstance(object_or_object_data, fife.Object):
+            object_or_object_data = self.__model.getObject(
+                *object_or_object_data)
+        return layer_or_layer_data.createInstance(object_or_object_data,
+                                                  coords, identifier or "")
+
+    def delete_instance(self, instance_or_identifier,
+                        layer_or_layer_data=None):
+        """Removes an instance
+
+        Args:
+
+            instance_or_identifier: The instance or the name of the instance
+
+            layer_or_layer_data: The layer or a tuple with 2 items: The name
+            of the layer and the map of the layer as a string or an map
+            instance.
+            Ignored if instance is an actual instance.
+
+        Raises:
+
+            ValueError if there was no map with that identifier.
+
+        """
+        if not isinstance(instance_or_identifier, fife.Instance):
+            instance_or_identifier = self.get_instance(instance_or_identifier,
+                                                       layer_or_layer_data)
+            if not isinstance(layer_or_layer_data, fife.Layer):
+                layer_or_layer_data = layer_or_layer_data[0]
+                map_or_identifier = layer_or_layer_data[1]
+                layer_or_layer_data = self.get_layer(map_or_identifier,
+                                                     layer_or_layer_data)
+        else:
+            tmp_location = instance_or_identifier.getLocation()
+            layer_or_layer_data = tmp_location.getLayer()
+        layer_or_layer_data.deleteInstance(instance_or_identifier)
+
+    def delete_instances_of_map(self, map_or_identifier=None):
+        """Deletes all instances of the given layer.
+
+        Returns:
+
+            True if instances could be deleted, False if there is a map with
+            instances.
+
+        Raises:
+
+            ValueError if there was no map with that identifier.
+        """
+        instances = self.get_instances_of_map(map_or_identifier)
+        success = True
+        for instance in instances:
+            if not self.delete_instance(instance):
+                success = False
+        return success
+
+    def delete_instances_of_layer(self, layer_or_layer_data):
+        """Deletes all instances of the given layer.
+
+        Args:
+
+            layer_or_layer_data: The layer or a tuple with 2 items: The name
+            of the layer and the map of the layer as a string or an map
+            instance.
+
+        Returns:
+
+            True if instances could be deleted, False if there is a map with
+            instances.
+
+        Raises:
+
+            ValueError if there was no map with that identifier.
+        """
+        instances = self.get_instances_of_layer(layer_or_layer_data)
+        success = True
+        for instance in instances:
+            if not self.delete_instance(instance):
+                success = False
+        return success
+
+    def get_instance(self, identifier, layer_or_identifier=None,
+                     map_or_identifier=None):
+        """Returns an instance from a layer or a map
+
+        Args:
+
+            identifier: The name of the instance
+
+            layer_or_identifier: The layer the instance is on or the name of
+            the layer.
+            If set to None the whole map will be searched.
+
+            map_or_identifier: The map of the layer or the name of the map.
+            Ignored if layer is an layer instance.
+
+        Returns:
+
+            The first instance with the given name on the given layer.
+
+        Raises:
+
+            ValueError if there was no map with that identifier.
+        """
+        if layer_or_identifier is None:
+            layers = self.get_layers(map_or_identifier)
+            for layer in layers:
+                instance = self.get_instance(identifier, layer)
+                if instance is not None:
+                    return instance
+            return None
+        else:
+            if not isinstance(layer_or_identifier, fife.Layer):
+                layer_or_identifier = self.get_layer(map_or_identifier,
+                                                     layer_or_identifier)
+            return layer_or_identifier.getInstance(identifier)
+
+    def get_instances_of_layer(self, layer_or_layer_data,
+                               instance_identifier=None):
+        """Returns a list of the instances of a layer
+
+        Args:
+
+            layer_or_layer_data: The layer or a tuple with 2 items: The name
+            of the layer and the map of the layer as a string or an map
+            instance.
+
+            instance_identifier: If set only return instances with the given
+            identifier.
+
+        Raises:
+
+            ValueError if there was no map with that identifier.
+        """
+        if not isinstance(layer_or_layer_data, fife.Layer):
+            layer_or_layer_data = self.get_layer(layer_or_layer_data[1],
+                                                 layer_or_layer_data[0])
+        return layer_or_layer_data.getInstances(instance_identifier)
+
+    def get_instances_of_map(self, map_or_identifier):
+        """Returns a list of the instances of a map
+
+        Args:
+
+
+            map_or_identifier: The map of the layer or the name of the map.
+            Ignored if layer is an layer instance.
+
+        Raises:
+
+            ValueError if there was no map with that identifier.
+        """
+        layers = self.get_layers(map_or_identifier)
+        instances = []
+        for layer in layers:
+            instances.append(self.get_instances_of_layer(layer))
+        return instances

@@ -571,8 +571,7 @@ class ObjectToolbar(ToolbarPage):
         if (button == fife.MouseEvent.MIDDLE or
                 button == fife.MouseEvent.UNKNOWN_BUTTON):
             return
-        namespace, name = self.selected_object
-        if namespace is None and button == fife.MouseEvent.LEFT:
+        if self.selected_object[0] is None and button == fife.MouseEvent.LEFT:
             return
         layer = self.app.current_map.get_layer(
             self.app.editor_gui.selected_layer)
@@ -585,7 +584,7 @@ class ObjectToolbar(ToolbarPage):
                 continue
             filename = instance.getObject().getFilename()
             self.app.decrease_refcount(filename)
-            layer.deleteInstance(instance)
+            self.app.editor.delete_instance(instance)
 
         map_name = self.app.current_map.name
         if map_name not in self.app.changed_maps:
@@ -593,10 +592,10 @@ class ObjectToolbar(ToolbarPage):
 
         if button == fife.MouseEvent.RIGHT:
             return
-        fife_model = self.app.engine.getModel()
-        map_object = fife_model.getObject(name, namespace)
         coords = location.getLayerCoordinates()
-        instance = layer.createInstance(map_object, coords)
+        object_data = reversed(self.selected_object)
+        instance = self.app.editor.create_instance(layer, coords,
+                                                   object_data)
         instance.setRotation(self.cur_rotation)
         filename = instance.getObject().getFilename()
         self.app.increase_refcount(filename)
@@ -606,9 +605,7 @@ class ObjectToolbar(ToolbarPage):
     def clean_mouse_instance(self):
         """Removes the instance that was created by mouse movement"""
         if self.last_instance is not None:
-            last_loc = self.last_instance.getLocation()
-            last_layer = last_loc.getLayer()
-            last_layer.deleteInstance(self.last_instance)
+            self.app.editor.delete_instance(self.last_instance)
         self.last_instance = None
         self.last_mouse_pos = None
 
@@ -625,8 +622,7 @@ class ObjectToolbar(ToolbarPage):
         self.clean_mouse_instance()
         if self.app.editor_gui.selected_layer is None or not self.is_active:
             return
-        namespace, name = self.selected_object
-        if namespace is None:
+        if self.selected_object[0] is None:
             return
         layer = self.app.current_map.get_layer(
             self.app.editor_gui.selected_layer)
@@ -635,9 +631,9 @@ class ObjectToolbar(ToolbarPage):
         )
         coords = location.getLayerCoordinates()
         self.last_mouse_pos = location
-        fife_model = self.app.engine.getModel()
-        map_object = fife_model.getObject(name, namespace)
-        self.last_instance = layer.createInstance(map_object, coords)
+        object_data = reversed(self.selected_object)
+        self.last_instance = self.app.editor.create_instance(layer, coords,
+                                                             object_data)
         fife.InstanceVisual.create(self.last_instance)
         self.last_instance.setRotation(self.cur_rotation)
 
