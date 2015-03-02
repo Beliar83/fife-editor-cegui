@@ -461,14 +461,14 @@ class EditorGui(object):
 
     def cb_save_all(self, args):
         """Callback when save->all was clicked in the file menu"""
-        self.app.project.save()
         self.app.save_all_maps()
         self.app.save_entities()
+        self.app.save_project()
         self.save_popup.closePopupMenu()
 
     def cb_save_project(self, args):
         """Callback when save->project was clicked in the file menu"""
-        self.app.project.save()
+        self.app.save_project()
         self.save_popup.closePopupMenu()
 
     def cb_save_maps_all(self, args):

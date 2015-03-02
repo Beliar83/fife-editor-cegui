@@ -22,6 +22,8 @@
 
 import os
 import yaml
+from copy import copy
+
 # pylint: disable=unused-import
 import PyCEGUI  # @UnusedImport # PyCEGUI won't work otherwise (on windows)
 from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
@@ -495,6 +497,23 @@ class EditorApplication(RPGApplicationCEGUI):
                 os.chdir(old_dir)
             return True
         return False
+
+    def save_project(self):
+        """Saves the current project"""
+        self.project.save()
+        maps = copy(self.maps)
+        for game_map in self.maps.itervalues():
+            if isinstance(game_map, GameMap):
+                fife_map = game_map.fife_map
+                filename = os.path.split(fife_map.getFilename())[-1]
+                map_name = os.path.splitext(filename)[0]
+                maps[game_map.name] = map_name
+        save_data = {"Maps": maps}
+        maps_path = self.settings.get("fife-rpg", "MapsPath", "maps")
+        maps_filename = os.path.join(self.project_dir, maps_path, "maps.yaml")
+        maps_file = file(maps_filename, "w")
+        yaml.dump(save_data, maps_file, default_flow_style=False)
+        maps_file.close()
 
     def highlight_selected_object(self):
         """Adds an outline to the currently selected object"""
