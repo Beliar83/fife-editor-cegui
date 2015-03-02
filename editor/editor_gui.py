@@ -637,6 +637,7 @@ class EditorGui(object):
         game_map = GameMap(fife_map, map_name, camera_name, {}, self.app)
 
         self.app.add_map(map_name, game_map)
+        self.app.changed_maps.append(map_name)
         self.reset_maps_menu()
 
     def cb_project_cleared(self):
