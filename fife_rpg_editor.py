@@ -183,7 +183,6 @@ class EditorApplication(RPGApplicationCEGUI):
 
                 if not self.editor_gui.show_agents_check.isSelected():
                     self.hide_map_entities(self.current_map.name)
-                self.editor_gui.listbox.performChildWindowLayout()
         except Exception as error:
             print error
             raise

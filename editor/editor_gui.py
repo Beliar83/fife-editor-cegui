@@ -292,6 +292,7 @@ class EditorGui(object):
                     self.cb_layer_checkbox_changed(args, layer))
             # pylint:enable=cell-var-from-loop
             item.setText(layer_name)
+        self.listbox.performChildWindowLayout()
 
     def create_toolbars(self):
         """Creates the editors toolbars"""
