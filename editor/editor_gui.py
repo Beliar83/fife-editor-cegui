@@ -634,7 +634,7 @@ class EditorGui(object):
         camera.setCellImageDimensions(cid.x, cid.y)
         renderer = InstanceRenderer.getInstance(camera)
         renderer.activateAllLayers(fife_map)
-        game_map = GameMap(fife_map, map_name, camera_name, {}, self)
+        game_map = GameMap(fife_map, map_name, camera_name, {}, self.app)
 
         self.app.add_map(map_name, game_map)
         self.reset_maps_menu()
