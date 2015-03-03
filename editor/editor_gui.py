@@ -101,14 +101,53 @@ class EditorGui(object):
         layer_box = right_area_container.createChild("TaharezLook/GroupBox",
                                                      "layer_box")
         layer_box.setText("Layers")
-        layer_box.setHeight(PyCEGUI.UDim(0.175, 0.0))
+        layer_box.setHeight(PyCEGUI.UDim(0.275, 0.0))
         layer_box.setWidth(PyCEGUI.UDim(1.0, 0.0))
+        layer_box_layout = layer_box.createChild("VerticalLayoutContainer",
+                                                 "layer_box_layout")
 
-        self.listbox = layer_box.createChild("TaharezLook/ItemListbox",
-                                             "Listbox")
+        self.listbox = layer_box_layout.createChild("TaharezLook/ItemListbox",
+                                                    "Listbox")
 
-        self.listbox.setHeight(PyCEGUI.UDim(0.99, 0.0))
+        self.listbox.setHeight(PyCEGUI.UDim(0.79, 0.0))
         self.listbox.setWidth(PyCEGUI.UDim(0.99, 0.0))
+        self.listbox.subscribeEvent(PyCEGUI.ItemListbox.EventSelectionChanged,
+                                    self.cb_layer_box_changed)
+        self.listbox.subscribeEvent(
+            PyCEGUI.ItemListBase.EventListContentsChanged,
+            self.cb_layer_box_changed)
+
+        layer_edit_layout = layer_box_layout.createChild("HorizontalLayout"
+                                                         "Container",
+                                                         "layer_edit_layout")
+        layer_edit_layout.setHeight(PyCEGUI.UDim(0.15, 0.0))
+        layer_edit_layout.setWidth(PyCEGUI.UDim(0.99, 0.0))
+        add_layer_button = layer_edit_layout.createChild("TaharezLook/Button",
+                                                         "add_layer")
+        add_layer_button.setWidth(PyCEGUI.UDim(0.25, 0.0))
+        add_layer_button.setText("+")
+        add_layer_button.setEnabled(False)
+        add_layer_button.subscribeEvent(PyCEGUI.ButtonBase.EventActivated,
+                                        self.cb_add_layer_activated)
+        self.add_layer_button = add_layer_button
+        delete_layer_button = layer_edit_layout.createChild("TaharezLook"
+                                                            "/Button",
+                                                            "delete_layer")
+        delete_layer_button.setWidth(PyCEGUI.UDim(0.25, 0.0))
+        delete_layer_button.setText("-")
+        delete_layer_button.setEnabled(False)
+        delete_layer_button.subscribeEvent(PyCEGUI.ButtonBase.EventActivated,
+                                           self.cb_delete_layer_activated)
+        self.delete_layer_button = delete_layer_button
+        edit_layer_button = layer_edit_layout.createChild("TaharezLook/Button",
+                                                          "edit_layer")
+        edit_layer_button.setWidth(PyCEGUI.UDim(0.5, 0.0))
+        edit_layer_button.setText(_("Options"))
+        edit_layer_button.setEnabled(False)
+        edit_layer_button.subscribeEvent(PyCEGUI.ButtonBase.EventActivated,
+                                         self.cb_edit_layer_activated)
+
+        self.edit_layer_button = edit_layer_button
         self.show_agents_check = right_area_container.createChild("TaharezLook"
                                                                   "/Checkbox",
                                                                   "show_agents"
@@ -130,6 +169,7 @@ class EditorGui(object):
         self.toolbars = {}
         self.main_container.layout()
         self.app.add_project_clear_callback(self.cb_project_cleared)
+        self.app.add_map_switch_callback(self.cb_map_switched)
 
     @property
     def selected_layer(self):
@@ -375,7 +415,8 @@ class EditorGui(object):
         menu.resetList()
         item = menu.createChild("TaharezLook/MenuItem", "NoMap")
         item.setUserData(None)
-        item.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_map_switch)
+        item.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                            self.cb_map_switch_clicked)
         if self.app.current_map is None:
             item.setText("+" + _("No Map"))
         else:
@@ -390,7 +431,7 @@ class EditorGui(object):
             item = menu.createChild("TaharezLook/MenuItem", game_map)
             item.setUserData(game_map)
             item.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
-                                self.cb_map_switch)
+                                self.cb_map_switch_clicked)
             if (self.app.current_map is not None and
                     self.app.current_map.name is game_map):
                 item.setText("+" + game_map)
@@ -547,7 +588,7 @@ class EditorGui(object):
         self.app.edit_project_settings(self.app.project_dir,
                                        self.app.project)
 
-    def cb_map_switch(self, args):
+    def cb_map_switch_clicked(self, args):
         """Callback when a map from the menu was clicked"""
         self.view_maps_menu.closePopupMenu()
         self.app.switch_map(args.window.getUserData())
@@ -577,6 +618,47 @@ class EditorGui(object):
             self.editor.import_object(selected_file.encode())
             self.app.objects_imported()
 
+    def show_layer_dialog(self, layer=None):
+        """Show the dialog to edit the settings of a layer
+
+        Args:
+
+            layer: Optional argument to fill the fields with the values
+            of an existing layer.
+        """
+        grid_types = ["square", "hexagonal"]
+        dialog = LayerOptions(self.app, grid_types, layer)
+        values = dialog.show_modal(self.editor_window, self.app.engine.pump)
+        if not dialog.return_value:
+            return None
+        return values
+
+    def create_layer(self, map_name):
+        """Show the layer dialog and create a new layer on the given map
+        with the values entered into it.
+
+        Args:
+            map_name: The identifier of the map where the layer should be
+            added to
+
+        Raises:
+
+            ValueError if the there is already a layer with that name on the
+            map or if there was no map with that identifier
+
+        Returns:
+
+            The created layer
+
+        """
+        values = self.show_layer_dialog()
+        if not values:
+            return None
+        layer_name = values["LayerName"]
+        cell_grid = values["GridType"]
+        layer = self.editor.create_layer(map_name, layer_name, cell_grid)
+        return layer
+
     def cb_add_map(self, args):
         """Callback when Map was clicked in the edit->Add menu"""
         import Tkinter
@@ -599,18 +681,11 @@ class EditorGui(object):
                                    "Creation of the map failed with the "
                                    "following FIFE Error: %s" % str(error))
             return
-        grid_types = ["square", "hexagonal"]
-        dialog = LayerOptions(self.app, grid_types)
-        values = dialog.show_modal(self.editor_window,
-                                   self.app.engine.pump)
-        if not dialog.return_value:
+        layer = self.create_layer(map_name)
+
+        if layer is None:
             self.editor.delete_map(fife_map)
             return
-
-        layer_name = values["LayerName"]
-
-        cell_grid = values["GridType"]
-        layer = self.editor.create_layer(map_name, layer_name, cell_grid)
 
         resolution = self.app.settings.get("FIFE", "ScreenResolution",
                                            "1024x768")
@@ -719,3 +794,80 @@ class EditorGui(object):
                 except ValueError:
                     pass
         self.update_property_editor()
+
+    def cb_layer_box_changed(self, args):
+        """Called when something at the layerbox was changed
+
+        Args:
+
+            args: PyCEGUI.WindowEventArgs
+        """
+        is_selected = args.window.getSelectedCount() > 0
+
+        self.delete_layer_button.setEnabled(is_selected)
+        self.edit_layer_button.setEnabled(is_selected)
+
+    def cb_add_layer_activated(self, args):
+        """Called when the + Button in the layer box was clicked
+
+        Args:
+
+            args: PyCEGUI.WindowEventArgs
+        """
+        try:
+            current_map = self.app.current_map
+            layer = self.create_layer(current_map.fife_map.getId())
+            renderer = InstanceRenderer.getInstance(current_map.camera)
+            renderer.addActiveLayer(layer)
+        except ValueError:
+            import Tkinter
+            import tkMessageBox
+            window = Tkinter.Tk()
+            window.wm_withdraw()
+            tkMessageBox.showerror("Error",
+                                   "There is already a layer with that name.")
+            return
+        self.reset_layerlist()
+        self.update_layerlist()
+
+    def cb_delete_layer_activated(self, args):
+        """Called when the - Button in the layer box was clicked
+
+        Args:
+
+            args: PyCEGUI.WindowEventArgs
+        """
+        self.editor.delete_layer(self.app.current_map.fife_map.getId(),
+                                 self.selected_layer)
+        self.reset_layerlist()
+        self.update_layerlist()
+
+    def cb_edit_layer_activated(self, args):
+        """Called when the Edit Button in the layer box was clicked
+
+        Args:
+
+            args: PyCEGUI.WindowEventArgs
+        """
+        layer = self.editor.get_layer(self.app.current_map.fife_map.getId(),
+                                      self.selected_layer)
+        values = self.show_layer_dialog(layer)
+        if not values:
+            return None
+        layer_name = values["LayerName"]
+        cell_grid = self.editor.get_cell_grid(values["GridType"])
+        layer.setId(layer_name)
+        layer.setCellGrid(cell_grid)
+        self.reset_layerlist()
+        self.update_layerlist()
+
+    def cb_map_switched(self, old_map, new_map_name):
+        """Called when the app switched to another map.
+
+        Args:
+
+          old_map: The map that was active before the switch
+
+          new_map_name: The name of the new_map
+        """
+        self.add_layer_button.setEnabled(new_map_name is not None)

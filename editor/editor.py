@@ -98,6 +98,15 @@ class Editor(object):
         """Returns the number of maps"""
         return self.__model.getMapCount()
 
+    def get_cell_grid(self, grid_type):
+        """Returns the cell grid with the given name
+
+        Args:
+
+            grid_type: Name of the cell grid
+        """
+        return self.__model.getCellGrid(grid_type)
+
     def create_layer(self, fife_map_id, layer_name, grid_type):
         """Creates a new layer on a map
 
@@ -109,14 +118,10 @@ class Editor(object):
 
             grid_type: A fife.CellGrid or the name of the Grid
 
-        Raise:
-
-            ValueError if the there is already a layer with that name on the
-            map.
-
         Raises:
 
-            ValueError if there was no map with that identifier
+            ValueError if the there is already a layer with that name on the
+            map or if there was no map with that identifier
 
         Returns:
 
@@ -133,7 +138,7 @@ class Editor(object):
                 "The map %s already has a layer named %s" % (
                     fife_map.getId(), layer_name))
         if not isinstance(grid_type, fife.CellGrid):
-            grid_type = self.__model.getCellGrid(grid_type)
+            grid_type = self.get_cell_grid(grid_type)
         return fife_map.createLayer(layer_name, grid_type)
 
     def delete_layer(self, fife_map_id, layer):
