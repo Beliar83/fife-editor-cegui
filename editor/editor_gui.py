@@ -81,6 +81,10 @@ class EditorGui(object):
         self.app = app
         self.editor = app.editor
 
+        import Tkinter
+        self.window = Tkinter.Tk()
+        self.window.wm_withdraw()
+
         cegui_system = PyCEGUI.System.getSingleton()
         cegui_system.getDefaultGUIContext().setDefaultTooltipType(
             "TaharezLook/Tooltip")
@@ -476,10 +480,7 @@ class EditorGui(object):
 
     def cb_new(self, args):
         """Callback when new was clicked in the file menu"""
-        import Tkinter
         import tkMessageBox
-        window = Tkinter.Tk()
-        window.wm_withdraw()
         dialog = NewProject(self.app)
         values = dialog.show_modal(self.editor_window,
                                    self.app.engine.pump)
@@ -532,11 +533,8 @@ class EditorGui(object):
 
     def cb_open(self, args):
         """Callback when open was clicked in the file menu"""
-        import Tkinter
         import tkFileDialog
         import tkMessageBox
-        window = Tkinter.Tk()
-        window.wm_withdraw()
         # Based on code from unknown-horizons
         try:
             selected_file = tkFileDialog.askopenfilename(
@@ -597,10 +595,7 @@ class EditorGui(object):
     def cb_import_objects(self, args):
         """Callback when objects was clicked in the file->import menu"""
         self.import_popup.closePopupMenu()
-        import Tkinter
         import tkFileDialog
-        window = Tkinter.Tk()
-        window.wm_withdraw()
 
         # Based on code from unknown-horizons
         try:
@@ -661,7 +656,6 @@ class EditorGui(object):
 
     def cb_add_map(self, args):
         """Callback when Map was clicked in the edit->Add menu"""
-        import Tkinter
         import tkMessageBox
 
         self.add_popup.closePopupMenu()
@@ -675,8 +669,6 @@ class EditorGui(object):
         try:
             fife_map = self.editor.create_map(map_name)
         except RuntimeError as error:
-            window = Tkinter.Tk()
-            window.wm_withdraw()
             tkMessageBox.showerror("Could not create map",
                                    "Creation of the map failed with the "
                                    "following FIFE Error: %s" % str(error))
@@ -820,10 +812,7 @@ class EditorGui(object):
             renderer = InstanceRenderer.getInstance(current_map.camera)
             renderer.addActiveLayer(layer)
         except ValueError:
-            import Tkinter
             import tkMessageBox
-            window = Tkinter.Tk()
-            window.wm_withdraw()
             tkMessageBox.showerror("Error",
                                    "There is already a layer with that name.")
             return

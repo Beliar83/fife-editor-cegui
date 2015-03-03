@@ -116,10 +116,7 @@ def select_path(title, initialdir=None):
 
         initialdir: The directory the dialog starts in
     """
-    import Tkinter
     import tkFileDialog
-    window = Tkinter.Tk()
-    window.wm_withdraw()
     return tkFileDialog.askdirectory(title=title, initialdir=initialdir)
 
 
@@ -131,10 +128,7 @@ def ask_create_path(path):
         path: The path that should be created - Will not be checked if really
         nonexistent.
     """
-    import Tkinter
     import tkMessageBox
-    window = Tkinter.Tk()
-    window.wm_withdraw()
     answer = tkMessageBox.askyesno(
         _("Create path"),
         _("Path does not exist, create it? "

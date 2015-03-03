@@ -641,10 +641,7 @@ class ProjectSettings(Dialog):
 
             filetypes: The available file types
         """
-        import Tkinter
         import tkFileDialog
-        window = Tkinter.Tk()
-        window.wm_withdraw()
         selected_file = tkFileDialog.askopenfilename(
             filetypes=filetypes,
             title="Open file",

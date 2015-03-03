@@ -322,7 +322,7 @@ class ObjectToolbar(ToolbarPage):
             # iconify window instead of closing
             window.protocol("WM_DELETE_WINDOW", window.iconify)
             window.attributes("-topmost", 1, "-disabled", 1)
-            window.title("Unknown Horizons")
+            window.title("FIFErpg Editor")
             window.maxsize(300, 150)
             label = Tkinter.Label(window, padx=10,
                                   text=_("Updating Objects"))

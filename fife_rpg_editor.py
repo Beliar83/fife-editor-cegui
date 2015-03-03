@@ -144,10 +144,7 @@ class EditorApplication(RPGApplicationCEGUI):
 
             values: The starting values of the project.
         """
-        import Tkinter
         import tkMessageBox
-        window = Tkinter.Tk()
-        window.wm_withdraw()
         settings_file = file(settings_path, "w")
         settings_file.write(BASIC_SETTINGS)
         settings_file.close()
