@@ -826,7 +826,13 @@ class EditorGui(object):
 
             args: PyCEGUI.WindowEventArgs
         """
-        self.editor.delete_layer(self.app.current_map.fife_map.getId(),
+        map_id = self.app.current_map.fife_map.getId()
+        if self.editor.get_layer_count(map_id) <= 1:
+            import tkMessageBox
+            tkMessageBox.showerror(_("Error"),
+                                   _("Cannot delete the last layer"))
+            return
+        self.editor.delete_layer(map_id,
                                  self.selected_layer)
         self.reset_layerlist()
         self.update_layerlist()
