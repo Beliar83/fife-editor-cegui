@@ -545,7 +545,7 @@ class EditorApplication(RPGApplicationCEGUI):
         """Callback for when a map was loaded"""
 
         fife_map = game_map.fife_map
-        for layer in fife_map.getLayers():
+        for layer in self.editor.get_layers(fife_map):
             for instance in layer.getInstances():
                 filename = instance.getObject().getFilename()
                 map_name = fife_map.getId()

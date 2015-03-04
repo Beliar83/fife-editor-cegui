@@ -321,7 +321,7 @@ class EditorGui(object):
 
     def update_layerlist(self):
         """Update the layerlist to the layers of the current map"""
-        layers = self.app.current_map.fife_map.getLayers()
+        layers = self.app.editor.get_layers(self.app.current_map.fife_map)
         for layer in layers:
             layer_name = layer.getId()
             item = self.listbox.createChild(
