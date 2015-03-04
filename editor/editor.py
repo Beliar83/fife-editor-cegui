@@ -72,6 +72,10 @@ class Editor(object):
         Args:
 
             map_or_identifier: A fife.Map instance or the name of the map
+
+        Raises:
+
+            ValueError if there was no map with that identifier
         """
         if not isinstance(map_or_identifier, fife.Map):
             map_or_identifier = self.get_map(map_or_identifier)
@@ -91,8 +95,16 @@ class Editor(object):
         Args:
 
             identifier: The name of the map
+
+        Raises:
+
+            ValueError if there was no map with that identifier
         """
-        return self.__model.getMap(identifier)
+        try:
+            return self.__model.getMap(identifier)
+        except RuntimeError:
+            raise ValueError("A map with the id %s could not be found" % (
+                             identifier))
 
     def get_map_count(self):
         """Returns the number of maps"""
@@ -127,10 +139,7 @@ class Editor(object):
 
             The created layer
         """
-        fife_map = self.__model.getMap(fife_map_id)
-        if not fife_map:
-            raise ValueError("A map with the id %s could not be found" % (
-                             fife_map_id))
+        fife_map = self.get_map(fife_map_id)
         if 0:  # Just for IDEs
             assert isinstance(fife_map, fife.Map)
         if fife_map.getLayer(layer_name):
@@ -154,10 +163,7 @@ class Editor(object):
 
             ValueError if there was no map with that identifier
         """
-        fife_map = self.__model.getMap(fife_map_id)
-        if not fife_map:
-            raise ValueError("A map with the id %s could not be found" % (
-                             fife_map_id))
+        fife_map = self.get_map(fife_map_id)
         if 0:  # Just for IDEs
             assert isinstance(fife_map, fife.Map)
         if not isinstance(layer, fife.Layer):
@@ -175,10 +181,7 @@ class Editor(object):
 
             ValueError if there was no map with that identifier
         """
-        fife_map = self.__model.getMap(fife_map_id)
-        if not fife_map:
-            raise ValueError("A map with the id %s could not be found" % (
-                             fife_map_id))
+        fife_map = self.__model.get_map(fife_map_id)
         if 0:  # Just for IDEs
             assert isinstance(fife_map, fife.Map)
         fife_map.deleteLayers()
@@ -194,10 +197,7 @@ class Editor(object):
 
             ValueError if there was no map with that identifier
         """
-        fife_map = self.__model.getMap(fife_map_id)
-        if not fife_map:
-            raise ValueError("A map with the id %s could not be found" % (
-                             fife_map_id))
+        fife_map = self.__model.get_map(fife_map_id)
         if 0:  # Just for IDEs
             assert isinstance(fife_map, fife.Map)
         return fife_map.getLayers()
@@ -219,10 +219,7 @@ class Editor(object):
 
             The layer, if present on the map.
         """
-        fife_map = self.__model.getMap(fife_map_id)
-        if not fife_map:
-            raise ValueError("A map with the id %s could not be found" % (
-                             fife_map_id))
+        fife_map = self.__model.get_map(fife_map_id)
         if 0:  # Just for IDEs
             assert isinstance(fife_map, fife.Map)
         return fife_map.getLayer(layer)
@@ -240,10 +237,7 @@ class Editor(object):
 
             ValueError if there was no map with that identifier
         """
-        fife_map = self.__model.getMap(fife_map_id)
-        if not fife_map:
-            raise ValueError("A map with the id %s could not be found" % (
-                             fife_map_id))
+        fife_map = self.__model.get_map(fife_map_id)
         if 0:  # Just for IDEs
             assert isinstance(fife_map, fife.Map)
         return fife_map.getLayerCount()
