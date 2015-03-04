@@ -186,21 +186,20 @@ class Editor(object):
             assert isinstance(fife_map, fife.Map)
         fife_map.deleteLayers()
 
-    def get_layers(self, fife_map_id):
+    def get_layers(self, map_or_identifier):
         """Returns a list of the layers of a map
 
         Args:
 
-            fife_map_id: A fife.Map or the identifier of the map
+            map_or_identifier: A fife.Map or the identifier of the map
 
         Raises:
 
             ValueError if there was no map with that identifier
         """
-        fife_map = self.get_map(fife_map_id)
-        if 0:  # Just for IDEs
-            assert isinstance(fife_map, fife.Map)
-        return fife_map.getLayers()
+        if not isinstance(map_or_identifier, fife.Map):
+            map_or_identifier = self.get_map(map_or_identifier)
+        return map_or_identifier.getLayers()
 
     def get_layer(self, fife_map_id, layer):
         """Get a layer from a map
