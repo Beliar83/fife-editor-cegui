@@ -89,9 +89,9 @@ class Dialog(object):  # pylint: disable=abstract-class-not-used
         cancel_btn.setWidth(PyCEGUI.UDim(0.0, text_width + 30))
         cancel_btn.setMargin(btn_margin)
 
-        ok_btn.subscribeEvent(PyCEGUI.ButtonBase.EventActivated, self.cb_ok)
+        ok_btn.subscribeEvent(PyCEGUI.PushButton.EventClicked, self.cb_ok)
 
-        cancel_btn.subscribeEvent(PyCEGUI.ButtonBase.EventActivated,
+        cancel_btn.subscribeEvent(PyCEGUI.PushButton.EventClicked,
                                   self.cb_cancel)
 
     @abstractmethod

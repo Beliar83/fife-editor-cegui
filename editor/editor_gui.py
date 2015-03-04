@@ -131,7 +131,7 @@ class EditorGui(object):
         add_layer_button.setWidth(PyCEGUI.UDim(0.25, 0.0))
         add_layer_button.setText("+")
         add_layer_button.setEnabled(False)
-        add_layer_button.subscribeEvent(PyCEGUI.ButtonBase.EventActivated,
+        add_layer_button.subscribeEvent(PyCEGUI.PushButton.EventClicked,
                                         self.cb_add_layer_activated)
         self.add_layer_button = add_layer_button
         delete_layer_button = layer_edit_layout.createChild("TaharezLook"
@@ -140,7 +140,7 @@ class EditorGui(object):
         delete_layer_button.setWidth(PyCEGUI.UDim(0.25, 0.0))
         delete_layer_button.setText("-")
         delete_layer_button.setEnabled(False)
-        delete_layer_button.subscribeEvent(PyCEGUI.ButtonBase.EventActivated,
+        delete_layer_button.subscribeEvent(PyCEGUI.PushButton.EventClicked,
                                            self.cb_delete_layer_activated)
         self.delete_layer_button = delete_layer_button
         edit_layer_button = layer_edit_layout.createChild("TaharezLook/Button",
@@ -148,7 +148,7 @@ class EditorGui(object):
         edit_layer_button.setWidth(PyCEGUI.UDim(0.5, 0.0))
         edit_layer_button.setText(_("Options"))
         edit_layer_button.setEnabled(False)
-        edit_layer_button.subscribeEvent(PyCEGUI.ButtonBase.EventActivated,
+        edit_layer_button.subscribeEvent(PyCEGUI.PushButton.EventClicked,
                                          self.cb_edit_layer_activated)
 
         self.edit_layer_button = edit_layer_button
