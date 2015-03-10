@@ -501,7 +501,10 @@ class Editor(object):
         if not isinstance(layer_or_layer_data, fife.Layer):
             layer_or_layer_data = self.get_layer(layer_or_layer_data[1],
                                                  layer_or_layer_data[0])
-        return layer_or_layer_data.getInstances(instance_identifier)
+        if instance_identifier is None:
+            return layer_or_layer_data.getInstances()
+        else:
+            return layer_or_layer_data.getInstances(instance_identifier)
 
     def get_instances_of_map(self, map_or_identifier):
         """Returns a list of the instances of a map
