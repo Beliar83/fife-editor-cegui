@@ -42,9 +42,6 @@ disable=W0142,R0901,R0902,R0903,R0904,R0911,R0912,R0913,R0914,R0915,W0105
 # (visual studio) and html
 output-format=text
 
-# Include message's id in output
-include-ids=yes
-
 # Put messages in a separate file for each module / package specified on the
 # command line instead of printing them on stdout. Reports (if any) will be
 # written in a file name "pylint_global.[txt|html]".
@@ -73,7 +70,7 @@ ignore-mixin-members=yes
 
 # List of classes names for which member attributes should not be checked
 # (useful for classes with attributes dynamically set).
-ignored-classes=SQLObject
+ignored-classes=SQLObject,lxml.etree
 
 # When zope mode is activated, add a predefined set of Zope acquired attributes
 # to generated-members.
@@ -84,6 +81,7 @@ zope=no
 # expressions are accepted.
 generated-members=REQUEST,acl_users,aq_parent
 
+ignored-modules=PyCEGUI
 
 [VARIABLES]
 
