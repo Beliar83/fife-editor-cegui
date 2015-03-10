@@ -201,12 +201,12 @@ class Editor(object):
             map_or_identifier = self.get_map(map_or_identifier)
         return map_or_identifier.getLayers()
 
-    def get_layer(self, fife_map_id, layer):
+    def get_layer(self, map_or_identifier, layer):
         """Get a layer from a map
 
         Args:
 
-            fife_map_id: A fife.Map or the identifier of the map
+            map_or_identifier: A fife.Map or the identifier of the map
 
             layer: The identifier of the layer
 
@@ -218,10 +218,9 @@ class Editor(object):
 
             The layer, if present on the map.
         """
-        fife_map = self.get_map(fife_map_id)
-        if 0:  # Just for IDEs
-            assert isinstance(fife_map, fife.Map)
-        return fife_map.getLayer(layer)
+        if not isinstance(map_or_identifier, fife.Map):
+            map_or_identifier = self.get_map(map_or_identifier)
+        return map_or_identifier.getLayer(layer)
 
     def get_layer_count(self, fife_map_id):
         """Returns the number of layers on a map
