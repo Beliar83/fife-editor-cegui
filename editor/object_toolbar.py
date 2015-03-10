@@ -592,7 +592,7 @@ class ObjectToolbar(ToolbarPage):
         if button == fife.MouseEvent.RIGHT:
             return
         coords = location.getLayerCoordinates()
-        object_data = reversed(self.selected_object)
+        object_data = list(reversed(self.selected_object))
         instance = self.app.editor.create_instance(layer, coords,
                                                    object_data)
         instance.setRotation(self.cur_rotation)
