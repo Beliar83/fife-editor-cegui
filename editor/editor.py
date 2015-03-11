@@ -20,6 +20,7 @@
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
 from fife import fife
+from .undo import UndoManager
 
 
 class Editor(object):
@@ -36,6 +37,7 @@ class Editor(object):
                                            engine.getImageManager(),
                                            engine.getRenderBackend())
         self.__import_ref_count = {}
+        self.undo_manager = UndoManager()
 
     def reset_data(self):
         """Resets the internal data of the editor instance"""
@@ -680,3 +682,11 @@ class Editor(object):
             return self.__import_ref_count[map_name].iterkeys()
         else:
             return []
+
+    def undo(self):
+        """Undoes the last done action"""
+        self.undo_manager.undo_action()
+
+    def redo(self):
+        """Redoes the last undone action"""
+        self.undo_manager.redo_action()
