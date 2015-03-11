@@ -367,6 +367,38 @@ class Editor(object):
         self.increase_refcount(tmp_filename, tmp_map_name)
         return instance
 
+    def add_instance(self, instance, coords, layer_or_layer_data):
+        """Adds an instance to a layer
+
+        Args:
+
+            instance: A fife.Instance
+
+            coords: A fife.ExactModelCoordinates instance or a tuple with
+            3 values.
+
+            layer_or_layer_data: The layer or a tuple with 2 items: The name
+            of the layer and the map of the layer as a string or an map
+            instance.
+
+        Raises:
+
+            ValueError if there was no map with that identifier.
+
+        """
+        if not isinstance(layer_or_layer_data, fife.Layer):
+            layer_or_layer_data = self.get_layer(layer_or_layer_data[1],
+                                                 layer_or_layer_data[0])
+        try:
+            iter(coords)
+            coords = fife.ExactModelCoordinate(*coords)
+        except TypeError:
+            pass
+        layer_or_layer_data.addInstance(instance, coords)
+        tmp_filename = instance.getObject().getFilename()
+        tmp_map_name = layer_or_layer_data.getMap().getId()
+        self.increase_refcount(tmp_filename, tmp_map_name)
+
     def delete_instance(self, instance_or_identifier,
                         layer_or_layer_data=None):
         """Deletes an instance
