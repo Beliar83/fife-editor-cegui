@@ -369,7 +369,7 @@ class Editor(object):
 
     def delete_instance(self, instance_or_identifier,
                         layer_or_layer_data=None):
-        """Removes an instance
+        """Deletes an instance
 
         Args:
 
@@ -400,6 +400,45 @@ class Editor(object):
         map_name = layer_or_layer_data.getMap().getId()
         self.decrease_refcount(filename, map_name)
         layer_or_layer_data.deleteInstance(instance_or_identifier)
+
+    def remove_instance(self, instance_or_identifier,
+                        layer_or_layer_data=None):
+        """Removes an instance
+
+        Args:
+
+            instance_or_identifier: The instance or the name of the instance
+
+            layer_or_layer_data: The layer or a tuple with 2 items: The name
+            of the layer and the map of the layer as a string or an map
+            instance.
+            Ignored if instance is an actual instance.
+
+        Returns:
+
+            The removed instance.
+
+        Raises:
+
+            ValueError if there was no map with that identifier.
+
+        """
+        if not isinstance(instance_or_identifier, fife.Instance):
+            instance_or_identifier = self.get_instance(instance_or_identifier,
+                                                       layer_or_layer_data)
+            if not isinstance(layer_or_layer_data, fife.Layer):
+                layer_or_layer_data = layer_or_layer_data[0]
+                map_or_identifier = layer_or_layer_data[1]
+                layer_or_layer_data = self.get_layer(map_or_identifier,
+                                                     layer_or_layer_data)
+        else:
+            tmp_location = instance_or_identifier.getLocation()
+            layer_or_layer_data = tmp_location.getLayer()
+        filename = instance_or_identifier.getObject().getFilename()
+        map_name = layer_or_layer_data.getMap().getId()
+        self.decrease_refcount(filename, map_name)
+        layer_or_layer_data.removeInstance(instance_or_identifier)
+        return instance_or_identifier
 
     def delete_instances_of_map(self, map_or_identifier=None):
         """Deletes all instances of the given layer.
