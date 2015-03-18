@@ -577,6 +577,45 @@ class Editor(object):
         else:
             return layer_or_layer_data.getInstances(instance_identifier)
 
+    def get_instances_at(self, coords, layer_or_layer_data=None,
+                         use_exact_coordinates=False):
+        """Get all instances at the given coords
+
+        Args:
+
+            coords: Either a 3-value tuple, fife.(Exact)ModelCoordinates
+            instance or a fife.Location instance.
+
+            layer_or_layer_data: The layer or a tuple with 2 items: The name
+            of the layer and the map of the layer as a string or an map
+            instance.
+            Ignored if coords is a fife.Location instance
+
+            use_exact_coordinates: if True, comparison is done using exact
+            coordinates. if not, cell coordinates are used.
+
+        Raises:
+
+            ValueError if there was no map with that identifier.
+        """
+        try:
+            iter(coords)
+            coords = fife.ExactModelCoordinate(*coords)
+        except TypeError:
+            pass
+        layer = None
+        if not isinstance(coords, fife.Location):
+            layer = layer_or_layer_data
+            if not isinstance(layer_or_layer_data, fife.Layer):
+                layer = self.get_layer(layer_or_layer_data[1],
+                                       layer_or_layer_data[0])
+            tmp_coords = coords
+            coords = fife.Location(layer)
+            coords.setExactLayerCoordinates(tmp_coords)
+        else:
+            layer = coords.getLayer()
+        return layer.getInstancesAt(coords)
+
     def get_instances_of_map(self, map_or_identifier):
         """Returns a list of the instances of a map
 
