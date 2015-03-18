@@ -24,6 +24,8 @@ from fife import fife
 
 from fife_rpg.game_scene import GameSceneListener, GameSceneController
 
+from .undo import UndoError
+
 
 class EditorListener(GameSceneListener, fife.IKeyListener):
 
@@ -138,6 +140,23 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
             if application.current_map is None:
                 return
             application.current_map.move_camera_to((0, 0))
+        if event.isControlPressed():
+            if event.isShiftPressed():
+                return
+            if event.isAltPressed():
+                return
+            if event.getKey().getValue() == fife.Key.Z:
+                app = self.gamecontroller.application
+                try:
+                    app.editor.undo()
+                except UndoError:
+                    pass
+            if event.getKey().getValue() == fife.Key.Y:
+                app = self.gamecontroller.application
+                try:
+                    app.editor.redo()
+                except UndoError:
+                    pass
 
     def keyReleased(self, event):  # pylint: disable=C0103,W0221
         """Called when a key was released
