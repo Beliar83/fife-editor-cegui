@@ -32,6 +32,7 @@ from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
 # pylint: enable=unused-import
 
 from .toolbarpage import ToolbarPage
+from .undo_editor import UndoCreateInstance, UndoRemoveInstance
 
 
 def parse_file(filename):
@@ -582,8 +583,9 @@ class ObjectToolbar(ToolbarPage):
         for instance in layer.getInstancesAt(location):
             if world.is_identifier_used(instance.getId()):
                 continue
-
-            self.app.editor.delete_instance(instance)
+            action = UndoRemoveInstance(self.app.editor, instance)
+            action.redo()
+            self.app.editor.undo_manager.add_action(action)
 
         map_name = self.app.current_map.name
         if map_name not in self.app.changed_maps:
@@ -593,10 +595,10 @@ class ObjectToolbar(ToolbarPage):
             return
         coords = location.getLayerCoordinates()
         object_data = list(reversed(self.selected_object))
-        instance = self.app.editor.create_instance(layer, coords,
-                                                   object_data)
-        instance.setRotation(self.cur_rotation)
-        fife.InstanceVisual.create(instance)
+        action = UndoCreateInstance(self.app.editor, layer, coords,
+                                    object_data, self.cur_rotation)
+        instance = action.redo()
+        self.app.editor.undo_manager.add_action(action)
         self.app.set_selected_object(instance)
 
     def clean_mouse_instance(self):
@@ -630,7 +632,8 @@ class ObjectToolbar(ToolbarPage):
         self.last_mouse_pos = location
         object_data = reversed(self.selected_object)
         self.last_instance = self.app.editor.create_instance(layer, coords,
-                                                             object_data)
+                                                             object_data,
+                                                             "__editor_mouse")
         fife.InstanceVisual.create(self.last_instance)
         self.last_instance.setRotation(self.cur_rotation)
 
