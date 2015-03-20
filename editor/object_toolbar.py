@@ -22,6 +22,8 @@
 
 from io import StringIO
 import os
+from Queue import Queue, Empty
+import thread
 
 from lxml import etree
 import PyCEGUI
@@ -295,6 +297,9 @@ class ObjectToolbar(ToolbarPage):
                                    self.cb_key_pressed)
         self.app.add_project_clear_callback(self.cb_project_closed)
         self.app.add_objects_imported_callback(self.cb_objects_imported)
+        self.objects = Queue()
+        self.images_lock = thread.allocate_lock()
+        self.namespaces_lock = thread.allocate_lock()
 
     def image_clicked(self, args):
         """Called when the user clicked on an image
@@ -303,6 +308,7 @@ class ObjectToolbar(ToolbarPage):
 
                 args: The args of the event
         """
+        self.images_lock.acquire()
         identifier = args.window.getName()
         image = self.images[identifier]
         obj_data = image.user_data
@@ -314,215 +320,46 @@ class ObjectToolbar(ToolbarPage):
         self.images[identifier].setAlpha(self.HIGHLIGHT_ALPHA)
         self.selected_object = obj_data
         self.cur_rotation = self.image_directions[identifier][0]
+        self.images_lock.release()
 
     def update_contents(self):
         """Update the contents of the toolbar page"""
         if self.have_objects_changed and self.is_active:
-            import Tkinter
-            window = Tkinter.Tk()
-            # iconify window instead of closing
-            window.protocol("WM_DELETE_WINDOW", window.iconify)
-            window.attributes("-topmost", 1, "-disabled", 1)
-            window.title("FIFErpg Editor")
-            window.maxsize(300, 150)
-            label = Tkinter.Label(window, padx=10,
-                                  text=_("Updating Objects"))
-            label.pack(side="right")
-            window.deiconify()
-            window.update()
-            self.update_images()
-            window.destroy()
+            thread.start_new(self.update_objects_threaded, ())
+        elif self.is_active:
+            self.process_object()
         ToolbarPage.update_contents(self)
 
-    def update_images(self):
+    def update_objects_threaded(self):
         """Update the contents of the toolbar page"""
+        self.namespaces_lock.acquire()
         self.have_objects_changed = False
         self.namespaces = {}
-        vec2f = PyCEGUI.Vector2f
-        sizef = PyCEGUI.Sizef
         model = self.app.engine.getModel()
         namespaces = model.getNamespaces()
         for namespace in namespaces:
-            self.namespaces[namespace] = {}
-            namespace_def = self.namespaces[namespace]
+            self.namespaces[namespace] = []
             objects = model.getObjects(namespace)
             for fife_object in objects:
                 identifier = fife_object.getId()
-                if identifier in self.namespaces:
+                if identifier in self.namespaces[namespace]:
                     continue
                 if identifier in self.images:
-                    namespace_def[identifier] = {}
                     continue
                 project_dir = self.app.project_source
                 object_filename = fife_object.getFilename()
                 filename = os.path.join(project_dir, object_filename)
                 objects = parse_file(filename)
-                cegui_system = PyCEGUI.System.getSingleton()
-                renderer = cegui_system.getRenderer()
-                image_manager = PyCEGUI.ImageManager.getSingleton()
                 for obj in objects:
-                    obj_def = obj["object"]
-                    identifier = obj_def["id"]
-                    name = ".".join([namespace, identifier])
-                    namespace_def[identifier] = {}
-                    namespace_def[identifier]["static"] = obj_def["static"]
-                    if int(obj_def["static"]) == 0:
-                        actions = obj["actions"]
-                        namespace_def[identifier]["actions"] = {}
-                        actions_dict = namespace_def[identifier]["actions"]
-                        for action, action_def in actions.iteritems():
-                            img_type = action_def["type"]
-                            if img_type == "single":
-                                atlas_def = action_def["atlas"]
-                                tname = ".".join([name, action, "atlas"])
-                                fname = atlas_def["image"]
-                                if renderer.isTextureDefined(tname):
-                                    tex = renderer.getTexture(tname)
-                                else:
-                                    tex = renderer.createTexture(tname,
-                                                                 fname,
-                                                                 "FIFE")
-                                tex_size = tex.getSize()
-                                tex_width = tex_size.d_width
-                                frame_width = int(atlas_def["width"])
-                                frame_height = int(atlas_def["height"])
-                                frames_p_line = tex_width / frame_width
-                                frame_count = 0
-                            dirs = action_def["directions"]
-                            actions_dict[action] = {}
-                            action_dict = actions_dict[action]
-                            dirs_iter = iter(sorted(dirs.iteritems()))
-                            for direction, dir_def in dirs_iter:
-                                action_dict[direction] = {}
-                                dir_dict = action_dict[direction]
-                                dir_dict["delay"] = dir_def["delay"]
-                                if img_type == "multi":
-                                    dir_dict["type"] = "multi"
-                                    frame_id = 0
-                                    frames = dir_def["frames"]
-                                    for frame in frames:
-                                        tname = ".".join([name,
-                                                          action,
-                                                          str(direction),
-                                                          str(frame_id)])
-                                        if not renderer.isTextureDefined(
-                                                tname):
-                                            tex = renderer.createTexture(
-                                                tname,
-                                                frame,
-                                                "FIFE")
-                                            pos = vec2f(0, 0)
-                                            size = sizef(
-                                                tex.getSize().d_width,
-                                                tex.getSize().d_height)
-                                            area = PyCEGUI.Rectf(pos, size)
-                                            image = image_manager.create(
-                                                "BasicImage",
-                                                tname)
-                                            image.setTexture(tex)
-                                            image.setArea(area)
-                                        frame_id = frame_id + 1
-                                    dir_dict["frames"] = frame_id
-                                elif img_type == "single":
-                                    dir_dict["type"] = "single"
-                                    frames = int(dir_def["frames"])
-                                    for frame_id in xrange(frames):
-                                        line = frame_count / frames_p_line
-                                        col = frame_count % frames_p_line
-                                        pos = vec2f(col * frame_width,
-                                                    line * frame_height)
-                                        size = sizef(frame_width,
-                                                     frame_height)
-                                        area = PyCEGUI.Rectf(pos, size)
-                                        iname = ".".join([name,
-                                                          action,
-                                                          str(direction),
-                                                          str(frame_id)])
-                                        if not image_manager.isDefined(iname):
-                                            image = image_manager.create(
-                                                "BasicImage",
-                                                iname)
-                                            image.setTexture(tex)
-                                            image.setArea(area)
-                                        frame_count = frame_count + 1
-                    elif int(obj_def["static"]) == 1:
-                        namespace_def[identifier]["directions"] = []
-                        dir_list = namespace_def[identifier]["directions"]
-                        dir_iter = iter(sorted(obj["directions"].iteritems()))
-                        for direction, dir_def in dir_iter:
-                            dir_list.append(direction)
-                            source = dir_def["source"]
-                            if dir_def["type"] == "atlas":
-                                tex_name = ".".join([source, "atlas"])
-                                img_name = ".".join(
-                                    [name, str(direction)])
-
-                                if not renderer.isTextureDefined(tex_name):
-                                    tex = renderer.createTexture(tex_name,
-                                                                 source,
-                                                                 "FIFE")
-                                else:
-                                    tex = renderer.getTexture(tex_name)
-                                if image_manager.isDefined(img_name):
-                                    continue
-                                pos = vec2f(float(dir_def["xpos"]),
-                                            float(dir_def["ypos"]))
-                                size = sizef(float(dir_def["width"]),
-                                             float(dir_def["height"]))
-                                area = PyCEGUI.Rectf(pos, size)
-                                image = image_manager.create(
-                                    "BasicImage",
-                                    img_name)
-                                image.setTexture(tex)
-                                image.setArea(area)
-                            elif dir_def["type"] == "image":
-                                tex_name = ".".join(
-                                    [name, str(direction)])
-                                if not renderer.isTextureDefined(tex_name):
-                                    tex = renderer.createTexture(tex_name,
-                                                                 source,
-                                                                 "FIFE")
-                                    pos = vec2f(0, 0)
-                                    size = sizef(tex.getSize().d_width,
-                                                 tex.getSize().d_height)
-                                    area = PyCEGUI.Rectf(pos, size)
-                                    image = image_manager.create(
-                                        "BasicImage",
-                                        tex_name)
-                                    image.setTexture(tex)
-                                    image.setArea(area)
-        for namespace in self.namespaces.iterkeys():
-            for identifier, obj in self.namespaces[namespace].iteritems():
-                name = ".".join([namespace, identifier])
-                wmgr = PyCEGUI.WindowManager.getSingleton()
-                if name not in self.images:
-                    image = wmgr.createWindow(
-                        "TaharezLook/StaticImage", name)
-                    image.setTooltipText(name)
-                    directions = None
-                    if int(obj["static"]) == 0:
-                        f_action = obj["actions"].keys()[0]
-                        f_action_def = obj["actions"][f_action]
-                        f_dir = f_action_def.keys()[0]
-                        directions = f_action_def.keys()
-                        img_name = ".".join([name,
-                                             f_action,
-                                             str(f_dir),
-                                             str(0)])
-                        image.setProperty("Image", img_name)
-                    elif int(obj["static"]) == 1:
-                        f_dir = obj["directions"][0]
-                        directions = obj["directions"]
-                        img_name = ".".join([name,
-                                             str(f_dir)])
-                        image.setProperty("Image", img_name)
-                    self.items.addChild(image)
-                    self.images[name] = image
-                    self.image_directions[name] = sorted(directions)
-                    image.setAlpha(self.DEFAULT_ALPHA)
-                    image.user_data = [namespace, identifier]
-                    image.subscribeEvent(PyCEGUI.Window.EventMouseClick,
-                                         self.image_clicked)
+                    self.app.guimanager.turn()
+                    identifier = obj["object"]["id"]
+                    if identifier in self.namespaces[namespace]:
+                        continue
+                    if identifier in self.images:
+                        continue
+                    self.namespaces[namespace].append(identifier)
+                    self.objects.put((namespace, obj))
+        self.images_lock.acquire()
         for image in self.images.itervalues():
             namespace, image_id = image.user_data
             if image_id not in self.namespaces[namespace]:
@@ -530,6 +367,124 @@ class ObjectToolbar(ToolbarPage):
                 image.getParent().removeChild(image)
                 wmgr.destroyWindow(image)
                 del self.images[image_id]
+        self.images_lock.release()
+        self.namespaces_lock.release()
+
+    def process_object(self):
+        """Processes the next object in the Queue"""
+        try:
+            namespace, obj = self.objects.get_nowait()
+        except Empty:
+            return
+        vec2f = PyCEGUI.Vector2f
+        sizef = PyCEGUI.Sizef
+        cegui_system = PyCEGUI.System.getSingleton()
+        renderer = cegui_system.getRenderer()
+        image_manager = PyCEGUI.ImageManager.getSingleton()
+        obj_def = obj["object"]
+        identifier = obj_def["id"]
+        name = ".".join([namespace, identifier])
+        img_def = {}
+        img_def["static"] = obj_def["static"]
+        dirs = []
+        if int(obj_def["static"]) == 0:
+            actions = obj["actions"]
+            img_def["actions"] = {}
+            actions_dict = img_def["actions"]
+            action, action_def = actions.iteritems().next()
+            img_type = action_def["type"]
+            if img_type == "single":
+                atlas_def = action_def["atlas"]
+                fname = atlas_def["image"]
+                if renderer.isTextureDefined(name):
+                    tex = renderer.getTexture(name)
+                else:
+                    tex = renderer.createTexture(name, fname, "FIFE")
+                tex_size = tex.getSize()
+                tex_width = tex_size.d_width
+                frame_width = int(atlas_def["width"])
+                frame_height = int(atlas_def["height"])
+                frames_p_line = tex_width / frame_width
+                frame_count = 0
+            dirs_def = action_def["directions"]
+            actions_dict[action] = {}
+            dirs = sorted(dirs_def.iterkeys())
+            dir_def = dirs_def[dirs[0]]
+
+            if img_type == "multi":
+                frame = dir_def["frames"][0]
+                if not renderer.isTextureDefined(name):
+                    tex = renderer.createTexture(name, frame, "FIFE")
+                    pos = vec2f(0, 0)
+                    size = sizef(
+                        tex.getSize().d_width,
+                        tex.getSize().d_height)
+                    area = PyCEGUI.Rectf(pos, size)
+                    image = image_manager.create("BasicImage", name)
+                    image.setTexture(tex)
+                    image.setArea(area)
+            elif img_type == "single":
+                line = frame_count / frames_p_line
+                col = frame_count % frames_p_line
+                pos = vec2f(col * frame_width,
+                            line * frame_height)
+                size = sizef(frame_width,
+                             frame_height)
+                area = PyCEGUI.Rectf(pos, size)
+                if not image_manager.isDefined(name):
+                    image = image_manager.create("BasicImage", name)
+                    image.setTexture(tex)
+                    image.setArea(area)
+                frame_count = frame_count + 1
+        elif int(obj_def["static"]) == 1:
+            img_def["directions"] = []
+            dirs_def = obj["directions"]
+            dirs = sorted(dirs_def.iterkeys())
+            dir_def = dirs_def[dirs[0]]
+            source = dir_def["source"]
+            if dir_def["type"] == "atlas":
+                tex_name = ".".join([source, "atlas"])
+
+                if not renderer.isTextureDefined(tex_name):
+                    tex = renderer.createTexture(tex_name, source, "FIFE")
+                else:
+                    tex = renderer.getTexture(tex_name)
+                pos = vec2f(float(dir_def["xpos"]),
+                            float(dir_def["ypos"]))
+                size = sizef(float(dir_def["width"]),
+                             float(dir_def["height"]))
+                area = PyCEGUI.Rectf(pos, size)
+                image = image_manager.create("BasicImage", name)
+                image.setTexture(tex)
+                image.setArea(area)
+            elif dir_def["type"] == "image":
+                if not renderer.isTextureDefined(name):
+                    tex = renderer.createTexture(name, source, "FIFE")
+                    pos = vec2f(0, 0)
+                    size = sizef(tex.getSize().d_width, tex.getSize().d_height)
+                    area = PyCEGUI.Rectf(pos, size)
+                    image = image_manager.create("BasicImage", name)
+                    image.setTexture(tex)
+                    image.setArea(area)
+        name = ".".join([namespace, identifier])
+        wmgr = PyCEGUI.WindowManager.getSingleton()
+        if name not in self.images:
+            image = wmgr.createWindow(
+                "TaharezLook/StaticImage", name)
+            image.setTooltipText(name)
+            image.setProperty("Image", name)
+            self.items.addChild(image)
+            if dirs:
+                self.image_directions[name] = dirs
+            else:
+                self.image_directions[name] = [0]
+            image.setAlpha(self.DEFAULT_ALPHA)
+            image.user_data = [namespace, identifier]
+            image.subscribeEvent(PyCEGUI.Window.EventMouseClick,
+                                 self.image_clicked)
+            self.images_lock.acquire()
+            self.images[name] = image
+            self.images_lock.release()
 
     def activate(self):
         """Called when the page gets activated"""
@@ -540,7 +495,9 @@ class ObjectToolbar(ToolbarPage):
         namespace, name = self.selected_object
         if namespace is not None:
             identifier = ".".join((namespace, name))
+            self.images_lock.acquire()
             self.images[identifier].setAlpha(self.DEFAULT_ALPHA)
+            self.images_lock.release()
         self.selected_object = [None, None]
         self.clean_mouse_instance()
         self.is_active = False
@@ -655,7 +612,9 @@ class ObjectToolbar(ToolbarPage):
     def cb_project_closed(self):
         """Called when the current project was closed"""
         self.namespaces = {}
+        self.images_lock.acquire()
         self.images = {}
+        self.images_lock.release()
         self.selected_object = [None, None]
         if self.items:
             self.items_panel.destroyChild(self.items)
