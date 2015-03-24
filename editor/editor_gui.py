@@ -216,9 +216,11 @@ class EditorGui(object):
         file_new = file_popup.createChild("TaharezLook/MenuItem", "FileNew")
         file_new.setText(_("New Project"))
         file_new.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_new)
+        file_new.setAutoPopupTimeout(0.5)
         file_open = file_popup.createChild("TaharezLook/MenuItem", "FileOpen")
         file_open.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_open)
         file_open.setText(_("Open Project"))
+        file_open.setAutoPopupTimeout(0.5)
         file_import = file_popup.createChild(
             "TaharezLook/MenuItem", "FileImport")
         file_import.setText(_("Import") + "  ")
@@ -245,10 +247,12 @@ class EditorGui(object):
         save_all.setText(_("All"))
         save_all.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
                                 self.cb_save_all)
+        save_all.setAutoPopupTimeout(0.5)
         self.file_save = file_save
         save_project = save_popup.createChild("TaharezLook/MenuItem",
                                               "FileSaveProject")
         save_project.setText(_("Project"))
+        save_project.setAutoPopupTimeout(0.5)
         save_project.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
                                     self.cb_save_project)
         save_maps = save_popup.createChild("TaharezLook/MenuItem",
@@ -261,6 +265,7 @@ class EditorGui(object):
         save_entities = save_popup.createChild("TaharezLook/MenuItem",
                                                "FileSaveEntities")
         save_entities.setText(_("Entities"))
+        save_entities.setAutoPopupTimeout(0.5)
         save_entities.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
                                      self.cb_save_entities)
         file_close = file_popup.createChild(
@@ -268,10 +273,12 @@ class EditorGui(object):
         file_close.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_close)
         file_close.setText(_("Close Project"))
         file_close.setEnabled(False)
+        file_close.setAutoPopupTimeout(0.5)
         self.file_close = file_close
         file_quit = file_popup.createChild("TaharezLook/MenuItem", "FileQuit")
         file_quit.setText(_("Quit"))
         file_quit.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_quit)
+        file_quit.setAutoPopupTimeout(0.5)
 
         # Edit Menu
 
@@ -283,12 +290,14 @@ class EditorGui(object):
         edit_add = edit_popup.createChild("TaharezLook/MenuItem",
                                           "Edit/Add")
         edit_add.setText(_("Add") + "  ")
+        edit_add.setAutoPopupTimeout(0.5)
         add_popup = edit_add.createChild("TaharezLook/PopupMenu",
                                          "Edit/AddPopup")
         self.add_popup = add_popup
         add_map = add_popup.createChild("TaharezLook/MenuItem",
                                         "Edit/Add/Map")
         add_map.setText(_("Map"))
+        add_map.setAutoPopupTimeout(0.5)
         add_map.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_add_map)
 
         self.edit_add = edit_add
@@ -316,6 +325,7 @@ class EditorGui(object):
                                         self.cb_project_settings)
         project_settings.setText(_("Settings"))
         project_settings.setEnabled(False)
+        project_settings.setAutoPopupTimeout(0.5)
         self.project_settings = project_settings
 
     def reset_layerlist(self):
