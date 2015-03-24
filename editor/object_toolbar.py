@@ -348,7 +348,6 @@ class ObjectToolbar(ToolbarPage):
                 filename = os.path.join(project_dir, object_filename)
                 objects = parse_file(filename)
                 for obj in objects:
-                    self.app.guimanager.turn()
                     identifier = obj["object"]["id"]
                     if identifier in self.namespaces[namespace]:
                         continue
@@ -381,6 +380,8 @@ class ObjectToolbar(ToolbarPage):
         obj_def = obj["object"]
         identifier = obj_def["id"]
         name = ".".join([namespace, identifier])
+        if name in self.images:
+            return
         img_def = {}
         img_def["static"] = obj_def["static"]
         dirs = []
