@@ -38,19 +38,17 @@ from .undo_editor import UndoCreateInstance, UndoRemoveInstance
 
 
 def parse_file(filename):
-    """Parse an fife object definiton file
+    """Generator that parse an fife object definition file and yields the
+    objects.
 
         Args:
 
             filename: The path to the object file.
-
-        Returns: A list of object definitions in the file
     """
     root_path = os.path.dirname(filename)
-    objects = []
     try:
         tree = etree.parse(filename)
-        objects.append(parse_object(tree.getroot(), root_path))
+        yield parse_object(tree.getroot(), root_path)
     except etree.XMLSyntaxError as error:
         doc = file(filename, "r")
         line_no = error.position[0] - 2
@@ -70,8 +68,7 @@ def parse_file(filename):
         tree = etree.parse(second_doc)
         object_defs = tree.getroot().findall("object")
         for obj in object_defs:
-            objects.append(parse_object(obj, root_path, atlas_def))
-    return objects
+            yield parse_object(obj, root_path, atlas_def)
 
 
 def parse_atlas(element, root_path):  # pylint: disable=unused-argument
