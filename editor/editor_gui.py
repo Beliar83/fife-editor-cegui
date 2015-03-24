@@ -84,6 +84,7 @@ class EditorGui(object):
         import Tkinter
         self.window = Tkinter.Tk()
         self.window.wm_withdraw()
+        self.window.attributes("-topmost", 1)
 
         cegui_system = PyCEGUI.System.getSingleton()
         cegui_system.getDefaultGUIContext().setDefaultTooltipType(
