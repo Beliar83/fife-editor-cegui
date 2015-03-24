@@ -203,6 +203,8 @@ class EditorGui(object):
     def create_menu(self):
         """Create the menu items"""
         self.menubar = self.main_container.getChild("Menu")
+        self.menubar.subscribeEvent(PyCEGUI.Window.EventDeactivated,
+                                    self.cb_menu_leave)
         # File Menu
         self.file_menu = self.menubar.createChild("TaharezLook/MenuItem",
                                                   "File")
@@ -867,3 +869,9 @@ class EditorGui(object):
           new_map_name: The name of the new_map
         """
         self.add_layer_button.setEnabled(new_map_name is not None)
+
+    def cb_menu_leave(self, args):
+        """Calld when the menubar loses input focus"""
+        item = self.menubar.getPopupMenuItem()
+        if item is not None:
+            item.closePopupMenu()
