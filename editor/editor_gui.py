@@ -444,20 +444,21 @@ class EditorGui(object):
         item.setText(_("All"))
         item.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
                             self.cb_save_maps_all)
-        for game_map in self.app.maps.iterkeys():
-            item = menu.createChild("TaharezLook/MenuItem", game_map)
-            item.setUserData(game_map)
+        for identifier, game_map in self.app.maps.iteritems():
+            map_name = game_map.view_name
+            item = menu.createChild("TaharezLook/MenuItem", map_name)
+            item.setUserData(identifier)
             item.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
                                 self.cb_map_switch_clicked)
             if (self.app.current_map is not None and
-                    self.app.current_map.name is game_map):
-                item.setText("+" + game_map)
+                    self.app.current_map.name is map_name):
+                item.setText("+" + map_name)
             else:
-                item.setText("   " + game_map)
+                item.setText("   " + map_name)
             item = self.save_maps_popup.createChild("TaharezLook/MenuItem",
-                                                    game_map)
-            item.setText(game_map)
-            item.setUserData(game_map)
+                                                    identifier)
+            item.setText(map_name)
+            item.setUserData(identifier)
             item.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
                                 self.cb_save_map)
 
@@ -677,16 +678,17 @@ class EditorGui(object):
                                    self.app.engine.pump)
         if not dialog.return_value:
             return
+        map_id = values["MapId"]
         map_name = values["MapName"]
         fife_map = None
         try:
-            fife_map = self.editor.create_map(map_name)
+            fife_map = self.editor.create_map(map_id)
         except RuntimeError as error:
             tkMessageBox.showerror("Could not create map",
                                    "Creation of the map failed with the "
                                    "following FIFE Error: %s" % str(error))
             return
-        layer = self.create_layer(map_name)
+        layer = self.create_layer(map_id)
 
         if layer is None:
             self.editor.delete_map(fife_map)
@@ -717,8 +719,8 @@ class EditorGui(object):
         renderer.activateAllLayers(fife_map)
         game_map = GameMap(fife_map, map_name, camera_name, {}, self.app)
 
-        self.app.add_map(map_name, game_map)
-        self.app.changed_maps.append(map_name)
+        self.app.add_map(map_id, game_map)
+        self.app.changed_maps.append(map_id)
         self.reset_maps_menu()
 
     def cb_project_cleared(self):

@@ -31,6 +31,7 @@ class MapOptions(Dialog):
     def __init__(self, app, game_map=None):
         Dialog.__init__(self, app)
         self.m_name_editor = None
+        self.m_id_editor = None
         self.game_map = game_map
 
     def setup_dialog(self, root):
@@ -41,9 +42,9 @@ class MapOptions(Dialog):
             root: The root window to which the windows should be added
         """
         self.window.setArea(PyCEGUI.UDim(0, 3), PyCEGUI.UDim(0, 4),
-                            PyCEGUI.UDim(0.4, 3), PyCEGUI.UDim(0.125, 4))
+                            PyCEGUI.UDim(0.4, 3), PyCEGUI.UDim(0.175, 4))
         self.window.setMinSize(PyCEGUI.USize(PyCEGUI.UDim(0.4, 3),
-                                             PyCEGUI.UDim(0.125, 4)))
+                                             PyCEGUI.UDim(0.175, 4)))
         self.window.setText(_("Map Options"))
 
         font = root.getFont()
@@ -56,12 +57,30 @@ class MapOptions(Dialog):
         horz_margin = PyCEGUI.UBox(PyCEGUI.UDim(0, 0), PyCEGUI.UDim(0, margin),
                                    PyCEGUI.UDim(0, 0), PyCEGUI.UDim(0, margin))
 
+        m_id_layout = root.createChild("HorizontalLayoutContainer")
+        m_id_layout.setMargin(vert_margin)
+        m_id_layout.setHeight(PyCEGUI.UDim(0.05, 0))
+        m_id_label = m_id_layout.createChild("TaharezLook/Label")
+        m_id_label.setMargin(horz_margin)
+        m_id_label.setText(_("Identifier of map"))
+        m_id_label.setProperty("HorzFormatting", "LeftAligned")
+        text_width = font.getTextExtent(m_id_label.getText())
+        m_id_label.setWidth(PyCEGUI.UDim(0, text_width))
+        m_id_editor = m_id_layout.createChild("TaharezLook/Editbox")
+        m_id_editor.setMargin(horz_margin)
+        m_id_editor.setWidth(PyCEGUI.UDim(1.0, -(text_width + 4 * margin)))
+        m_id_editor.subscribeEvent(evt_key_down,
+                                   cb_cut_copy_paste)
+        if self.game_map is not None:
+            m_id_editor.setText(self.game_map.name)
+        self.m_id_editor = m_id_editor
+
         m_name_layout = root.createChild("HorizontalLayoutContainer")
         m_name_layout.setMargin(vert_margin)
         m_name_layout.setHeight(PyCEGUI.UDim(0.05, 0))
         m_name_label = m_name_layout.createChild("TaharezLook/Label")
         m_name_label.setMargin(horz_margin)
-        m_name_label.setText(_("Name of map"))
+        m_name_label.setText(_("Display name of map"))
         m_name_label.setProperty("HorzFormatting", "LeftAligned")
         text_width = font.getTextExtent(m_name_label.getText())
         m_name_label.setWidth(PyCEGUI.UDim(0, text_width))
@@ -77,11 +96,14 @@ class MapOptions(Dialog):
     def get_values(self):
         """Returns the values of the dialog fields"""
         values = {}
+        values["MapId"] = self.m_id_editor.getText().encode()
         values["MapName"] = self.m_name_editor.getText().encode()
         return values
 
     def validate(self):
         """Check if the current state of the dialog fields is valid"""
+        if not self.m_id_editor.getText().strip():
+            return False
         if not self.m_name_editor.getText().strip():
             return False
         return True
