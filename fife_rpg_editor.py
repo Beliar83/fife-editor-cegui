@@ -205,6 +205,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.changed_maps = []
         self.editor_gui.reset_layerlist()
         self.map_entities = None
+        self.set_selected_object(None)
         ComponentManager.clear_components()
         ComponentManager.clear_checkers()
         ActionManager.clear_actions()

@@ -380,6 +380,8 @@ class EditorGui(object):
         """Update the property editor"""
         property_editor = self.property_editor
         property_editor.clear_properties()
+        if self.app.selected_object is None:
+            return
         identifier = self.app.selected_object.getId()
         world = self.app.world
         components = ComponentManager.get_components()
