@@ -574,6 +574,8 @@ class EditorGui(object):
                 if not answer:
                     return
                 bak_file = self.app.convert_fife_project(selected_file)
+                if bak_file is None:
+                    return
                 if not self.app.try_load_project(selected_file):
                     tkMessageBox.showerror("Load Error",
                                            "There was a problem loading the "

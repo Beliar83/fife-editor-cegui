@@ -118,8 +118,9 @@ class EditorApplication(RPGApplicationCEGUI):
         values = dialog.show_modal(self.editor_gui.editor_window,
                                    self.engine.pump)
         if not dialog.return_value:
-            return
+            return False
         update_settings(project, values)
+        return True
 
     def convert_fife_project(self, project_filepath):
         """Converts a fife settings file to a fife-rpg project
@@ -134,7 +135,8 @@ class EditorApplication(RPGApplicationCEGUI):
         settings = {}
         settings["ProjectName"] = project.get("FIFE", "WindowTitle", "")
         update_settings(project, settings)
-        self.edit_project_settings(project_filepath, project)
+        if not self.edit_project_settings(project_filepath, project):
+            return None
         project.save()
         return bak_file
 
