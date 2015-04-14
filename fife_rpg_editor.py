@@ -100,7 +100,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.editor_gui.create_toolbars()
         self.clear()
 
-    def edit_project_settings(self, project_filepath, project):
+    def edit_project_settings(self, project_dir, project):
         """Show a dialog to edit the settings of a project
 
         Args:
@@ -110,9 +110,11 @@ class EditorApplication(RPGApplicationCEGUI):
             project: The project to edit
         """
         settings = project.getAllSettings("fife-rpg")
+        if os.path.isfile(project_dir):
+            project_dir = os.path.dirname(project_dir)
         dialog = ProjectSettings(self,
                                  settings,
-                                 os.path.dirname(project_filepath))
+                                 project_dir)
         values = dialog.show_modal(self.editor_gui.editor_window,
                                    self.engine.pump)
         if not dialog.return_value:
