@@ -541,6 +541,7 @@ class ObjectToolbar(ToolbarPage):
             action = UndoRemoveInstance(self.app.editor, instance)
             action.redo()
             self.app.editor.undo_manager.add_action(action)
+            self.app.set_selected_object(None)
 
         map_name = self.app.current_map.name
         if map_name not in self.app.changed_maps:
