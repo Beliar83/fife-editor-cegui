@@ -22,7 +22,6 @@
 
 import os
 import yaml
-from copy import copy
 
 # pylint: disable=unused-import
 import PyCEGUI  # @UnusedImport # PyCEGUI won't work otherwise (on windows)
@@ -33,6 +32,8 @@ from fife.extensions.fife_settings import Setting
 from fife.fife import InstanceRenderer
 from fife.fife import MapSaver
 from fife.fife import Map as FifeMap
+from fife.fife import MapChangeListener
+
 from fife_rpg import RPGApplicationCEGUI
 from fife.extensions.serializers import ET
 from fife.extensions.serializers.simplexml import (SimpleXMLSerializer,
@@ -66,6 +67,50 @@ BASIC_SETTINGS = """<?xml version='1.0' encoding='UTF-8'?>
 """
 
 
+class EditorMapChangeListener(MapChangeListener):
+
+    """Listens to changes on maps"""
+
+    def __init__(self, app):
+        MapChangeListener.__init__(self)
+        self.app = app
+
+    # pylint: disable=arguments-differ
+    def onMapChanged(self, fife_map, changed_layers):
+        """Called when something on a map was changed
+
+        Args:
+
+            fife_map: The map that was changed
+
+            changed_layers: The layers that where changed
+        """
+        pass
+
+    def onLayerCreate(self, fife_map, layer):
+        """Called when a layer was created.
+
+        Args:
+
+            fife_map: The map where the layer was created.
+
+            layer: The layer that was created
+        """
+        pass
+
+    def onLayerDelete(self, fife_map, layer):
+        """Called when a layer was deleted.
+
+        Args:
+
+            fife_map: The map the layer was deleted from
+
+            layer: The layer that was deleted
+        """
+        pass
+    # pylint: enable=arguments-differ
+
+
 class EditorApplication(RPGApplicationCEGUI):
 
     """The application for the editor"""
@@ -86,6 +131,8 @@ class EditorApplication(RPGApplicationCEGUI):
         self.editor_gui = None
 
         self.changed_maps = []
+        self.project_changed = False
+        self.entity_changed = False
         self._project_cleared_callbacks = []
         self.add_map_load_callback(self.cb_map_loaded)
         self.map_entities = None
@@ -121,6 +168,7 @@ class EditorApplication(RPGApplicationCEGUI):
         if not dialog.return_value:
             return False
         update_settings(project, values)
+        self.project_changed = True
         return True
 
     def convert_fife_project(self, project_filepath):
@@ -160,6 +208,8 @@ class EditorApplication(RPGApplicationCEGUI):
         self.try_load_project(settings_path)
         tkMessageBox.showinfo(_("Project created"),
                               _("Project successfully created"))
+        self.project_changed = False
+        self.entity_changed = False
 
     def switch_map(self, map_name):
         """Switches to the given map.
@@ -203,6 +253,8 @@ class EditorApplication(RPGApplicationCEGUI):
         self._systems = {}
         self._behaviours = {}
         self.changed_maps = []
+        self.project_changed = False
+        self.entity_changed = False
         self.editor_gui.reset_layerlist()
         self.map_entities = None
         self.set_selected_object(None)
@@ -247,6 +299,8 @@ class EditorApplication(RPGApplicationCEGUI):
             self.project_dir = project_dir
             self.load_project_settings()
             self.changed_maps = []
+            self.project_changed = False
+            self.entity_changed = False
             try:
                 old_dir = os.getcwd()
                 os.chdir(self.project_dir)
@@ -437,6 +491,7 @@ class EditorApplication(RPGApplicationCEGUI):
             entities_file = file(entities_file_name, "w")
             entities = self.world[RPGEntity].entities
             helpers.dump_entities(entities, entities_file)
+            self.entity_changed = False
         finally:
             os.chdir(old_wd)
 
@@ -518,6 +573,7 @@ class EditorApplication(RPGApplicationCEGUI):
         maps_file = file(maps_filename, "w")
         yaml.dump(save_data, maps_file, default_flow_style=False)
         maps_file.close()
+        self.project_changed = False
 
     def highlight_selected_object(self):
         """Adds an outline to the currently selected object"""

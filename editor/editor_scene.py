@@ -41,6 +41,7 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
         self.callbacks["mouse_dragged"] = []
         self.callbacks["mouse_moved"] = []
         self.callbacks["key_pressed"] = []
+        self.callbacks["map_changed"] = []
         self.middle_container = None
         self.old_mouse_pos = None
 
@@ -158,7 +159,8 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
                 except UndoError:
                     pass
 
-    def keyReleased(self, event):  # pylint: disable=C0103,W0221
+    # pylint: disable=C0103,W0221
+    def keyReleased(self, event):
         """Called when a key was released
 
         Args:
@@ -166,6 +168,7 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
             event: The key event
         """
         pass
+    # pylint: enable=C0103,W0221
 
 
 class EditorController(GameSceneController):

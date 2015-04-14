@@ -426,7 +426,7 @@ class EditorGui(object):
             visual = self.app.selected_object.get2dGfxVisual()
             property_editor.add_property(
                 "Instance", "StackPosition",
-                ("text",  visual.getStackPosition()))
+                ("text", visual.getStackPosition()))
 
     def reset_maps_menu(self):
         """Recreate the view->maps menu"""
@@ -489,10 +489,59 @@ class EditorGui(object):
         """Callback when quit was clicked in the file menu"""
         self.app.quit()
 
+    def ask_save_changed(self):
+        """Ask to save changed files.
+
+        Returns:
+            True if no dialog was cancelled. False if a dialog was cancelled
+        """
+        import tkMessageBox
+        if (self.app.changed_maps or self.app.project_changed or
+                self.app.entity_changed):
+            message = _("Something was changed. Save everything?")
+            answer = tkMessageBox.askyesnocancel("Save?", message)
+            if answer is True:
+                self.save_all()
+                return True
+            elif answer is None:
+                return False
+        if self.app.project_changed:
+            message = _("The project was changed. Save the project?")
+            answer = tkMessageBox.askyesnocancel("Save?", message)
+            if answer is True:
+                self.app.save_project()
+            if answer is None:
+                return False
+        if self.app.changed_maps:
+            message = _("One or more maps have changed. Save ALL maps?")
+            answer = tkMessageBox.askyesnocancel("Save?", message)
+            if answer is True:
+                self.app.save_all_maps()
+            elif answer is False:
+                for changed_map in self.app.changed_maps:
+                    message = _("The map {map_name} has changed. "
+                                "Save?").format(map_name=changed_map)
+                    answer = tkMessageBox.askyesnocancel("Save?",
+                                                         message)
+                    if answer is True:
+                        self.app.save_map(changed_map)
+                    elif answer is None:
+                        return False
+            elif answer is None:
+                return False
+        if self.app.entity_changed:
+            message = _("One or more entities have changed. Save entities?")
+            answer = tkMessageBox.askyesnocancel("Save?", message)
+            if answer is True:
+                self.app.save_entities()
+            elif answer is None:
+                return False
+        return True
+
     def cb_close(self, args):
         """Callback when close was clicked in the file menu"""
-        # TODO: Ask to save project/files
-        self.app.clear()
+        if self.ask_save_changed():
+            self.app.clear()
 
     def cb_new(self, args):
         """Callback when new was clicked in the file menu"""
@@ -518,11 +567,15 @@ class EditorGui(object):
             os.remove(settings_path)
         self.app.new_project(settings_path, values)
 
-    def cb_save_all(self, args):
-        """Callback when save->all was clicked in the file menu"""
+    def save_all(self):
+        """Save all maps, entities and the project"""
         self.app.save_all_maps()
         self.app.save_entities()
         self.app.save_project()
+
+    def cb_save_all(self, args):
+        """Callback when save->all was clicked in the file menu"""
+        self.save_all()
         self.save_popup.closePopupMenu()
 
     def cb_save_project(self, args):
@@ -770,6 +823,7 @@ class EditorGui(object):
                     value = yaml.load(value)
                 setattr(com_data, property_name, value)
                 self.app.update_agents(self.app.current_map)
+                self.app.entity_changed = True
             except (ValueError, yaml.parser.ParserError):
                 pass
         else:
@@ -784,26 +838,31 @@ class EditorGui(object):
                     self.app.selected_object.setCost(value, cur_cost)
                 except UnicodeEncodeError:
                     print "The CostId has to be an ascii value"
+                    return
             elif property_name == "Cost":
                 cur_cost_id = self.app.selected_object.getCostId()
                 try:
                     self.app.selected_object.setCost(cur_cost_id,
                                                      float(value))
                 except ValueError:
-                    pass
+                    return
             elif property_name == "Blocking":
                 self.app.selected_object.setBlocking(value)
+                return
             elif property_name == "Rotation":
                 try:
                     self.app.selected_object.setRotation(int(value))
                 except ValueError:
-                    pass
+                    return
             elif property_name == "StackPosition":
                 try:
                     visual = self.app.selected_object.get2dGfxVisual()
                     visual.setStackPosition(int(value))
                 except ValueError:
-                    pass
+                    return
+            map_name = self.app.current_map.name
+            if map_name not in self.app.changed_maps:
+                self.app.changed_maps.append(map_name)
         self.update_property_editor()
 
     def cb_layer_box_changed(self, args):
