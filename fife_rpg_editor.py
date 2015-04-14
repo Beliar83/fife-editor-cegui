@@ -32,6 +32,7 @@ from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
 from fife.extensions.fife_settings import Setting
 from fife.fife import InstanceRenderer
 from fife.fife import MapSaver
+from fife.fife import Map as FifeMap
 from fife_rpg import RPGApplicationCEGUI
 from fife.extensions.serializers import ET
 from fife.extensions.serializers.simplexml import (SimpleXMLSerializer,
@@ -501,13 +502,15 @@ class EditorApplication(RPGApplicationCEGUI):
     def save_project(self):
         """Saves the current project"""
         self.project.save()
-        maps = copy(self.maps)
+        maps = {}
         for game_map in self.maps.itervalues():
-            if isinstance(game_map, GameMap):
+            if isinstance(game_map.fife_map, FifeMap):
                 fife_map = game_map.fife_map
-                filename = os.path.split(fife_map.getFilename())[-1]
-                map_name = os.path.splitext(filename)[0]
-                maps[game_map.name] = map_name
+                filepath = os.path.split(fife_map.getFilename())[-1]
+            else:
+                filepath = os.path.split(game_map.fife_map)[-1]
+            map_name = os.path.splitext(filepath)[0]
+            maps[game_map.view_name] = map_name
         save_data = {"Maps": maps}
         maps_path = self.settings.get("fife-rpg", "MapsPath", "maps")
         maps_filename = os.path.join(self.project_dir, maps_path, "maps.yaml")
