@@ -830,6 +830,7 @@ class EditorGui(object):
             if section != "Instance":
                 return
             if property_name == "Identifier":
+                value = value.encode()
                 self.app.selected_object.setId(value)
             elif property_name == "CostId":
                 cur_cost = self.app.selected_object.getCost()
