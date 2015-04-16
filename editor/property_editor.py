@@ -43,6 +43,7 @@ class PropertyEditor(object):
         self.sections = {}
         self.__value_changed_callbacks = []
         self.__list_items = []
+        self.property_types = []
 
     def set_size(self, size):
         """Sets the size of the property editor
@@ -91,12 +92,27 @@ class PropertyEditor(object):
         if section not in self.sections.keys():
             self.add_section(section, False)
         if property_name not in self.sections[section]:
-            self.sections[section][property_name] = property_data
+            section_data = self.sections[section]
+            for property_type in self.property_types:
+                if property_type.check_type(property_data):
+                    section_data[property_name] = property_type(self, section,
+                                                                property_name,
+                                                                property_data)
+                    break
             self.update_widgets()
         else:
             error = ("Tried to add already present property %s to section %s"
                      % (property_name, section))
             raise RuntimeError(error)
+
+    def add_property_type(self, property_type):
+        """Adds a property type to the end of the list.
+
+        Args:
+
+            property_type: The property type to add
+        """
+        self.property_types.append(property_type)
 
     def update_widgets(self):
         """Update the editors widgets"""
@@ -119,244 +135,10 @@ class PropertyEditor(object):
             section_label.setProperty("HorzFormatting", "CentreAligned")
             y_pos += self.WIDGET_HEIGHT
             y_pos += self.WIDGET_MARGIN
-            for property_name, property_data in properties.iteritems():
-                self.__create_property_widget(property_name, section,
-                                              property_data, area, y_pos)
+            for property_data in properties.itervalues():
+                property_data.setup_widget(area, y_pos)
                 y_pos += self.WIDGET_HEIGHT
                 y_pos += self.WIDGET_MARGIN
-
-    def __create_property_widget(self, property_name, section, property_data,
-                                 container, y_pos):
-        """Create a property widget from the data
-
-        Args:
-
-            property_data: The data of the property
-
-            section: The name of the properties section
-
-            container: The container to which the widget shoud be added
-
-            y_pos: The vertical position of the widget
-        """
-        base_text = "/".join((section, property_name))
-        property_container = container.createChild(
-            "HorizontalLayoutContainer", "%s_container" % (base_text))
-        property_container.setYPosition(y_pos)
-        property_label = property_container.createChild(
-            "TaharezLook/Label", "%s_label" % (base_text))
-        property_label.setProperty(
-            "HorzFormatting", "LeftAligned")
-        property_label.setWidth(PyCEGUI.UDim(0.5, 0))
-        property_label.setHeight(self.WIDGET_HEIGHT)
-        property_label.setText(property_name)
-        property_label.setTooltipText(property_name)
-        property_type = property_data[0].lower()
-        if property_type == "text":
-            start_value = str(property_data[1])
-            property_input = property_container.createChild(
-                "TaharezLook/Editbox", "%s_input" % (base_text))
-            property_input.setWidth(PyCEGUI.UDim(0.49, 0))
-            property_input.setHeight(self.WIDGET_HEIGHT)
-            property_input.setText(start_value)
-            property_input.setTooltipText(start_value)
-
-            property_input.subscribeEvent(
-                PyCEGUI.Editbox.EventTextAccepted,
-                lambda args: self.cb_text_value_changed(section, property_name,
-                                                        args))
-        elif property_type == "combo":
-            possible_values = property_data[1]
-            start_value = str(property_data[2])
-            property_input = property_container.createChild(
-                "TaharezLook/Combobox", "%s_input" % (base_text))
-            property_input.setWidth(PyCEGUI.UDim(0.49, 0))
-            property_input.setText(start_value)
-            property_input.setTooltipText(start_value)
-            property_input.selectListItemWithEditboxText()
-            property_input.subscribeEvent(
-                PyCEGUI.Combobox.EventListSelectionAccepted,
-                lambda args: self.cb_text_value_changed(section, property_name,
-                                                        args))
-            for value in possible_values:
-                item = PyCEGUI.ListboxTextItem(str(value))
-                item.setSelectionBrushImage("TaharezLook/"
-                                            "MultiListSelectionBrush")
-                property_input.addItem(item)
-                self.__list_items.append(item)
-        elif property_type == "check":
-            start_value = property_data[1]
-            property_input = property_container.createChild(
-                "TaharezLook/Checkbox", "%s_input" % (base_text))
-            property_input.setWidth(PyCEGUI.UDim(0.49, 0))
-            property_input.setSelected(start_value)
-            property_input.subscribeEvent(
-                PyCEGUI.ToggleButton.EventSelectStateChanged,
-                lambda args: self.cb_toggle_value_changed(section,
-                                                          property_name,
-                                                          args))
-        elif property_type == "point":
-            x_pos = unicode(property_data[1][0])
-            y_pos = unicode(property_data[1][1])
-            property_input = property_container.createChild(
-                "TaharezLook/Editbox", "%s_x_input" % (base_text))
-            property_input.setWidth(PyCEGUI.UDim(0.245, 0))
-            property_input.setHeight(self.WIDGET_HEIGHT)
-            property_input.setText(x_pos)
-            property_input.setTooltipText(x_pos)
-            property_input.subscribeEvent(
-                PyCEGUI.Editbox.EventTextAccepted,
-                lambda args: self.cb_point_value_changed(section,
-                                                         property_name,
-                                                         args))
-            property_input = property_container.createChild(
-                "TaharezLook/Editbox", "%s_y_input" % (base_text))
-            property_input.setWidth(PyCEGUI.UDim(0.245, 0))
-            property_input.setYPosition(PyCEGUI.UDim(0.245, 0))
-            property_input.setHeight(self.WIDGET_HEIGHT)
-            property_input.setText(y_pos)
-            property_input.setTooltipText(y_pos)
-            property_input.subscribeEvent(
-                PyCEGUI.Editbox.EventTextAccepted,
-                lambda args: self.cb_point_value_changed(section,
-                                                         property_name,
-                                                         args))
-        elif property_type == "point3d":
-            x_pos = unicode(property_data[1][0])
-            y_pos = unicode(property_data[1][1])
-            z_pos = unicode(property_data[1][2])
-            property_input = property_container.createChild(
-                "TaharezLook/Editbox", "%s_x_input" % (base_text))
-            property_input.setWidth(PyCEGUI.UDim(0.163, 0))
-            property_input.setHeight(self.WIDGET_HEIGHT)
-            property_input.setText((x_pos))
-            property_input.setTooltipText(x_pos)
-            property_input.subscribeEvent(
-                PyCEGUI.Editbox.EventTextAccepted,
-                lambda args: self.cb_point3d_value_changed(section,
-                                                           property_name,
-                                                           args))
-            property_input = property_container.createChild(
-                "TaharezLook/Editbox", "%s_y_input" % (base_text))
-            property_input.setWidth(PyCEGUI.UDim(0.163, 0))
-            property_input.setYPosition(PyCEGUI.UDim(0.163, 0))
-            property_input.setHeight(self.WIDGET_HEIGHT)
-            property_input.setText(y_pos)
-            property_input.setTooltipText(y_pos)
-            property_input.subscribeEvent(
-                PyCEGUI.Editbox.EventTextAccepted,
-                lambda args: self.cb_point3d_value_changed(section,
-                                                           property_name,
-                                                           args))
-            property_input = property_container.createChild(
-                "TaharezLook/Editbox", "%s_z_input" % (base_text))
-            property_input.setWidth(PyCEGUI.UDim(0.163, 0))
-            property_input.setYPosition(PyCEGUI.UDim(0.326, 0))
-            property_input.setHeight(self.WIDGET_HEIGHT)
-            property_input.setText(z_pos)
-            property_input.setTooltipText(z_pos)
-            property_input.subscribeEvent(
-                PyCEGUI.Editbox.EventTextAccepted,
-                lambda args: self.cb_point3d_value_changed(section,
-                                                           property_name,
-                                                           args))
-        else:
-            raise RuntimeError("Don't know the property type %s"
-                               % (property_type))
-
-    def cb_text_value_changed(self, section, property_name, args):
-        """Called when the text value of a widget was changed
-
-        Args:
-
-            section: The section the edit box belongs to
-
-            property: The property the editbox belongs to
-
-            args: PyCEGUI event args
-        """
-        window = args.window
-        new_value = unicode(window.getText())
-        window.setTooltipText(new_value)
-        self.__send_value_changed(section,
-                                  property_name,
-                                  new_value)
-
-    def cb_toggle_value_changed(self, section, property_name, args):
-        """Called when the value of toggle button/checkbox was changed
-
-        Args:
-
-            section: The section the edit box belongs to
-
-            property: The property the editbox belongs to
-
-            args: PyCEGUI event args
-        """
-        self.__send_value_changed(section,
-                                  property_name,
-                                  args.window.isSelected())
-
-    def cb_point_value_changed(self, section, property_name, args):
-        """Called when the value of a point was changed
-
-        Args:
-
-            section: The section the edit box belongs to
-
-            property: The property the editbox belongs to
-
-            args: PyCEGUI event args
-        """
-        area = self.properties_area
-        base_text = "/".join((section, property_name))
-        property_container = area.getChildRecursive("%s_container" %
-                                                    (base_text))
-        x_pos_edit = property_container.getChildRecursive("%s_x_input" %
-                                                          (base_text))
-        y_pos_edit = property_container.getChildRecursive("%s_y_input" %
-                                                          (base_text))
-        try:
-            x_pos = float(x_pos_edit.getText())
-            y_pos = float(y_pos_edit.getText())
-            pos = (x_pos, y_pos)
-            self.__send_value_changed(section,
-                                      property_name,
-                                      pos)
-        except ValueError:
-            self.update_widgets()
-
-    def cb_point3d_value_changed(self, section, property_name, args):
-        """Called when the value of a point3d was changed
-
-        Args:
-
-            section: The section the edit box belongs to
-
-            property: The property the editbox belongs to
-
-            args: PyCEGUI event args
-        """
-        area = self.properties_area
-        base_text = "/".join((section, property_name))
-        property_container = area.getChildRecursive("%s_container" %
-                                                    (base_text))
-        x_pos_edit = property_container.getChildRecursive("%s_x_input" %
-                                                          (base_text))
-        y_pos_edit = property_container.getChildRecursive("%s_y_input" %
-                                                          (base_text))
-        z_pos_edit = property_container.getChildRecursive("%s_z_input" %
-                                                          (base_text))
-        try:
-            x_pos = float(x_pos_edit.getText())
-            y_pos = float(y_pos_edit.getText())
-            z_pos = float(z_pos_edit.getText())
-            pos = (x_pos, y_pos, z_pos)
-            self.__send_value_changed(section,
-                                      property_name,
-                                      pos)
-        except ValueError:
-            self.update_widgets()
 
     def add_value_changed_callback(self, function):
         """Adds a function to be called when a value has changed
@@ -367,7 +149,7 @@ class PropertyEditor(object):
         """
         self.__value_changed_callbacks.append(function)
 
-    def __send_value_changed(self, section, property_name, value):
+    def send_value_changed(self, section, property_name, value):
         """Send a value changed callback.
 
         Args:

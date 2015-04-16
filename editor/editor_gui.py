@@ -40,6 +40,8 @@ from .new_project import NewProject
 from .object_toolbar import ObjectToolbar
 from .basic_toolbar import BasicToolbar
 from .property_editor import PropertyEditor
+from .property import (ComboProperty, Point3DProperty, PointProperty,
+                       TextProperty, ToggleProperty)
 
 
 class EditorGui(object):
@@ -167,6 +169,11 @@ class EditorGui(object):
                                              PyCEGUI.UDim(0.780, 0))
         self.property_editor = PropertyEditor(right_area_container)
         self.property_editor.set_size(property_editor_size)
+        self.property_editor.add_property_type(TextProperty)
+        self.property_editor.add_property_type(PointProperty)
+        self.property_editor.add_property_type(Point3DProperty)
+        self.property_editor.add_property_type(ComboProperty)
+        self.property_editor.add_property_type(ToggleProperty)
         self.property_editor.add_value_changed_callback(self.cb_value_changed)
 
         cegui_system.getDefaultGUIContext().setRootWindow(
@@ -396,37 +403,37 @@ class EditorGui(object):
                             pos = (value.x, value.y)
                             property_editor.add_property(
                                 comp_name, field,
-                                ("point", pos))
+                                [pos])
                         elif isinstance(value, helpers.DoublePoint3DYaml):
                             pos = (value.x, value.y, value.z)
                             property_editor.add_property(
                                 comp_name, field,
-                                ("point3d", pos))
+                                [pos])
                         else:
                             str_val = yaml.dump(value).split('\n')[0]
                             property_editor.add_property(
                                 comp_name, field,
-                                ("text", str_val))
+                                [str_val])
         else:
             property_editor.add_property(
                 "Instance", "Identifier",
-                ("text", identifier))
+                [identifier])
             property_editor.add_property(
                 "Instance", "CostId",
-                ("text", self.app.selected_object.getCostId()))
+                [str(self.app.selected_object.getCostId())])
             property_editor.add_property(
                 "Instance", "Cost",
-                ("text", self.app.selected_object.getCost()))
+                [str(self.app.selected_object.getCost())])
             property_editor.add_property(
                 "Instance", "Blocking",
-                ("check", self.app.selected_object.isBlocking()))
+                [str(self.app.selected_object.isBlocking())])
             property_editor.add_property(
                 "Instance", "Rotation",
-                ("text", self.app.selected_object.getRotation()))
+                [str(self.app.selected_object.getRotation())])
             visual = self.app.selected_object.get2dGfxVisual()
             property_editor.add_property(
                 "Instance", "StackPosition",
-                ("text", visual.getStackPosition()))
+                [str(visual.getStackPosition())])
 
     def reset_maps_menu(self):
         """Recreate the view->maps menu"""
