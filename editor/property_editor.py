@@ -30,7 +30,8 @@ class PropertyEditor(object):
     WIDGET_HEIGHT = PyCEGUI.UDim(0.05, 0)
     WIDGET_MARGIN = PyCEGUI.UDim(0.01, 0)
 
-    def __init__(self, root):
+    def __init__(self, root, app):
+        self.app = app
         size = PyCEGUI.USize(PyCEGUI.UDim(1.0, 0),
                              PyCEGUI.UDim(1.0, 0))
         self.properties_box = root.createChild(

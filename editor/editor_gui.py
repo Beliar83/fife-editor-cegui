@@ -3,12 +3,12 @@
 #   it under the terms of the GNU General Public License as published by
 #   the Free Software Foundation, either version 3 of the License, or
 #   (at your option) any later version.
-
+#
 #   This program is distributed in the hope that it will be useful,
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #   GNU General Public License for more details.
-
+#
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -41,7 +41,7 @@ from .object_toolbar import ObjectToolbar
 from .basic_toolbar import BasicToolbar
 from .property_editor import PropertyEditor
 from .property import (ComboProperty, Point3DProperty, PointProperty,
-                       TextProperty, ToggleProperty)
+                       TextProperty, ToggleProperty, ListProperty)
 
 
 class EditorGui(object):
@@ -167,13 +167,14 @@ class EditorGui(object):
         )
         property_editor_size = PyCEGUI.USize(PyCEGUI.UDim(1.0, 0),
                                              PyCEGUI.UDim(0.780, 0))
-        self.property_editor = PropertyEditor(right_area_container)
+        self.property_editor = PropertyEditor(right_area_container, self.app)
         self.property_editor.set_size(property_editor_size)
         self.property_editor.add_property_type(TextProperty)
         self.property_editor.add_property_type(PointProperty)
         self.property_editor.add_property_type(Point3DProperty)
         self.property_editor.add_property_type(ComboProperty)
         self.property_editor.add_property_type(ToggleProperty)
+        self.property_editor.add_property_type(ListProperty)
         self.property_editor.add_value_changed_callback(self.cb_value_changed)
 
         cegui_system.getDefaultGUIContext().setRootWindow(
@@ -410,10 +411,10 @@ class EditorGui(object):
                                 comp_name, field,
                                 [pos])
                         else:
-                            str_val = yaml.dump(value).split('\n')[0]
+                            # str_val = yaml.dump(value).split('\n')[0]
                             property_editor.add_property(
                                 comp_name, field,
-                                [str_val])
+                                [value])
         else:
             property_editor.add_property(
                 "Instance", "Identifier",

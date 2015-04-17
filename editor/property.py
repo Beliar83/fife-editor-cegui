@@ -21,6 +21,7 @@
 """
 
 from abc import ABCMeta, abstractmethod
+from .list_editor import ListEditor
 
 import PyCEGUI
 
@@ -436,13 +437,68 @@ class TextProperty(BaseProperty):
 
         Args:
 
-            section: The section the edit box belongs to
-
-            property: The property the editbox belongs to
-
             args: PyCEGUI event args
         """
         window = args.window
         new_value = unicode(window.getText())
         window.setTooltipText(new_value)
         self.editor.send_value_changed(self.section, self.name, new_value)
+
+
+class ListProperty(BaseProperty):
+
+    """Class for a list property"""
+
+    @classmethod
+    def check_type(cls, value_data):
+        """Checks if the value_data is of the type this class is for
+
+        Args:
+
+            value_data: The value_data to check
+
+        Returns:
+            True if the property can handle the type, False if not
+        """
+        if len(value_data) != 1:
+            return False
+        return isinstance(value_data[0], list)
+
+    def setup_widget(self, root, y_pos):
+        """Sets up the widget for this property
+
+        Args:
+
+            root: The root widget to which to add the widget to
+
+            y_pos: The vertical position of the widget
+
+        """
+        base_text, container = self._create_base_widget(root, y_pos)
+        property_edit = container.createChild(
+            "TaharezLook/Editbox", "%s_edit" % (base_text))
+        property_edit.setWidth(PyCEGUI.UDim(0.49, 0))
+        property_edit.setHeight(self.editor.WIDGET_HEIGHT)
+        property_edit.setText("(list)")
+        property_edit.setTooltipText("(list)")
+        property_edit.setReadOnly(True)
+
+        property_edit.subscribeEvent(
+            PyCEGUI.Editbox.EventMouseClick,
+            self.cb_mouse_clicked)
+
+    def cb_mouse_clicked(self, args):
+        """Called when the text value of a widget was changed
+
+        Args:
+
+            args: PyCEGUI event args
+        """
+        dialog = ListEditor(self.editor.app, self.value_data[0])
+        dialog.show_modal(self.editor.app.editor_gui.editor_window,
+                          self.editor.app.engine.pump)
+        if not dialog.return_value:
+            return
+        values = dialog.get_values()
+        self.editor.send_value_changed(self.section, self.name,
+                                       values["items"])
