@@ -41,7 +41,8 @@ from .object_toolbar import ObjectToolbar
 from .basic_toolbar import BasicToolbar
 from .property_editor import PropertyEditor
 from .property import (ComboProperty, Point3DProperty, PointProperty,
-                       TextProperty, ToggleProperty, ListProperty)
+                       TextProperty, ToggleProperty, ListProperty,
+                       DictProperty)
 
 
 class EditorGui(object):
@@ -175,6 +176,7 @@ class EditorGui(object):
         self.property_editor.add_property_type(ComboProperty)
         self.property_editor.add_property_type(ToggleProperty)
         self.property_editor.add_property_type(ListProperty)
+        self.property_editor.add_property_type(DictProperty)
         self.property_editor.add_value_changed_callback(self.cb_value_changed)
 
         cegui_system.getDefaultGUIContext().setRootWindow(
