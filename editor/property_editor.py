@@ -110,7 +110,6 @@ class PropertyEditor(object):
             else:
                 print "Could not find editor for %s" % property_name
         else:
-            print "%s : %s" % (section, property_name)
             self.sections[section][property_name].update_data(property_data)
 
     def add_property_type(self, property_type):
