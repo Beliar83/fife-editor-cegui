@@ -39,6 +39,8 @@ class BaseProperty(object):
         self.section = section
         self.name = name
         self.value_data = value_data
+        self.base_widget = None
+        self.base_text = None
 
     @classmethod
     def check_type(cls, value_data):
@@ -53,7 +55,7 @@ class BaseProperty(object):
         """
         raise NotImplementedError("Method \"check_type\" was not overridden.")
 
-    def _create_base_widget(self, root, y_pos):
+    def _create_base_widget(self, root):
         """Create the base widget for the editor
 
         Args:
@@ -63,9 +65,8 @@ class BaseProperty(object):
             y_pos: The vertical position of the widget
         """
         base_text = "/".join((self.section, self.name))
-        property_container = root.createChild(
-            "HorizontalLayoutContainer", "%s_container" % (base_text))
-        property_container.setYPosition(y_pos)
+        property_container = root.createChild("HorizontalLayoutContainer",
+                                              "%s_container" % (base_text))
         property_label = property_container.createChild(
             "TaharezLook/Label", "%s_label" % (base_text))
         property_label.setProperty(
@@ -74,11 +75,15 @@ class BaseProperty(object):
         property_label.setHeight(self.editor.WIDGET_HEIGHT)
         property_label.setText(self.name)
         property_label.setTooltipText(self.name)
-        return base_text, property_container
+        self.base_widget = property_container
+        self.base_text = base_text
 
     @abstractmethod
-    def setup_widget(self, root, y_pos):
-        """Sets up the widget for this property
+    def setup_widget(self, root):
+        """Sets up the widget for this property"""
+
+    def update_widget(self, y_pos):
+        """Updates the base widget for this property
 
         Args:
 
@@ -87,6 +92,22 @@ class BaseProperty(object):
             y_pos: The vertical position of the widget
 
         """
+        self.base_widget.setYPosition(y_pos)
+        # self.base_widget.layoutIfNecessary()
+
+    @abstractmethod
+    def update_input_widgets(self):
+        """Updates the values of the input widgets to the current data"""
+
+    def update_data(self, value_data):
+        """Update the properties data
+
+        Args:
+
+            value_data: The new value data
+        """
+        self.value_data = value_data
+        self.update_input_widgets()
 
 
 class ComboProperty(BaseProperty):
@@ -96,6 +117,7 @@ class ComboProperty(BaseProperty):
     def __init__(self, editor, section, name, value_data):
         BaseProperty.__init__(self, editor, section, name, value_data)
         self.__list_items = []
+        self.property_input = None
 
     @classmethod
     def check_type(cls, value_data):
@@ -120,35 +142,42 @@ class ComboProperty(BaseProperty):
                 return False
         return True
 
-    def setup_widget(self, root, y_pos):
+    def update_input_widgets(self):
+        """Updates the values of the input widgets to the current data"""
+        possible_values = self.value_data[0]
+        start_value = str(self.value_data[1])
+        self.property_input.setMutedState(True)
+        self.property_input.resetList()
+
+        self.property_input.setText(start_value)
+        self.property_input.setTooltipText(start_value)
+        for value in possible_values:
+            item = PyCEGUI.ListboxTextItem(str(value))
+            item.setSelectionBrushImage("TaharezLook/"
+                                        "MultiListSelectionBrush")
+            self.property_input.addItem(item)
+            self.__list_items.append(item)
+
+        self.property_input.selectListItemWithEditboxText()
+        self.property_input.setMutedState(False)
+
+    def setup_widget(self, root):
         """Sets up the widget for this property
 
         Args:
 
             root: The root widget to which to add the widget to
-
-            y_pos: The vertical position of the widget
-
         """
         self.__list_items = []
-        base_text, container = self._create_base_widget(root, y_pos)
-        possible_values = self.value_data[0]
-        start_value = str(self.value_data[1])
-        property_input = container.createChild(
-            "TaharezLook/Combobox", "%s_input" % (base_text))
+        self._create_base_widget(root)
+        property_input = self.base_widget.createChild(
+            "TaharezLook/Combobox", "%s_input" % (self.base_text))
         property_input.setWidth(PyCEGUI.UDim(0.49, 0))
-        property_input.setText(start_value)
-        property_input.setTooltipText(start_value)
-        property_input.selectListItemWithEditboxText()
         property_input.subscribeEvent(
             PyCEGUI.Combobox.EventListSelectionAccepted,
             self.cb_value_changed)
-        for value in possible_values:
-            item = PyCEGUI.ListboxTextItem(str(value))
-            item.setSelectionBrushImage("TaharezLook/"
-                                        "MultiListSelectionBrush")
-            property_input.addItem(item)
-            self.__list_items.append(item)
+        self.property_input = property_input
+        self.update_input_widgets()
 
     def cb_value_changed(self, args):
         """Called when the value of the widget was changed
@@ -169,6 +198,10 @@ class ToggleProperty(BaseProperty):
 
     """Class for toggleable properties"""
 
+    def __init__(self, editor, section, name, value_data):
+        BaseProperty.__init__(self, editor, section, name, value_data)
+        self.property_input = None
+
     @classmethod
     def check_type(cls, value_data):
         """Checks if the value_data is of the type this class is for
@@ -184,25 +217,38 @@ class ToggleProperty(BaseProperty):
             return False
         return isinstance(value_data[0], bool)
 
-    def setup_widget(self, root, y_pos):
+    def update_input_widgets(self):
+        """Updates the values of the input widgets to the current data"""
+        cur_value = self.value_data[0]
+        self.property_input.setMutedState(True)
+        self.property_input.setSelected(cur_value)
+        self.property_input.setMutedState(False)
+
+    def setup_widget(self, root):
         """Sets up the widget for this property
 
         Args:
 
             root: The root widget to which to add the widget to
-
-            y_pos: The vertical position of the widget
-
         """
-        base_text, container = self._create_base_widget(root, y_pos)
-        start_value = self.value_data[0]
-        property_input = container.createChild(
-            "TaharezLook/Checkbox", "%s_input" % (base_text))
+        self._create_base_widget(root)
+        property_input = self.base_widget.createChild(
+            "TaharezLook/Checkbox", "%s_input" % (self.base_text))
         property_input.setWidth(PyCEGUI.UDim(0.49, 0))
-        property_input.setSelected(start_value)
         property_input.subscribeEvent(
             PyCEGUI.ToggleButton.EventSelectStateChanged,
             self.cb_value_changed)
+        self.property_input = property_input
+        self.update_input_widgets()
+
+    def update_data(self, value_data):
+        """Update the properties data
+
+        Args:
+
+            value_data: The new value data
+        """
+        BaseProperty.update_data(self, value_data)
 
     def cb_value_changed(self, args):
         """Called when the value of toggle button/checkbox was changed
@@ -219,6 +265,11 @@ class ToggleProperty(BaseProperty):
 class PointProperty(BaseProperty):
 
     """Class for point properties"""
+
+    def __init__(self, editor, section, name, value_data):
+        BaseProperty.__init__(self, editor, section, name, value_data)
+        self.property_input_x = None
+        self.property_input_y = None
 
     @classmethod
     def check_type(cls, value_data):
@@ -238,38 +289,46 @@ class PointProperty(BaseProperty):
         except TypeError:
             return False
 
-    def setup_widget(self, root, y_pos):
+    def update_input_widgets(self):
+        """Updates the input widgets to the current data"""
+        x_pos = unicode(self.value_data[0][0])
+        y_pos = unicode(self.value_data[0][1])
+        self.property_input_x.setMutedState(True)
+        self.property_input_y.setMutedState(True)
+
+        self.property_input_x.setText(x_pos)
+        self.property_input_x.setTooltipText(x_pos)
+        self.property_input_y.setText(y_pos)
+        self.property_input_y.setTooltipText(y_pos)
+        self.property_input_x.setMutedState(True)
+        self.property_input_y.setMutedState(True)
+
+    def setup_widget(self, root):
         """Sets up the widget for this property
 
         Args:
 
             root: The root widget to which to add the widget to
-
-            y_pos: The vertical position of the widget
-
         """
-        base_text, container = self._create_base_widget(root, y_pos)
-        x_pos = unicode(self.value_data[0][0])
-        y_pos = unicode(self.value_data[0][1])
-        property_input = container.createChild(
-            "TaharezLook/Editbox", "%s_x_input" % (base_text))
+        self._create_base_widget(root)
+        property_input = self.base_widget.createChild(
+            "TaharezLook/Editbox", "%s_x_input" % (self.base_text))
         property_input.setWidth(PyCEGUI.UDim(0.245, 0))
         property_input.setHeight(self.editor.WIDGET_HEIGHT)
-        property_input.setText(x_pos)
-        property_input.setTooltipText(x_pos)
         property_input.subscribeEvent(
             PyCEGUI.Editbox.EventTextAccepted,
             self.cb_value_changed)
-        property_input = container.createChild(
-            "TaharezLook/Editbox", "%s_y_input" % (base_text))
+        self.property_input_x = property_input
+        property_input = self.base_widget.createChild(
+            "TaharezLook/Editbox", "%s_y_input" % (self.base_text))
         property_input.setWidth(PyCEGUI.UDim(0.245, 0))
         property_input.setYPosition(PyCEGUI.UDim(0.245, 0))
         property_input.setHeight(self.editor.WIDGET_HEIGHT)
-        property_input.setText(y_pos)
-        property_input.setTooltipText(y_pos)
         property_input.subscribeEvent(
             PyCEGUI.Editbox.EventTextAccepted,
             self.cb_value_changed)
+        self.property_input_y = property_input
+        self.update_input_widgets()
 
     def cb_value_changed(self, args):
         """Called when the value of a point was changed
@@ -301,6 +360,12 @@ class Point3DProperty(BaseProperty):
 
     """Class for point3d properties"""
 
+    def __init__(self, editor, section, name, value_data):
+        BaseProperty.__init__(self, editor, section, name, value_data)
+        self.property_input_x = None
+        self.property_input_y = None
+        self.property_input_z = None
+
     @classmethod
     def check_type(cls, value_data):
         """Checks if the value_data is of the type this class is for
@@ -319,49 +384,59 @@ class Point3DProperty(BaseProperty):
         except TypeError:
             return False
 
-    def setup_widget(self, root, y_pos):
+    def update_input_widgets(self):
+        """Updates the input widgets to the current data"""
+        x_pos = unicode(self.value_data[0][0])
+        y_pos = unicode(self.value_data[0][1])
+        z_pos = unicode(self.value_data[0][2])
+        self.property_input_x.setMutedState(True)
+        self.property_input_y.setMutedState(True)
+        self.property_input_z.setMutedState(True)
+
+        self.property_input_x.setText(x_pos)
+        self.property_input_x.setTooltipText(x_pos)
+        self.property_input_y.setText(y_pos)
+        self.property_input_y.setTooltipText(y_pos)
+        self.property_input_z.setText(z_pos)
+        self.property_input_z.setTooltipText(z_pos)
+        self.property_input_x.setMutedState(True)
+        self.property_input_y.setMutedState(True)
+        self.property_input_z.setMutedState(True)
+
+    def setup_widget(self, root):
         """Sets up the widget for this property
 
         Args:
 
             root: The root widget to which to add the widget to
-
-            y_pos: The vertical position of the widget
-
         """
-        base_text, container = self._create_base_widget(root, y_pos)
-        x_pos = unicode(self.value_data[0][0])
-        y_pos = unicode(self.value_data[0][1])
-        z_pos = unicode(self.value_data[0][2])
-        property_input = container.createChild(
-            "TaharezLook/Editbox", "%s_x_input" % (base_text))
+        self._create_base_widget(root)
+        property_input = self.base_widget.createChild(
+            "TaharezLook/Editbox", "%s_x_input" % (self.base_text))
         property_input.setWidth(PyCEGUI.UDim(0.163, 0))
         property_input.setHeight(self.editor.WIDGET_HEIGHT)
-        property_input.setText((x_pos))
-        property_input.setTooltipText(x_pos)
-        property_input.subscribeEvent(
-            PyCEGUI.Editbox.EventTextAccepted,
-            self.cb_value_changed)
-        property_input = container.createChild(
-            "TaharezLook/Editbox", "%s_y_input" % (base_text))
+        property_input.subscribeEvent(PyCEGUI.Editbox.EventTextAccepted,
+                                      self.cb_value_changed)
+        self.property_input_x = property_input
+
+        property_input = self.base_widget.createChild(
+            "TaharezLook/Editbox", "%s_y_input" % (self.base_text))
         property_input.setWidth(PyCEGUI.UDim(0.163, 0))
         property_input.setYPosition(PyCEGUI.UDim(0.163, 0))
         property_input.setHeight(self.editor.WIDGET_HEIGHT)
-        property_input.setText(y_pos)
-        property_input.setTooltipText(y_pos)
-        property_input.subscribeEvent(
-            PyCEGUI.Editbox.EventTextAccepted,
-            self.cb_value_changed)
-        property_input = container.createChild(
-            "TaharezLook/Editbox", "%s_z_input" % (base_text))
+        property_input.subscribeEvent(PyCEGUI.Editbox.EventTextAccepted,
+                                      self.cb_value_changed)
+        self.property_input_y = property_input
+
+        property_input = self.base_widget.createChild(
+            "TaharezLook/Editbox", "%s_z_input" % (self.base_text))
         property_input.setWidth(PyCEGUI.UDim(0.163, 0))
         property_input.setYPosition(PyCEGUI.UDim(0.326, 0))
         property_input.setHeight(self.editor.WIDGET_HEIGHT)
-        property_input.setText(z_pos)
-        property_input.setTooltipText(z_pos)
-        property_input.subscribeEvent(
-            PyCEGUI.Editbox.EventTextAccepted,
-            self.cb_value_changed)
+        property_input.subscribeEvent(PyCEGUI.Editbox.EventTextAccepted,
+                                      self.cb_value_changed)
+        self.property_input_z = property_input
+        self.update_input_widgets()
 
     def cb_value_changed(self, args):
         """Called when the value of a point was changed
@@ -396,6 +471,10 @@ class TextProperty(BaseProperty):
 
     """Class for a text property"""
 
+    def __init__(self, editor, section, name, value_data):
+        BaseProperty.__init__(self, editor, section, name, value_data)
+        self.property_input = None
+
     @classmethod
     def check_type(cls, value_data):
         """Checks if the value_data is of the type this class is for
@@ -411,28 +490,32 @@ class TextProperty(BaseProperty):
             return False
         return isinstance(value_data[0], basestring)
 
-    def setup_widget(self, root, y_pos):
+    def update_input_widgets(self):
+        """Updates the values of the input widgets to the current data"""
+        cur_value = str(self.value_data[0])
+        self.property_input.setMutedState(True)
+        self.property_input.setText(cur_value)
+        self.property_input.setTooltipText(cur_value)
+        self.property_input.setMutedState(False)
+
+    def setup_widget(self, root):
         """Sets up the widget for this property
 
         Args:
 
             root: The root widget to which to add the widget to
-
-            y_pos: The vertical position of the widget
-
         """
-        base_text, container = self._create_base_widget(root, y_pos)
-        start_value = str(self.value_data[0])
-        property_input = container.createChild(
-            "TaharezLook/Editbox", "%s_input" % (base_text))
+        self._create_base_widget(root)
+        property_input = self.base_widget.createChild(
+            "TaharezLook/Editbox", "%s_input" % (self.base_text))
         property_input.setWidth(PyCEGUI.UDim(0.49, 0))
         property_input.setHeight(self.editor.WIDGET_HEIGHT)
-        property_input.setText(start_value)
-        property_input.setTooltipText(start_value)
 
         property_input.subscribeEvent(
             PyCEGUI.Editbox.EventTextAccepted,
             self.cb_value_changed)
+        self.property_input = property_input
+        self.update_input_widgets()
 
     def cb_value_changed(self, args):
         """Called when the text value of a widget was changed
@@ -466,19 +549,20 @@ class ListProperty(BaseProperty):
             return False
         return isinstance(value_data[0], list)
 
-    def setup_widget(self, root, y_pos):
+    def update_input_widgets(self):
+        """Updates the values of the input widgets to the current data"""
+        pass
+
+    def setup_widget(self, root):
         """Sets up the widget for this property
 
         Args:
 
             root: The root widget to which to add the widget to
-
-            y_pos: The vertical position of the widget
-
         """
-        base_text, container = self._create_base_widget(root, y_pos)
-        property_edit = container.createChild(
-            "TaharezLook/Editbox", "%s_edit" % (base_text))
+        self._create_base_widget(root)
+        property_edit = self.base_widget.createChild(
+            "TaharezLook/Editbox", "%s_edit" % (self.base_text))
         property_edit.setWidth(PyCEGUI.UDim(0.49, 0))
         property_edit.setHeight(self.editor.WIDGET_HEIGHT)
         property_edit.setText("(list)")
@@ -525,19 +609,20 @@ class DictProperty(BaseProperty):
             return False
         return isinstance(value_data[0], dict)
 
-    def setup_widget(self, root, y_pos):
+    def update_input_widgets(self):
+        """Updates the values of the input widgets to the current data"""
+        pass
+
+    def setup_widget(self, root):
         """Sets up the widget for this property
 
         Args:
 
             root: The root widget to which to add the widget to
-
-            y_pos: The vertical position of the widget
-
         """
-        base_text, container = self._create_base_widget(root, y_pos)
-        property_edit = container.createChild(
-            "TaharezLook/Editbox", "%s_edit" % (base_text))
+        self._create_base_widget(root)
+        property_edit = self.base_widget.createChild(
+            "TaharezLook/Editbox", "%s_edit" % (self.base_text))
         property_edit.setWidth(PyCEGUI.UDim(0.49, 0))
         property_edit.setHeight(self.editor.WIDGET_HEIGHT)
         property_edit.setText("(dict)")

@@ -40,9 +40,7 @@ from .new_project import NewProject
 from .object_toolbar import ObjectToolbar
 from .basic_toolbar import BasicToolbar
 from .property_editor import PropertyEditor
-from .property import (ComboProperty, Point3DProperty, PointProperty,
-                       TextProperty, ToggleProperty, ListProperty,
-                       DictProperty)
+from . import properties
 
 
 class EditorGui(object):
@@ -170,14 +168,16 @@ class EditorGui(object):
                                              PyCEGUI.UDim(0.780, 0))
         self.property_editor = PropertyEditor(right_area_container, self.app)
         self.property_editor.set_size(property_editor_size)
-        self.property_editor.add_property_type(TextProperty)
-        self.property_editor.add_property_type(PointProperty)
-        self.property_editor.add_property_type(Point3DProperty)
-        self.property_editor.add_property_type(ComboProperty)
-        self.property_editor.add_property_type(ToggleProperty)
-        self.property_editor.add_property_type(ListProperty)
-        self.property_editor.add_property_type(DictProperty)
+        self.property_editor.add_property_type(properties.PointProperty)
+        self.property_editor.add_property_type(properties.Point3DProperty)
+        self.property_editor.add_property_type(properties.ComboProperty)
+        self.property_editor.add_property_type(properties.ToggleProperty)
+        self.property_editor.add_property_type(properties.TextProperty)
+        self.property_editor.add_property_type(properties.ListProperty)
+        self.property_editor.add_property_type(properties.DictProperty)
         self.property_editor.add_value_changed_callback(self.cb_value_changed)
+
+        self.previous_object = None
 
         cegui_system.getDefaultGUIContext().setRootWindow(
             self.editor_window)
@@ -387,9 +387,11 @@ class EditorGui(object):
             toolbar.update_contents()
 
     def update_property_editor(self):
-        """Update the property editor"""
+        """Update the properties editor"""
         property_editor = self.property_editor
-        property_editor.clear_properties()
+        if not self.app.selected_object == self.previous_object:
+            property_editor.clear_properties()
+        self.previous_object = self.app.selected_object
         if self.app.selected_object is None:
             return
         identifier = self.app.selected_object.getId()
@@ -404,39 +406,40 @@ class EditorGui(object):
                         value = getattr(com_data, field)
                         if isinstance(value, helpers.DoublePointYaml):
                             pos = (value.x, value.y)
-                            property_editor.add_property(
+                            property_editor.set_property(
                                 comp_name, field,
                                 [pos])
                         elif isinstance(value, helpers.DoublePoint3DYaml):
                             pos = (value.x, value.y, value.z)
-                            property_editor.add_property(
+                            property_editor.set_property(
                                 comp_name, field,
                                 [pos])
                         else:
                             # str_val = yaml.dump(value).split('\n')[0]
-                            property_editor.add_property(
+                            property_editor.set_property(
                                 comp_name, field,
                                 [value])
         else:
-            property_editor.add_property(
+            property_editor.set_property(
                 "Instance", "Identifier",
                 [identifier])
-            property_editor.add_property(
+            property_editor.set_property(
                 "Instance", "CostId",
                 [str(self.app.selected_object.getCostId())])
-            property_editor.add_property(
+            property_editor.set_property(
                 "Instance", "Cost",
                 [str(self.app.selected_object.getCost())])
-            property_editor.add_property(
+            property_editor.set_property(
                 "Instance", "Blocking",
                 [str(self.app.selected_object.isBlocking())])
-            property_editor.add_property(
+            property_editor.set_property(
                 "Instance", "Rotation",
                 [str(self.app.selected_object.getRotation())])
             visual = self.app.selected_object.get2dGfxVisual()
-            property_editor.add_property(
+            property_editor.set_property(
                 "Instance", "StackPosition",
                 [str(visual.getStackPosition())])
+        property_editor.update_widgets()
 
     def reset_maps_menu(self):
         """Recreate the view->maps menu"""
@@ -813,15 +816,15 @@ class EditorGui(object):
             self.app.hide_map_entities(self.app.current_map.name)
 
     def cb_value_changed(self, section, property_name, value):
-        """Called when the value of a property changed
+        """Called when the value of a properties changed
 
         Args:
 
-            section: The section of the property
+            section: The section of the properties
 
-            property_name: The name of the property
+            property_name: The name of the properties
 
-            value: The new value of the property
+            value: The new value of the properties
         """
         identifier = self.app.selected_object.getId()
         world = self.app.world
@@ -839,6 +842,7 @@ class EditorGui(object):
         else:
             if section != "Instance":
                 return
+            is_valid = True
             if property_name == "Identifier":
                 value = value.encode()
                 self.app.selected_object.setId(value)
@@ -849,31 +853,34 @@ class EditorGui(object):
                     self.app.selected_object.setCost(value, cur_cost)
                 except UnicodeEncodeError:
                     print "The CostId has to be an ascii value"
-                    return
+                    is_valid = False
             elif property_name == "Cost":
                 cur_cost_id = self.app.selected_object.getCostId()
                 try:
                     self.app.selected_object.setCost(cur_cost_id,
                                                      float(value))
-                except ValueError:
-                    return
+                except ValueError as error:
+                    print error.message
+                    is_valid = False
             elif property_name == "Blocking":
                 self.app.selected_object.setBlocking(value)
-                return
             elif property_name == "Rotation":
                 try:
                     self.app.selected_object.setRotation(int(value))
-                except ValueError:
-                    return
+                except ValueError as error:
+                    print error.message
+                    is_valid = False
             elif property_name == "StackPosition":
                 try:
                     visual = self.app.selected_object.get2dGfxVisual()
                     visual.setStackPosition(int(value))
-                except ValueError:
-                    return
-            map_name = self.app.current_map.name
-            if map_name not in self.app.changed_maps:
-                self.app.changed_maps.append(map_name)
+                except ValueError as error:
+                    print error.message
+                    is_valid = False
+            if is_valid:
+                map_name = self.app.current_map.name
+                if map_name not in self.app.changed_maps:
+                    self.app.changed_maps.append(map_name)
         self.update_property_editor()
 
     def cb_layer_box_changed(self, args):

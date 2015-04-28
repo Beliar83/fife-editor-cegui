@@ -60,7 +60,14 @@ class PropertyEditor(object):
         """Removed all sections and sections"""
         self.sections = {}
         self.__list_items = []
-        self.update_widgets()
+        ignored_count = 0
+        area = self.properties_area
+        while (area.getContentPane().getChildCount() - ignored_count) > 0:
+            child = area.getContentPane().getChildAtIdx(ignored_count)
+            if child.isAutoWindow():
+                ignored_count += 1
+                continue
+            child.destroy()
 
     def add_section(self, section, update=True):
         """Adds a section to the editor.
@@ -79,14 +86,14 @@ class PropertyEditor(object):
             error = "Tried to add already present section %s" % (section)
             raise RuntimeError(error)
 
-    def add_property(self, section, property_name, property_data):
-        """Add a property to the given section
+    def set_property(self, section, property_name, property_data):
+        """Sets the value of a property
 
         Args:
 
-            section: The name of the section, to add the property to
+            section: The name of the section
 
-            property_name: The name of the property to add
+            property_name: The name of the property
 
             property_data: Property dependent information
         """
@@ -100,11 +107,11 @@ class PropertyEditor(object):
                                                                 property_name,
                                                                 property_data)
                     break
-            self.update_widgets()
+            else:
+                print "Could not find editor for %s" % property_name
         else:
-            error = ("Tried to add already present property %s to section %s"
-                     % (property_name, section))
-            raise RuntimeError(error)
+            print "%s : %s" % (section, property_name)
+            self.sections[section][property_name].update_data(property_data)
 
     def add_property_type(self, property_type):
         """Adds a property type to the end of the list.
@@ -117,27 +124,32 @@ class PropertyEditor(object):
 
     def update_widgets(self):
         """Update the editors widgets"""
-        ignored_count = 0
         area = self.properties_area
-        while (area.getContentPane().getChildCount() - ignored_count) > 0:
-            child = area.getContentPane().getChildAtIdx(ignored_count)
-            if child.isAutoWindow():
-                ignored_count += 1
-                continue
-            child.destroy()
         y_pos = PyCEGUI.UDim(0, 0.0)
 
         for section, properties in self.sections.iteritems():
-            section_label = area.createChild("TaharezLook/Label", section)
+            try:
+                PyCEGUI.Exception.setStdErrEnabled(False)
+                section_label = area.getChild(section)
+            except RuntimeError:
+                section_label = area.createChild("TaharezLook/Label",
+                                                 section)
+                section_label.setText(section)
+                section_label.setWidth(PyCEGUI.UDim(0.99, 0.0))
+                section_label.setHeight(self.WIDGET_HEIGHT)
+                section_label.setProperty("HorzFormatting",
+                                          "CentreAligned")
+            finally:
+                PyCEGUI.Exception.setStdErrEnabled(True)
+
             section_label.setYPosition(y_pos)
-            section_label.setText(section)
-            section_label.setWidth(PyCEGUI.UDim(0.99, 0.0))
-            section_label.setHeight(self.WIDGET_HEIGHT)
-            section_label.setProperty("HorzFormatting", "CentreAligned")
             y_pos += self.WIDGET_HEIGHT
             y_pos += self.WIDGET_MARGIN
             for property_data in properties.itervalues():
-                property_data.setup_widget(area, y_pos)
+                if property_data.base_widget is None:
+                    property_data.setup_widget(area)
+                    property_data.update_widget(y_pos)
+                property_data.update_input_widgets()
                 y_pos += self.WIDGET_HEIGHT
                 y_pos += self.WIDGET_MARGIN
 
