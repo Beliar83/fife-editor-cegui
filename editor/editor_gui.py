@@ -31,7 +31,6 @@ from fife.extensions.serializers.simplexml import (SimpleXMLSerializer,
 from fife.extensions.serializers import ET
 from fife_rpg.map import Map as GameMap
 from fife_rpg.components import ComponentManager
-from fife_rpg import helpers
 
 from .edit_map import MapOptions
 from .edit_layer import LayerOptions
@@ -405,21 +404,9 @@ class EditorGui(object):
                 if com_data:
                     for field in component.saveable_fields:
                         value = getattr(com_data, field)
-                        if isinstance(value, helpers.DoublePointYaml):
-                            pos = (value.x, value.y)
-                            property_editor.set_property(
-                                comp_name, field,
-                                [pos])
-                        elif isinstance(value, helpers.DoublePoint3DYaml):
-                            pos = (value.x, value.y, value.z)
-                            property_editor.set_property(
-                                comp_name, field,
-                                [pos])
-                        else:
-                            # str_val = yaml.dump(value).split('\n')[0]
-                            property_editor.set_property(
-                                comp_name, field,
-                                [value])
+                        property_editor.set_property(
+                            comp_name, field,
+                            [value])
         else:
             property_editor.set_property(
                 "Instance", "Identifier",
@@ -429,13 +416,13 @@ class EditorGui(object):
                 [str(self.app.selected_object.getCostId())])
             property_editor.set_property(
                 "Instance", "Cost",
-                [str(self.app.selected_object.getCost())])
+                [self.app.selected_object.getCost()])
             property_editor.set_property(
                 "Instance", "Blocking",
-                [str(self.app.selected_object.isBlocking())])
+                [self.app.selected_object.isBlocking()])
             property_editor.set_property(
                 "Instance", "Rotation",
-                [str(self.app.selected_object.getRotation())])
+                [self.app.selected_object.getRotation()])
             visual = self.app.selected_object.get2dGfxVisual()
             property_editor.set_property(
                 "Instance", "StackPosition",

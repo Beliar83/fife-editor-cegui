@@ -23,6 +23,7 @@
 from abc import ABCMeta, abstractmethod
 
 import PyCEGUI
+from fife_rpg import helpers
 
 from .list_editor import ListEditor
 from .dict_editor import DictEditor
@@ -284,15 +285,12 @@ class PointProperty(BaseProperty):
         """
         if len(value_data) != 1:
             return False
-        try:
-            return len(value_data[0]) == 2
-        except TypeError:
-            return False
+        return isinstance(value_data[0], helpers.DoublePointYaml)
 
     def update_input_widgets(self):
         """Updates the input widgets to the current data"""
-        x_pos = unicode(self.value_data[0][0])
-        y_pos = unicode(self.value_data[0][1])
+        x_pos = unicode(self.value_data[0].x)
+        y_pos = unicode(self.value_data[0].y)
         self.property_input_x.setMutedState(True)
         self.property_input_y.setMutedState(True)
 
@@ -348,7 +346,7 @@ class PointProperty(BaseProperty):
         try:
             x_pos = float(x_pos_edit.getText())
             y_pos = float(y_pos_edit.getText())
-            pos = (x_pos, y_pos)
+            pos = helpers.DoublePointYaml(x_pos, y_pos)
             self.editor.send_value_changed(self.section,
                                            self.name,
                                            pos)
@@ -379,16 +377,13 @@ class Point3DProperty(BaseProperty):
         """
         if len(value_data) != 1:
             return False
-        try:
-            return len(value_data[0]) == 3
-        except TypeError:
-            return False
+        return isinstance(value_data[0], helpers.DoublePoint3DYaml)
 
     def update_input_widgets(self):
         """Updates the input widgets to the current data"""
-        x_pos = unicode(self.value_data[0][0])
-        y_pos = unicode(self.value_data[0][1])
-        z_pos = unicode(self.value_data[0][2])
+        x_pos = unicode(self.value_data[0].x)
+        y_pos = unicode(self.value_data[0].y)
+        z_pos = unicode(self.value_data[0].z)
         self.property_input_x.setMutedState(True)
         self.property_input_y.setMutedState(True)
         self.property_input_z.setMutedState(True)
@@ -459,7 +454,7 @@ class Point3DProperty(BaseProperty):
             x_pos = float(x_pos_edit.getText())
             y_pos = float(y_pos_edit.getText())
             z_pos = float(z_pos_edit.getText())
-            pos = (x_pos, y_pos, z_pos)
+            pos = helpers.DoublePoint3DYaml(x_pos, y_pos, z_pos)
             self.editor.send_value_changed(self.section,
                                            self.name,
                                            pos)
