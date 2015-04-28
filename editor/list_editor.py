@@ -37,6 +37,8 @@ class ListEditor(Dialog):
         self.text_input = None
         self.add_button = None
         self.delete_button = None
+        self.up_button = None
+        self.down_button = None
         self.items = []
         self.values = []
 
@@ -98,6 +100,24 @@ class ListEditor(Dialog):
                                      self.cb_delete_clicked)
         self.delete_button = delete_button
 
+        up_button = buttons_layout.createChild("TaharezLook/Button",
+                                               "up_button")
+        up_button.setText("Up")
+        up_button.setHeight(PyCEGUI.UDim(0.0, text_height))
+        up_button.setEnabled(False)
+        up_button.subscribeEvent(PyCEGUI.ButtonBase.EventMouseClick,
+                                 self.cb_up_clicked)
+        self.up_button = up_button
+
+        down_button = buttons_layout.createChild("TaharezLook/Button",
+                                                 "down_button")
+        down_button.setText("Down")
+        down_button.setHeight(PyCEGUI.UDim(0.0, text_height))
+        down_button.setEnabled(False)
+        down_button.subscribeEvent(PyCEGUI.ButtonBase.EventMouseClick,
+                                   self.cb_down_clicked)
+        self.down_button = down_button
+
     def cb_edit_list_changed(self, args):
         """Called when something in the list was changed
 
@@ -105,7 +125,20 @@ class ListEditor(Dialog):
 
             args: PyCEGUI.WindowEventArgs
         """
-        self.delete_button.setEnabled(args.window.getSelectedCount() > 0)
+        has_selected = args.window.getSelectedCount() > 0
+        self.delete_button.setEnabled(has_selected)
+        item_count = args.window.getItemCount()
+        if not has_selected:
+            self.up_button.setEnabled(has_selected)
+            self.down_button.setEnabled(has_selected)
+        elif item_count < 2:
+            self.up_button.setEnabled(False)
+            self.down_button.setEnabled(False)
+        else:
+            item = args.window.getFirstSelectedItem()
+            index = args.window.getItemIndex(item)
+            self.up_button.setEnabled(index > 0)
+            self.down_button.setEnabled(index < item_count - 1)
 
     def cb_text_changed(self, args):
         """Called when the editbox was changed
@@ -138,8 +171,51 @@ class ListEditor(Dialog):
             args: PyCEGUI.WindowEventArgs
         """
         item = self.edit_list.getFirstSelectedItem()
-        self.values.remove(item.getText())
+        index = self.edit_list.getItemIndex(item)
+        del self.values[index]
         self.edit_list.removeItem(item)
+
+    def cb_up_clicked(self, args):
+        """Called when the up button was clicked
+
+        Args:
+
+            args: PyCEGUI.WindowEventArgs
+        """
+        item = self.edit_list.getFirstSelectedItem()
+        old_index = self.edit_list.getItemIndex(item)
+        new_index = old_index - 1
+        self.values.insert(new_index, self.values.pop(old_index))
+        temp_item = self.edit_list.getItemFromIndex(new_index)
+        item.setDestroyedByParent(False)
+        self.edit_list.removeItem(item)
+        self.edit_list.insertItem(item, temp_item)
+        item.setDestroyedByParent(True)
+        self.edit_list.performChildWindowLayout()
+        self.edit_list.selectRange(new_index, new_index)
+
+    def cb_down_clicked(self, args):
+        """Called when the down button was clicked
+
+        Args:
+
+            args: PyCEGUI.WindowEventArgs
+        """
+        item = self.edit_list.getFirstSelectedItem()
+        old_index = self.edit_list.getItemIndex(item)
+        new_index = old_index + 1
+        self.values.insert(new_index, self.values.pop(old_index))
+        item.setDestroyedByParent(False)
+        self.edit_list.removeItem(item)
+        if new_index >= self.edit_list.getItemCount():
+            self.edit_list.addItem(item)
+        else:
+            temp_item = self.edit_list.getItemFromIndex(new_index)
+            self.edit_list.insertItem(item, temp_item)
+        self.edit_list.selectRange(new_index, new_index)
+
+        item.setDestroyedByParent(True)
+        self.edit_list.performChildWindowLayout()
 
     def get_values(self):
         return {"items": copy(self.values)}
