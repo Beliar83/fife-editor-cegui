@@ -26,6 +26,7 @@ import PyCEGUI
 from fife_rpg import helpers
 
 from .list_editor import ListEditor
+from .set_editor import SetEditor
 from .dict_editor import DictEditor
 
 
@@ -576,6 +577,66 @@ class ListProperty(BaseProperty):
             args: PyCEGUI event args
         """
         dialog = ListEditor(self.editor.app, self.value_data[0])
+        dialog.show_modal(self.editor.app.editor_gui.editor_window,
+                          self.editor.app.engine.pump)
+        if not dialog.return_value:
+            return
+        values = dialog.get_values()
+        self.editor.send_value_changed(self.section, self.name,
+                                       values["items"])
+
+
+class SetProperty(BaseProperty):
+
+    """Class for a list property"""
+
+    @classmethod
+    def check_type(cls, value_data):
+        """Checks if the value_data is of the type this class is for
+
+        Args:
+
+            value_data: The value_data to check
+
+        Returns:
+            True if the property can handle the type, False if not
+        """
+        if len(value_data) != 1:
+            return False
+        return isinstance(value_data[0], set)
+
+    def update_input_widgets(self):
+        """Updates the values of the input widgets to the current data"""
+        pass
+
+    def setup_widget(self, root):
+        """Sets up the widget for this property
+
+        Args:
+
+            root: The root widget to which to add the widget to
+        """
+        self._create_base_widget(root)
+        property_edit = self.base_widget.createChild(
+            "TaharezLook/Editbox", "%s_edit" % (self.base_text))
+        property_edit.setWidth(PyCEGUI.UDim(0.49, 0))
+        property_edit.setHeight(self.editor.WIDGET_HEIGHT)
+        property_edit.setText("(set)")
+        property_edit.setTooltipText("(set)")
+        property_edit.setReadOnly(True)
+
+        property_edit.subscribeEvent(
+            PyCEGUI.Editbox.EventMouseClick,
+            self.cb_mouse_clicked)
+
+    def cb_mouse_clicked(self, args):
+        """Called when the text value of a widget was changed
+
+        Args:
+
+            args: PyCEGUI event args
+        """
+        dialog = SetEditor(self.editor.app, self.value_data[0])
         dialog.show_modal(self.editor.app.editor_gui.editor_window,
                           self.editor.app.engine.pump)
         if not dialog.return_value:
