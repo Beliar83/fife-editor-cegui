@@ -175,6 +175,7 @@ class EditorGui(object):
         self.property_editor.add_property_type(properties.TextProperty)
         self.property_editor.add_property_type(properties.ListProperty)
         self.property_editor.add_property_type(properties.DictProperty)
+        self.property_editor.add_property_type(properties.NumberProperty)
         self.property_editor.add_value_changed_callback(self.cb_value_changed)
 
         self.previous_object = None

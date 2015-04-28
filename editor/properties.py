@@ -648,3 +648,74 @@ class DictProperty(BaseProperty):
         values = dialog.get_values()
         self.editor.send_value_changed(self.section, self.name,
                                        values)
+
+
+class NumberProperty(BaseProperty):
+
+    """Class for a text property"""
+
+    def __init__(self, editor, section, name, value_data):
+        BaseProperty.__init__(self, editor, section, name, value_data)
+        self.property_input = None
+
+    @classmethod
+    def check_type(cls, value_data):
+        """Checks if the value_data is of the type this class is for
+
+        Args:
+
+            value_data: The value_data to check
+
+        Returns:
+            True if the property can handle the type, False if not
+        """
+        if len(value_data) != 1:
+            return False
+        return isinstance(value_data[0], (float, int))
+
+    def update_input_widgets(self):
+        """Updates the values of the input widgets to the current data"""
+        start_value = self.value_data[0]
+        input_modes = PyCEGUI.Spinner.TextInputMode
+        input_mode = (input_modes.Integer if isinstance(start_value, int) else
+                      input_modes.FloatingPoint)
+        self.property_input.setTextInputMode(input_mode)
+        self.property_input.setMutedState(True)
+        self.property_input.setCurrentValue(start_value)
+        self.property_input.setMutedState(False)
+        self.property_input.setTooltipText(str(start_value))
+
+    def setup_widget(self, root):
+        """Sets up the widget for this property
+
+        Args:
+
+            root: The root widget to which to add the widget to
+
+        """
+        self._create_base_widget(root)
+        property_input = self.base_widget.createChild(
+            "TaharezLook/Spinner", "%s_input" % (self.base_text))
+        property_input.setWidth(PyCEGUI.UDim(0.49, 0))
+        property_input.setHeight(self.editor.WIDGET_HEIGHT)
+
+        property_input.subscribeEvent(
+            PyCEGUI.Spinner.EventValueChanged,
+            self.cb_value_changed)
+        self.property_input = property_input
+        self.update_input_widgets()
+
+    def cb_value_changed(self, args):
+        """Called when the text value of a widget was changed
+
+        Args:
+
+            args: PyCEGUI event args
+        """
+        window = args.window
+        input_modes = PyCEGUI.Spinner.TextInputMode
+        input_mode = window.getTextInputMode()
+        val_type = int if input_mode == input_modes.Integer else float
+        new_value = val_type(window.getText())
+        window.setTooltipText(str(new_value))
+        self.editor.send_value_changed(self.section, self.name, new_value)
