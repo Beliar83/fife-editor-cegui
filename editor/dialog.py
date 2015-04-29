@@ -25,6 +25,7 @@ import PyCEGUI
 
 
 class Dialog(object):  # pylint: disable=abstract-class-not-used
+
     """Class that displays an empty dialog"""
 
     __metaclass__ = ABCMeta
@@ -60,8 +61,7 @@ class Dialog(object):  # pylint: disable=abstract-class-not-used
         if self.window:
             self.window.destroy()
 
-        self.window = root.createChild("TaharezLook/FrameWindow",
-                                       "ProjectSettings")
+        self.window = root.createChild("TaharezLook/FrameWindow")
         self.window.hide()
         # self.window.setArea(PyCEGUI.UDim(0, 3), PyCEGUI.UDim(0, 4),
         #                    PyCEGUI.UDim(0.4, 3), PyCEGUI.UDim(0.5, 4))
