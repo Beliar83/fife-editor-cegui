@@ -507,9 +507,10 @@ class TextProperty(BaseProperty):
         property_input.setWidth(PyCEGUI.UDim(0.49, 0))
         property_input.setHeight(self.editor.WIDGET_HEIGHT)
 
-        property_input.subscribeEvent(
-            PyCEGUI.Editbox.EventTextAccepted,
-            self.cb_value_changed)
+        property_input.subscribeEvent(PyCEGUI.Editbox.EventTextAccepted,
+                                      self.cb_value_changed)
+        property_input.subscribeEvent(PyCEGUI.Editbox.EventInputCaptureLost,
+                                      self.cb_value_changed)
         self.property_input = property_input
         self.update_input_widgets()
 
