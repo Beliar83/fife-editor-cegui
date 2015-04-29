@@ -302,8 +302,8 @@ class PointProperty(BaseProperty):
         self.property_input_x.setTooltipText(x_pos)
         self.property_input_y.setText(y_pos)
         self.property_input_y.setTooltipText(y_pos)
-        self.property_input_x.setMutedState(True)
-        self.property_input_y.setMutedState(True)
+        self.property_input_x.setMutedState(False)
+        self.property_input_y.setMutedState(False)
 
     def setup_widget(self, root):
         """Sets up the widget for this property
@@ -334,7 +334,7 @@ class PointProperty(BaseProperty):
         property_input.setWidth(PyCEGUI.UDim(1, -text_width))
         property_input.setHeight(widget_height)
         property_input.setTextInputMode(input_mode)
-        property_input.subscribeEvent(PyCEGUI.Editbox.EventTextAccepted,
+        property_input.subscribeEvent(PyCEGUI.Spinner.EventValueChanged,
                                       self.cb_value_changed)
         self.property_input_x = property_input
 
@@ -356,7 +356,7 @@ class PointProperty(BaseProperty):
         property_input.setWidth(PyCEGUI.UDim(1, -text_width))
         property_input.setHeight(widget_height)
         property_input.setTextInputMode(input_mode)
-        property_input.subscribeEvent(PyCEGUI.Editbox.EventTextAccepted,
+        property_input.subscribeEvent(PyCEGUI.Spinner.EventValueChanged,
                                       self.cb_value_changed)
         self.property_input_y = property_input
         self.update_input_widgets()
@@ -368,17 +368,11 @@ class PointProperty(BaseProperty):
 
             args: PyCEGUI event args
         """
-        area = self.editor.properties_area
-        base_text = "/".join((self.section, self.name))
-        property_container = area.getChildRecursive("%s_container" %
-                                                    (base_text))
-        x_pos_edit = property_container.getChildRecursive("%s_x_input" %
-                                                          (base_text))
-        y_pos_edit = property_container.getChildRecursive("%s_y_input" %
-                                                          (base_text))
+        x_pos_edit = self.property_input_x
+        y_pos_edit = self.property_input_y
         try:
-            x_pos = float(x_pos_edit.getText())
-            y_pos = float(y_pos_edit.getText())
+            x_pos = x_pos_edit.getCurrentValue()
+            y_pos = y_pos_edit.getCurrentValue()
             pos = helpers.DoublePointYaml(x_pos, y_pos)
             self.editor.send_value_changed(self.section,
                                            self.name,
@@ -427,9 +421,9 @@ class Point3DProperty(BaseProperty):
         self.property_input_y.setTooltipText(y_pos)
         self.property_input_z.setText(z_pos)
         self.property_input_z.setTooltipText(z_pos)
-        self.property_input_x.setMutedState(True)
-        self.property_input_y.setMutedState(True)
-        self.property_input_z.setMutedState(True)
+        self.property_input_x.setMutedState(False)
+        self.property_input_y.setMutedState(False)
+        self.property_input_z.setMutedState(False)
 
     def setup_widget(self, root):
         """Sets up the widget for this property
@@ -460,7 +454,7 @@ class Point3DProperty(BaseProperty):
         property_input.setWidth(PyCEGUI.UDim(1, -text_width))
         property_input.setHeight(widget_height)
         property_input.setTextInputMode(input_mode)
-        property_input.subscribeEvent(PyCEGUI.Editbox.EventTextAccepted,
+        property_input.subscribeEvent(PyCEGUI.Spinner.EventValueChanged,
                                       self.cb_value_changed)
         self.property_input_x = property_input
 
@@ -482,7 +476,7 @@ class Point3DProperty(BaseProperty):
         property_input.setWidth(PyCEGUI.UDim(1, -text_width))
         property_input.setHeight(widget_height)
         property_input.setTextInputMode(input_mode)
-        property_input.subscribeEvent(PyCEGUI.Editbox.EventTextAccepted,
+        property_input.subscribeEvent(PyCEGUI.Spinner.EventValueChanged,
                                       self.cb_value_changed)
         self.property_input_y = property_input
 
@@ -503,7 +497,7 @@ class Point3DProperty(BaseProperty):
         property_input.setWidth(PyCEGUI.UDim(1, -text_width))
         property_input.setHeight(widget_height)
         property_input.setTextInputMode(input_mode)
-        property_input.subscribeEvent(PyCEGUI.Editbox.EventTextAccepted,
+        property_input.subscribeEvent(PyCEGUI.Spinner.EventValueChanged,
                                       self.cb_value_changed)
         self.property_input_z = property_input
         self.update_input_widgets()
@@ -515,20 +509,13 @@ class Point3DProperty(BaseProperty):
 
             args: PyCEGUI event args
         """
-        area = self.editor.properties_area
-        base_text = "/".join((self.section, self.name))
-        property_container = area.getChildRecursive("%s_container" %
-                                                    (base_text))
-        x_pos_edit = property_container.getChildRecursive("%s_x_input" %
-                                                          (base_text))
-        y_pos_edit = property_container.getChildRecursive("%s_y_input" %
-                                                          (base_text))
-        z_pos_edit = property_container.getChildRecursive("%s_z_input" %
-                                                          (base_text))
+        x_pos_edit = self.property_input_x
+        y_pos_edit = self.property_input_y
+        z_pos_edit = self.property_input_z
         try:
-            x_pos = float(x_pos_edit.getText())
-            y_pos = float(y_pos_edit.getText())
-            z_pos = float(z_pos_edit.getText())
+            x_pos = x_pos_edit.getCurrentValue()
+            y_pos = y_pos_edit.getCurrentValue()
+            z_pos = z_pos_edit.getCurrentValue()
             pos = helpers.DoublePoint3DYaml(x_pos, y_pos, z_pos)
             self.editor.send_value_changed(self.section,
                                            self.name,
