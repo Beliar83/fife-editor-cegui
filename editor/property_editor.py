@@ -149,7 +149,7 @@ class PropertyEditor(object):
                     property_data.setup_widget(area)
                     property_data.update_widget(y_pos)
                 property_data.update_input_widgets()
-                y_pos += self.WIDGET_HEIGHT
+                y_pos += self.WIDGET_HEIGHT * property_data.rows
                 y_pos += self.WIDGET_MARGIN
 
     def add_value_changed_callback(self, function):

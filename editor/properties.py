@@ -36,13 +36,14 @@ class BaseProperty(object):
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, editor, section, name, value_data):
+    def __init__(self, editor, section, name, value_data, rows=1):
         self.editor = editor
         self.section = section
         self.name = name
         self.value_data = value_data
         self.base_widget = None
         self.base_text = None
+        self.rows = rows
 
     @classmethod
     def check_type(cls, value_data):
@@ -57,7 +58,7 @@ class BaseProperty(object):
         """
         raise NotImplementedError("Method \"check_type\" was not overridden.")
 
-    def _create_base_widget(self, root):
+    def _create_base_widget(self, root, w_type="HorizontalLayoutContainer"):
         """Create the base widget for the editor
 
         Args:
@@ -65,9 +66,11 @@ class BaseProperty(object):
             root: The root widget to which to add the widget to
 
             y_pos: The vertical position of the widget
+
+            w_type: The widget type to create for the container.
         """
         base_text = "/".join((self.section, self.name))
-        property_container = root.createChild("HorizontalLayoutContainer",
+        property_container = root.createChild(w_type,
                                               "%s_container" % (base_text))
         property_label = property_container.createChild(
             "TaharezLook/Label", "%s_label" % (base_text))
@@ -269,7 +272,7 @@ class PointProperty(BaseProperty):
     """Class for point properties"""
 
     def __init__(self, editor, section, name, value_data):
-        BaseProperty.__init__(self, editor, section, name, value_data)
+        BaseProperty.__init__(self, editor, section, name, value_data, rows=3)
         self.property_input_x = None
         self.property_input_y = None
 
@@ -309,23 +312,52 @@ class PointProperty(BaseProperty):
 
             root: The root widget to which to add the widget to
         """
-        self._create_base_widget(root)
-        property_input = self.base_widget.createChild(
-            "TaharezLook/Editbox", "%s_x_input" % (self.base_text))
-        property_input.setWidth(PyCEGUI.UDim(0.245, 0))
-        property_input.setHeight(self.editor.WIDGET_HEIGHT)
-        property_input.subscribeEvent(
-            PyCEGUI.Editbox.EventTextAccepted,
-            self.cb_value_changed)
+        self._create_base_widget(root, "VerticalLayoutContainer")
+        base_widget = self.base_widget
+        font = base_widget.getFont()
+        input_mode = PyCEGUI.Spinner.TextInputMode.FloatingPoint
+        property_layout = base_widget.createChild("HorizontalLayoutContainer",
+                                                  "%s_x_layout" %
+                                                  (self.base_text))
+        widget_height = self.editor.WIDGET_HEIGHT
+        property_layout.setHeight(widget_height)
+        property_layout.setYPosition(PyCEGUI.UDim(0, 0))
+        property_label = property_layout.createChild("TaharezLook/Label",
+                                                     "%s_x_label" %
+                                                     (self.base_text))
+        property_label.setText("X")
+        text_width = font.getTextExtent(property_label.getText()) + 10
+        property_label.setWidth(PyCEGUI.UDim(0, text_width))
+        property_label.setHeight(widget_height)
+        property_input = property_layout.createChild(
+            "TaharezLook/Spinner", "%s_x_input" % (self.base_text))
+        property_input.setWidth(PyCEGUI.UDim(1, -text_width))
+        property_input.setHeight(widget_height)
+        property_input.setTextInputMode(input_mode)
+        property_input.subscribeEvent(PyCEGUI.Editbox.EventTextAccepted,
+                                      self.cb_value_changed)
         self.property_input_x = property_input
-        property_input = self.base_widget.createChild(
-            "TaharezLook/Editbox", "%s_y_input" % (self.base_text))
-        property_input.setWidth(PyCEGUI.UDim(0.245, 0))
-        property_input.setYPosition(PyCEGUI.UDim(0.245, 0))
-        property_input.setHeight(self.editor.WIDGET_HEIGHT)
-        property_input.subscribeEvent(
-            PyCEGUI.Editbox.EventTextAccepted,
-            self.cb_value_changed)
+
+        property_layout = base_widget.createChild("HorizontalLayoutContainer",
+                                                  "%s_y_layout" %
+                                                  (self.base_text))
+        property_layout.setHeight(widget_height)
+        property_layout.setYPosition(widget_height)
+
+        property_label = property_layout.createChild("TaharezLook/Label",
+                                                     "%s_y_label" %
+                                                     (self.base_text))
+        property_label.setText("Y")
+        text_width = font.getTextExtent(property_label.getText()) + 10
+        property_label.setWidth(PyCEGUI.UDim(0, text_width))
+        property_label.setHeight(widget_height)
+        property_input = property_layout.createChild(
+            "TaharezLook/Spinner", "%s_y_input" % (self.base_text))
+        property_input.setWidth(PyCEGUI.UDim(1, -text_width))
+        property_input.setHeight(widget_height)
+        property_input.setTextInputMode(input_mode)
+        property_input.subscribeEvent(PyCEGUI.Editbox.EventTextAccepted,
+                                      self.cb_value_changed)
         self.property_input_y = property_input
         self.update_input_widgets()
 
@@ -360,7 +392,7 @@ class Point3DProperty(BaseProperty):
     """Class for point3d properties"""
 
     def __init__(self, editor, section, name, value_data):
-        BaseProperty.__init__(self, editor, section, name, value_data)
+        BaseProperty.__init__(self, editor, section, name, value_data, rows=4)
         self.property_input_x = None
         self.property_input_y = None
         self.property_input_z = None
@@ -406,29 +438,71 @@ class Point3DProperty(BaseProperty):
 
             root: The root widget to which to add the widget to
         """
-        self._create_base_widget(root)
-        property_input = self.base_widget.createChild(
-            "TaharezLook/Editbox", "%s_x_input" % (self.base_text))
-        property_input.setWidth(PyCEGUI.UDim(0.163, 0))
-        property_input.setHeight(self.editor.WIDGET_HEIGHT)
+        self._create_base_widget(root, "VerticalLayoutContainer")
+        base_widget = self.base_widget
+        font = base_widget.getFont()
+        input_mode = PyCEGUI.Spinner.TextInputMode.FloatingPoint
+        property_layout = base_widget.createChild("HorizontalLayoutContainer",
+                                                  "%s_x_layout" %
+                                                  (self.base_text))
+        widget_height = self.editor.WIDGET_HEIGHT
+        property_layout.setHeight(widget_height)
+        property_layout.setYPosition(PyCEGUI.UDim(0, 0))
+        property_label = property_layout.createChild("TaharezLook/Label",
+                                                     "%s_x_label" %
+                                                     (self.base_text))
+        property_label.setText("X")
+        text_width = font.getTextExtent(property_label.getText()) + 10
+        property_label.setWidth(PyCEGUI.UDim(0, text_width))
+        property_label.setHeight(widget_height)
+        property_input = property_layout.createChild(
+            "TaharezLook/Spinner", "%s_x_input" % (self.base_text))
+        property_input.setWidth(PyCEGUI.UDim(1, -text_width))
+        property_input.setHeight(widget_height)
+        property_input.setTextInputMode(input_mode)
         property_input.subscribeEvent(PyCEGUI.Editbox.EventTextAccepted,
                                       self.cb_value_changed)
         self.property_input_x = property_input
 
-        property_input = self.base_widget.createChild(
-            "TaharezLook/Editbox", "%s_y_input" % (self.base_text))
-        property_input.setWidth(PyCEGUI.UDim(0.163, 0))
-        property_input.setYPosition(PyCEGUI.UDim(0.163, 0))
-        property_input.setHeight(self.editor.WIDGET_HEIGHT)
+        property_layout = base_widget.createChild("HorizontalLayoutContainer",
+                                                  "%s_y_layout" %
+                                                  (self.base_text))
+        property_layout.setHeight(widget_height)
+        property_layout.setYPosition(widget_height)
+
+        property_label = property_layout.createChild("TaharezLook/Label",
+                                                     "%s_y_label" %
+                                                     (self.base_text))
+        property_label.setText("Y")
+        text_width = font.getTextExtent(property_label.getText()) + 10
+        property_label.setWidth(PyCEGUI.UDim(0, text_width))
+        property_label.setHeight(widget_height)
+        property_input = property_layout.createChild(
+            "TaharezLook/Spinner", "%s_y_input" % (self.base_text))
+        property_input.setWidth(PyCEGUI.UDim(1, -text_width))
+        property_input.setHeight(widget_height)
+        property_input.setTextInputMode(input_mode)
         property_input.subscribeEvent(PyCEGUI.Editbox.EventTextAccepted,
                                       self.cb_value_changed)
         self.property_input_y = property_input
 
-        property_input = self.base_widget.createChild(
-            "TaharezLook/Editbox", "%s_z_input" % (self.base_text))
-        property_input.setWidth(PyCEGUI.UDim(0.163, 0))
-        property_input.setYPosition(PyCEGUI.UDim(0.326, 0))
-        property_input.setHeight(self.editor.WIDGET_HEIGHT)
+        property_layout = base_widget.createChild("HorizontalLayoutContainer",
+                                                  "%s_z_layout" %
+                                                  (self.base_text))
+        property_layout.setHeight(widget_height)
+        property_layout.setYPosition(widget_height * 2)
+        property_label = property_layout.createChild("TaharezLook/Label",
+                                                     "%s_z_label" %
+                                                     (self.base_text))
+        property_label.setText("Z")
+        text_width = font.getTextExtent(property_label.getText()) + 10
+        property_label.setWidth(PyCEGUI.UDim(0, text_width))
+        property_label.setHeight(widget_height)
+        property_input = property_layout.createChild(
+            "TaharezLook/Spinner", "%s_z_input" % (self.base_text))
+        property_input.setWidth(PyCEGUI.UDim(1, -text_width))
+        property_input.setHeight(widget_height)
+        property_input.setTextInputMode(input_mode)
         property_input.subscribeEvent(PyCEGUI.Editbox.EventTextAccepted,
                                       self.cb_value_changed)
         self.property_input_z = property_input
