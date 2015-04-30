@@ -120,6 +120,7 @@ class EditorApplication(RPGApplicationCEGUI):
 
         """
         super(EditorApplication, self).__init__(setting)
+        self.editor_settings = self.settings.getSettingsFromFile("fife-rpg")
         # For IDES
         if False:
             self.editor_gui = EditorGui(self)
@@ -258,6 +259,13 @@ class EditorApplication(RPGApplicationCEGUI):
         self.editor_gui.reset_layerlist()
         self.map_entities = None
         self.set_selected_object(None)
+        tmp_settings = self.settings.getSettingsFromFile("fife-rpg").keys()
+        for setting in tmp_settings:
+            if setting in self.editor_settings:
+                self.settings.set("fife-rpg", setting,
+                                  self.editor_settings[setting])
+            else:
+                self.settings.remove("fife-rpg", setting)
         ComponentManager.clear_components()
         ComponentManager.clear_checkers()
         ActionManager.clear_actions()
