@@ -21,8 +21,9 @@
 """
 
 import os
-import yaml
+import sys
 
+import yaml
 # pylint: disable=unused-import
 import PyCEGUI  # @UnusedImport # PyCEGUI won't work otherwise (on windows)
 from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
@@ -277,7 +278,9 @@ class EditorApplication(RPGApplicationCEGUI):
         if self.project_source is not None:
             self.engine.getVFS().removeSource(self.project_source)
             self.project_source = None
-        self.project_dir = None
+        if self.project_dir is not None:
+            sys.path.remove(self.project_dir)
+            self.project_dir = None
         self.project = None
         for callback in self._project_cleared_callbacks:
             callback()
@@ -530,6 +533,7 @@ class EditorApplication(RPGApplicationCEGUI):
             self.editor_gui.reset_maps_menu()
             old_dir = os.getcwd()
             os.chdir(self.project_dir)
+            sys.path.append(self.project_dir)
             try:
                 try:
                     self.load_combined()
