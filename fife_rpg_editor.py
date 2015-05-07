@@ -663,6 +663,13 @@ class EditorApplication(RPGApplicationCEGUI):
         game_map.update_entities()
         self.update_agents(game_map)
 
+    def quit(self):
+        """
+        Quit the application. Really!
+        """
+        if self.editor_gui.ask_save_changed():
+            self.quitRequested = True
+
 
 def update_settings(project, values):
     """Update the fife-rpg settings of a project
