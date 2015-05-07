@@ -113,6 +113,7 @@ class Dialog(object):  # pylint: disable=abstract-class-not-used
         self._retval = None
         self.setup_windows(window)
         self.window.show()
+        self.app.current_dialog = self
 
     def show_modal(self, window, proc_func):
         """Show the dialog modally
@@ -147,13 +148,18 @@ class Dialog(object):  # pylint: disable=abstract-class-not-used
     def validate(self):
         """Check if the current state of the dialog fields is valid"""
 
+    def close(self):
+        """Close the dialog"""
+        self.window.setModalState(False)
+        self.window.getParent().removeChild(self.window)
+        self.app.current_dialog = None
+
     def validate_and_close(self):
         """Validate the current filepath and close if valid"""
         if not self.validate():
             return
         self._retval = True
-        self.window.setModalState(False)
-        self.window.getParent().removeChild(self.window)
+        self.close()
 
     def cb_ok(self, args):
         """Callback for click on the OK button"""
@@ -162,6 +168,4 @@ class Dialog(object):  # pylint: disable=abstract-class-not-used
     def cb_cancel(self, args):
         """Callback for click on the Cancel button"""
         self._retval = False
-        self.window.setModalState(False)
-        self.window.hide()
-        self.window.getParent().removeChild(self.window)
+        self.close()

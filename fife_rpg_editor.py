@@ -143,6 +143,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.selected_object = None
         self.editor = Editor(self.engine)
         self.editor_gui = EditorGui(self)
+        self.current_dialog = None
 
     def setup(self):
         """Actions that should to be done with an active mode"""
@@ -667,6 +668,8 @@ class EditorApplication(RPGApplicationCEGUI):
         """
         Quit the application. Really!
         """
+        if self.current_dialog:
+            return
         if self.editor_gui.ask_save_changed():
             self.quitRequested = True
 
