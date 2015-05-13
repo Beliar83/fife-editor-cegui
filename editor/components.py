@@ -246,6 +246,8 @@ class Components(Dialog):
         """Callback for a click on the 'Edit available components' button"""
         self.app.edit_available_components()
         self.app.current_dialog = self
+        self.project_components = (self.project_components &
+                                   set(self.app.components.keys()))
         self.update_lists()
 
 
@@ -262,6 +264,7 @@ class AvailableComponents(Dialog):
         self.delete_button = None
         self.items = []
         self.values = dict()
+        self.components_in_use = set()
 
     def setup_dialog(self, root):
         """Sets up the dialog windows
@@ -270,6 +273,18 @@ class AvailableComponents(Dialog):
 
             root: The root window to which the windows should be added
         """
+        self.components_in_use = set()
+        project_components = set(self.app.project.get("fife-rpg", "Components",
+                                                      []))
+        entities = self.app.world[...]
+        for component in project_components:
+            try:
+                ent_comp = getattr(entities, component)
+                if ent_comp:
+                    self.components_in_use.add(component)
+            except AttributeError:
+                pass
+
         font = root.getFont()
         text_height = font.getFontHeight() + 2
         self.window.setArea(PyCEGUI.UDim(0, 3), PyCEGUI.UDim(0, 4),
@@ -288,8 +303,11 @@ class AvailableComponents(Dialog):
         self.items = []
         self.values = dict()
         for name, path in self.app.components.iteritems():
+            text = name
+            if name in self.components_in_use:
+                text = text = "[colour='FFFF0000']" + text
             item = edit_set.createChild("TaharezLook/ListboxItem")
-            item.setText(name)
+            item.setText(text)
             self.items.append(item)
             self.values[name] = path
         edit_set.performChildWindowLayout()
@@ -351,7 +369,10 @@ class AvailableComponents(Dialog):
         path_split = module_path.split(".")
         module_name = ".%s" % path_split[-1]
         base_path = ".".join(path_split[:-1])
-        module = import_module(module_name, base_path)
+        try:
+            module = import_module(module_name, base_path)
+        except ImportError:
+            return
         for member in dir(module):
             component = getattr(module, member)
             try:
@@ -379,7 +400,10 @@ class AvailableComponents(Dialog):
             args: PyCEGUI.WindowEventArgs
         """
         item = self.edit_set.getFirstSelectedItem()
-        del self.values[item.getText()]
+        text = clear_text(item.getText())
+        if text in self.components_in_use:
+            return
+        del self.values[text]
         self.edit_set.removeItem(item)
 
     def get_values(self):

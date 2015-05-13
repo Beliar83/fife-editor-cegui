@@ -795,8 +795,6 @@ class EditorApplication(RPGApplicationCEGUI):
                                    self.engine.pump)
         if not dialog.return_value:
             return False
-        ComponentManager.clear_components()
-        ComponentManager.clear_checkers()
         components = values["components"]
         self._components = components
         self.project_changed = True
