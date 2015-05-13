@@ -29,9 +29,5 @@
         <Setting name="Camera" type="str">camera1</Setting>
         <Setting name="AgentObjectsPath" type="str">objects/agents</Setting>
         <Setting name="ObjectNamespace" type="str">fife-rpg</Setting>
-        <Setting name="Components" type="list">Description ; Agent ; FifeAgent ; RPGEquip ; Lockable ; Dialogue ; Container ; Moving</Setting>
-        <Setting name="Actions" type="list">PickUp ; Open ; Open ; Close ; Lock ; Unlock ; MoveAgent ; Read ; Look ; MoveCamera ; SetGlobalLight</Setting>
-        <Setting name="Systems" type="list">ScriptingSystem ; CharacterStatisticSystem ; GameVariables</Setting>
-		<Setting name="Behaviours" type="list">Base</Setting>
     </Module>
 </Settings>

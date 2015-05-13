@@ -77,6 +77,7 @@ class EditorGui(object):
         self.import_popup = None
         self.edit_add = None
         self.add_popup = None
+        self.edit_components = None
 
         self.app = app
         self.editor = app.editor
@@ -313,6 +314,15 @@ class EditorGui(object):
 
         self.edit_add = edit_add
         self.edit_add.setEnabled(False)
+
+        edit_components = edit_popup.createChild("TaharezLook/MenuItem",
+                                                 "Edit/Add")
+        edit_components.setText(_("Components"))
+        edit_components.setAutoPopupTimeout(0.5)
+        edit_components.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                                       self.cb_edit_components)
+        self.edit_components = edit_components
+        self.edit_components.setEnabled(False)
 
         # View Menu
         self.view_menu = self.menubar.createChild("TaharezLook/MenuItem",
@@ -650,6 +660,7 @@ class EditorGui(object):
             self.file_import.setEnabled(True)
             self.project_settings.setEnabled(True)
             self.edit_add.setEnabled(True)
+            self.edit_components.setEnabled(True)
 
             tkMessageBox.showinfo(_("Project loaded"),
                                   _("Project successfully loaded"))
@@ -782,6 +793,10 @@ class EditorGui(object):
         self.app.changed_maps.append(map_id)
         self.reset_maps_menu()
 
+    def cb_edit_components(self, args):
+        """Callback when Components was clicked in the edit menu"""
+        self.app.edit_components()
+
     def cb_project_cleared(self):
         """Called when the project was cleared"""
         self.file_save.setEnabled(False)
@@ -789,6 +804,7 @@ class EditorGui(object):
         self.file_close.setEnabled(False)
         self.project_settings.setEnabled(False)
         self.edit_add.setEnabled(False)
+        self.edit_components.setEnabled(False)
         self.view_maps_menu.closePopupMenu()
         self.save_popup.closePopupMenu()
         self.import_popup.closePopupMenu()

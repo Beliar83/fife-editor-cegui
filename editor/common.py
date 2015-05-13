@@ -137,3 +137,12 @@ def ask_create_path(path):
         os.makedirs(path)
         return True
     return False
+
+
+def clear_text(text):
+    """Remove special tags from a text"""
+    lindex = text.lower().find("[colour=")
+    if lindex >= 0:
+        rindex = text.find("]", lindex)
+        text = text[:lindex] + text[rindex + 1:]
+    return text

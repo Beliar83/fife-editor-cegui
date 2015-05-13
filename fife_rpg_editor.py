@@ -22,6 +22,7 @@
 
 import os
 import sys
+from StringIO import StringIO
 
 import yaml
 # pylint: disable=unused-import
@@ -54,6 +55,7 @@ from editor.editor_gui import EditorGui
 from editor.editor import Editor
 from editor.editor_scene import EditorController
 from editor.project_settings import ProjectSettings
+from editor.components import Components, AvailableComponents
 
 BASIC_SETTINGS = """<?xml version='1.0' encoding='UTF-8'?>
 <Settings>
@@ -439,6 +441,24 @@ class EditorApplication(RPGApplicationCEGUI):
         self.entities[entity.identifier] = entity_dict
         return entity
 
+    def parse_entities(self, entities_file):
+        """Parse the entities from a file
+
+        Args:
+
+            entities_file: A file object from where the entities are being
+            loaded.
+        """
+        yaml.add_constructor('!Entity', self.entity_constructor,
+                             yaml.SafeLoader)
+
+        entities = yaml.safe_load_all(entities_file)
+        try:
+            while entities.next():
+                entities.next()
+        except StopIteration:
+            pass
+
     def load_entities(self):
         """Load and store the entities of the current project"""
         if self.project is None:
@@ -446,16 +466,8 @@ class EditorApplication(RPGApplicationCEGUI):
         entities_file_name = self.project.get("fife-rpg", "EntitiesFile",
                                               "objects/entities.yaml")
         vfs = self.engine.getVFS()
-        yaml.add_constructor('!Entity', self.entity_constructor,
-                             yaml.SafeLoader)
-
         entities_file = vfs.open(entities_file_name)
-        entities = yaml.safe_load_all(entities_file)
-        try:
-            while entities.next():
-                entities.next()
-        except StopIteration:
-            pass
+        self.parse_entities(entities_file)
 
     def entity_representer(self, dumper, data):
         """Creates a yaml node representing an entity
@@ -492,17 +504,27 @@ class EditorApplication(RPGApplicationCEGUI):
         entity_node = dumper.represent_mapping(u"!Entity", entity_dict)
         return entity_node
 
+    def dump_entities(self, entities_file):
+        """Dumps the projects entities to a file
+
+        Args:
+
+            entities_file: A file object to where the entities are written.
+        """
+        entities = self.world[RPGEntity].entities
+        yaml.add_representer(RPGEntity, self.entity_representer,
+                             yaml.SafeDumper)
+        helpers.dump_entities(entities, entities_file)
+
     def save_entities(self):
         """Save all entities to the entity file"""
-        yaml.add_representer(RPGEntity, self.entity_representer)
         entities_file_name = self.project.get("fife-rpg", "EntitiesFile",
                                               "objects/entities.yaml")
         old_wd = os.getcwd()
         os.chdir(self.project_dir)
         try:
             entities_file = file(entities_file_name, "w")
-            entities = self.world[RPGEntity].entities
-            helpers.dump_entities(entities, entities_file)
+            self.dump_entities(entities_file)
             self.entity_changed = False
         finally:
             os.chdir(old_wd)
@@ -521,6 +543,48 @@ class EditorApplication(RPGApplicationCEGUI):
         for map_name in self.changed_maps:
             self.save_map(map_name)
 
+    def reset_world(self, entities_file=None):
+        """Create a new world and set its values
+
+        Args:
+
+            entities_file: An optional file object to load entities from
+        """
+        self.create_world()
+        try:
+            self.world.read_object_db()
+            self.world.import_agent_objects()
+            if entities_file is not None:
+                self.parse_entities(entities_file)
+            else:
+                self.load_entities()
+        except:  # pylint: disable=bare-except
+            pass
+
+    def setup_project(self):
+        """Sets up the project"""
+        try:
+            self.load_combined()
+        except:  # pylint: disable=bare-except
+            self.load_combined("combined.yaml")
+        try:
+            self.register_components()
+        except ValueError:
+            pass
+        try:
+            self.register_actions()
+        except ValueError:
+            pass
+        try:
+            self.register_systems()
+        except ValueError:
+            pass
+        try:
+            self.register_behaviours()
+        except ValueError:
+            pass
+        self.reset_world()
+
     def try_load_project(self, file_name):
         """Try to load the specified file as a project
 
@@ -534,35 +598,9 @@ class EditorApplication(RPGApplicationCEGUI):
             self.editor_gui.reset_maps_menu()
             old_dir = os.getcwd()
             os.chdir(self.project_dir)
-            sys.path.append(self.project_dir)
+            sys.path.insert(0, self.project_dir)
             try:
-                try:
-                    self.load_combined()
-                except:  # pylint: disable=bare-except
-                    self.load_combined("combined.yaml")
-                try:
-                    self.register_components()
-                except ValueError:
-                    pass
-                try:
-                    self.register_actions()
-                except ValueError:
-                    pass
-                try:
-                    self.register_systems()
-                except ValueError:
-                    pass
-                try:
-                    self.register_behaviours()
-                except ValueError:
-                    pass
-                self.create_world()
-                try:
-                    self.world.read_object_db()
-                    self.world.import_agent_objects()
-                    self.load_entities()
-                except:  # pylint: disable=bare-except
-                    pass
+                self.setup_project()
             finally:
                 os.chdir(old_dir)
             return True
@@ -586,6 +624,52 @@ class EditorApplication(RPGApplicationCEGUI):
         maps_file = file(maps_filename, "w")
         yaml.dump(save_data, maps_file, default_flow_style=False)
         maps_file.close()
+        combined_filename = self.settings.get("fife-rpg", "CombinedFile", None)
+        comp_filename = self.settings.get("fife-rpg", "ComponentsFile", None)
+        syst_filename = self.settings.get("fife-rpg", "ActionsFile", None)
+        act_filename = self.settings.get("fife-rpg", "SystemsFile", None)
+        beh_filename = self.settings.get("fife-rpg", "BehavioursFile", None)
+        project_dir = self.project_dir
+        if None in (comp_filename, syst_filename, act_filename, beh_filename):
+            combined_filename = "combined.yaml"
+            combined = {}
+        if comp_filename is not None:
+            data = {"Components": self._components}
+            filename = os.path.join(project_dir, comp_filename)
+            stream = file(filename, "w")
+            yaml.dump(data, stream, dumper=helpers.FRPGDumper)
+            stream.close()
+        else:
+            combined["Components"] = self._components
+        if syst_filename is not None:
+            data = {"Systems": self._systems}
+            filename = os.path.join(project_dir, syst_filename)
+            stream = file(filename, "w")
+            yaml.dump(data, stream, dumper=helpers.FRPGDumper)
+            stream.close()
+        else:
+            combined["Systems"] = self._systems
+        if act_filename is not None:
+            data = {"Actions": self._actions}
+            filename = os.path.join(project_dir, act_filename)
+            stream = file(filename, "w")
+            yaml.dump(data, stream, dumper=helpers.FRPGDumper)
+            stream.close()
+        else:
+            combined["Actions"] = self._actions
+        if beh_filename is not None:
+            data = {"Behaviours": self._behaviours}
+            filename = os.path.join(project_dir, beh_filename)
+            stream = file(filename, "w")
+            yaml.dump(data, stream, dumper=helpers.FRPGDumper)
+            stream.close()
+        else:
+            combined["Behaviours"] = self._behaviours
+        if combined_filename is not None:
+            filename = os.path.join(project_dir, combined_filename)
+            stream = file(filename, "w")
+            yaml.dump(combined, stream, Dumper=helpers.FRPGDumper)
+            stream.close()
         self.project_changed = False
 
     def highlight_selected_object(self):
@@ -663,6 +747,7 @@ class EditorApplication(RPGApplicationCEGUI):
             agent.map = map_name
         game_map.update_entities()
         self.update_agents(game_map)
+        self.map_entities = None
 
     def quit(self):
         """
@@ -672,6 +757,49 @@ class EditorApplication(RPGApplicationCEGUI):
             return
         if self.editor_gui.ask_save_changed():
             self.quitRequested = True
+
+    def edit_components(self):
+        """Show the dialog to edit components"""
+        dialog = Components(self)
+        values = dialog.show_modal(self.editor_gui.editor_window,
+                                   self.engine.pump)
+        if not dialog.return_value:
+            return False
+        entities_hidden = self.map_entities is not None
+        if entities_hidden:
+            self.show_map_entities(self.current_map.name)
+        tmp_file = StringIO()
+        self.dump_entities(tmp_file)
+        for entity in tuple(self.world.entities):
+            entity.delete()
+        ComponentManager.clear_components()
+        ComponentManager.clear_checkers()
+        current_items = list(values["current_items"])
+        self.project.set("fife-rpg", "Components", current_items)
+        self.world.register_mandatory_components()
+        self.register_components(current_items)
+        tmp_file.seek(0)
+        self.reset_world(tmp_file)
+        for game_map in self.maps.itervalues():
+            game_map.update_entities()
+            self.update_agents(game_map)
+        if entities_hidden:
+            self.hide_map_entities(self.current_map.name)
+
+        self.project_changed = True
+
+    def edit_available_components(self):
+        """Show the dialog to edit components"""
+        dialog = AvailableComponents(self)
+        values = dialog.show_modal(self.editor_gui.editor_window,
+                                   self.engine.pump)
+        if not dialog.return_value:
+            return False
+        ComponentManager.clear_components()
+        ComponentManager.clear_checkers()
+        components = values["components"]
+        self._components = components
+        self.project_changed = True
 
 
 def update_settings(project, values):
