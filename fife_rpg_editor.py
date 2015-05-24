@@ -56,6 +56,9 @@ from editor.editor import Editor
 from editor.editor_scene import EditorController
 from editor.project_settings import ProjectSettings
 from editor.components import Components, AvailableComponents
+from editor.systems import Systems, AvailableSystems
+from editor.actions import Actions, AvailableActions
+from editor.behaviours import Behaviours, AvailableBehaviours
 
 BASIC_SETTINGS = """<?xml version='1.0' encoding='UTF-8'?>
 <Settings>
@@ -797,6 +800,81 @@ class EditorApplication(RPGApplicationCEGUI):
             return False
         components = values["components"]
         self._components = components
+        self.project_changed = True
+
+    def edit_systems(self):
+        """Show the dialog to edit systems"""
+        dialog = Systems(self)
+        values = dialog.show_modal(self.editor_gui.editor_window,
+                                   self.engine.pump)
+        if not dialog.return_value:
+            return False
+        SystemManager.clear_systems()
+        current_items = list(values["current_items"])
+        self.project.set("fife-rpg", "Systems", current_items)
+        self.register_systems(current_items)
+
+        self.project_changed = True
+
+    def edit_available_systems(self):
+        """Show the dialog to edit systems"""
+        dialog = AvailableSystems(self)
+        values = dialog.show_modal(self.editor_gui.editor_window,
+                                   self.engine.pump)
+        if not dialog.return_value:
+            return False
+        systems = values["systems"]
+        self._systems = systems
+        self.project_changed = True
+
+    def edit_actions(self):
+        """Show the dialog to edit actions"""
+        dialog = Actions(self)
+        values = dialog.show_modal(self.editor_gui.editor_window,
+                                   self.engine.pump)
+        if not dialog.return_value:
+            return False
+        ActionManager.clear_actions()
+        current_items = list(values["current_items"])
+        self.project.set("fife-rpg", "Actions", current_items)
+        self.register_actions(current_items)
+
+        self.project_changed = True
+
+    def edit_available_actions(self):
+        """Show the dialog to edit actions"""
+        dialog = AvailableActions(self)
+        values = dialog.show_modal(self.editor_gui.editor_window,
+                                   self.engine.pump)
+        if not dialog.return_value:
+            return False
+        actions = values["actions"]
+        self._actions = actions
+        self.project_changed = True
+
+    def edit_behaviours(self):
+        """Show the dialog to edit behaviours"""
+        dialog = Behaviours(self)
+        values = dialog.show_modal(self.editor_gui.editor_window,
+                                   self.engine.pump)
+        if not dialog.return_value:
+            return False
+        BehaviourManager.clear_behaviours()
+        current_items = list(values["current_items"])
+        self.project.set("fife-rpg", "Behaviours", current_items)
+        self.register_behaviours(current_items)
+
+        self.project_changed = True
+
+    def edit_available_behaviours(self):
+        """Show the dialog to edit behaviours"""
+        dialog = AvailableBehaviours(self)
+        values = dialog.show_modal(self.editor_gui.editor_window,
+                                   self.engine.pump)
+        if not dialog.return_value:
+            return False
+        behaviours = values["behaviours"]
+        self._behaviours = behaviours
         self.project_changed = True
 
 

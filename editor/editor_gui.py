@@ -78,6 +78,9 @@ class EditorGui(object):
         self.edit_add = None
         self.add_popup = None
         self.edit_components = None
+        self.edit_systems = None
+        self.edit_actions = None
+        self.edit_behaviours = None
 
         self.app = app
         self.editor = app.editor
@@ -316,13 +319,40 @@ class EditorGui(object):
         self.edit_add.setEnabled(False)
 
         edit_components = edit_popup.createChild("TaharezLook/MenuItem",
-                                                 "Edit/Add")
+                                                 "Edit/Components")
         edit_components.setText(_("Components"))
         edit_components.setAutoPopupTimeout(0.5)
         edit_components.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
                                        self.cb_edit_components)
         self.edit_components = edit_components
         self.edit_components.setEnabled(False)
+
+        edit_systems = edit_popup.createChild("TaharezLook/MenuItem",
+                                              "Edit/Systems")
+        edit_systems.setText(_("Systems"))
+        edit_systems.setAutoPopupTimeout(0.5)
+        edit_systems.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                                    self.cb_edit_systems)
+        self.edit_systems = edit_systems
+        self.edit_systems.setEnabled(False)
+
+        edit_actions = edit_popup.createChild("TaharezLook/MenuItem",
+                                              "Edit/Actions")
+        edit_actions.setText(_("Actions"))
+        edit_actions.setAutoPopupTimeout(0.5)
+        edit_actions.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                                    self.cb_edit_actions)
+        self.edit_actions = edit_actions
+        self.edit_actions.setEnabled(False)
+
+        edit_behaviours = edit_popup.createChild("TaharezLook/MenuItem",
+                                                 "Edit/Behaviours")
+        edit_behaviours.setText(_("Behaviours"))
+        edit_behaviours.setAutoPopupTimeout(0.5)
+        edit_behaviours.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                                       self.cb_edit_behaviours)
+        self.edit_behaviours = edit_behaviours
+        self.edit_behaviours.setEnabled(False)
 
         # View Menu
         self.view_menu = self.menubar.createChild("TaharezLook/MenuItem",
@@ -661,6 +691,9 @@ class EditorGui(object):
             self.project_settings.setEnabled(True)
             self.edit_add.setEnabled(True)
             self.edit_components.setEnabled(True)
+            self.edit_systems.setEnabled(True)
+            self.edit_actions.setEnabled(True)
+            self.edit_behaviours.setEnabled(True)
 
             tkMessageBox.showinfo(_("Project loaded"),
                                   _("Project successfully loaded"))
@@ -797,6 +830,18 @@ class EditorGui(object):
         """Callback when Components was clicked in the edit menu"""
         self.app.edit_components()
 
+    def cb_edit_systems(self, args):
+        """Callback when Systems was clicked in the edit menu"""
+        self.app.edit_systems()
+
+    def cb_edit_actions(self, args):
+        """Callback when Systems was clicked in the edit menu"""
+        self.app.edit_actions()
+
+    def cb_edit_behaviours(self, args):
+        """Callback when Systems was clicked in the edit menu"""
+        self.app.edit_behaviours()
+
     def cb_project_cleared(self):
         """Called when the project was cleared"""
         self.file_save.setEnabled(False)
@@ -805,6 +850,9 @@ class EditorGui(object):
         self.project_settings.setEnabled(False)
         self.edit_add.setEnabled(False)
         self.edit_components.setEnabled(False)
+        self.edit_systems.setEnabled(False)
+        self.edit_actions.setEnabled(False)
+        self.edit_behaviours.setEnabled(False)
         self.view_maps_menu.closePopupMenu()
         self.save_popup.closePopupMenu()
         self.import_popup.closePopupMenu()
