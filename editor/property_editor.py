@@ -49,6 +49,8 @@ class PropertyEditor(object):
         self.__list_items = []
         self.property_types = []
         self.section_areas = {}
+        self.section_headers = {}
+        self.collapse_labels = {}
 
     def set_size(self, size):
         """Sets the size of the property editor
@@ -124,22 +126,37 @@ class PropertyEditor(object):
     def update_widgets(self):
         """Update the editors widgets"""
         area = self.properties_area
-
         for section, properties in self.sections.iteritems():
             if section in self.section_areas:
                 section_area = self.section_areas[section]
             else:
-                section_area = area.createChild("VerticalLayoutContainer",
-                                                "%s_area" % section)
-                self.section_areas[section] = section_area
-                section_label = section_area.createChild("TaharezLook/Label",
-                                                         "%s_label" % section)
+                section_header = area.createChild("HorizontalLayoutContainer",
+                                                  "%s_header" % section)
+                self.section_headers[section] = section_header
+                collapse_label = section_header.createChild(
+                    "TaharezLook/Label",
+                    "%s_collapse"
+                    % section)
+                collapse_label.setText("-")
+                collapse_label.subscribeEvent(PyCEGUI.Window.EventMouseClick,
+                                              (lambda args, section=section:
+                                               self.cb_un_collapse_clicked(
+                                                   args, section)))
+                collapse_label.setWidth(PyCEGUI.UDim(0.1, 0))
+                self.collapse_labels[section] = collapse_label
+
+                section_label = section_header.createChild("TaharezLook/Label",
+                                                           "%s_label"
+                                                           % section)
                 section_label.setText(section)
-                section_label.setWidth(PyCEGUI.UDim(0.99, 0.0))
+                section_label.setWidth(PyCEGUI.UDim(0.98, 0.0))
                 section_label.setHeight(self.WIDGET_HEIGHT)
                 section_label.setMargin(self.WIDGET_MARGIN)
                 section_label.setProperty("HorzFormatting",
                                           "CentreAligned")
+                section_area = area.createChild("VerticalLayoutContainer",
+                                                "%s_area" % section)
+                self.section_areas[section] = section_area
 
             for property_data in properties.itervalues():
                 if property_data.base_widget is None:
@@ -168,3 +185,18 @@ class PropertyEditor(object):
         """
         for callback in self.__value_changed_callbacks:
             callback(section, property_name, value)
+
+    def cb_un_collapse_clicked(self, args, section):
+        """Called when un_collapse on a section header was clicked"""
+        area = self.properties_area
+        try:
+            PyCEGUI.Exception.setStdErrEnabled(False)
+            area.removeChild("%s_area" % section)
+            self.collapse_labels[section].setText("+")
+        except RuntimeError:
+            PyCEGUI.Exception.setStdErrEnabled(True)
+            header_pos = area.getPositionOfChild("%s_header" % section)
+            area.addChildToPosition(self.section_areas[section],
+                                    header_pos + 1)
+            self.collapse_labels[section].setText("-")
+        self.properties_pane.show()
