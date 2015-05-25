@@ -168,7 +168,7 @@ class EditorGui(object):
             self.cb_show_agent_selection_changed
         )
         property_editor_size = PyCEGUI.USize(PyCEGUI.UDim(1.0, 0),
-                                             PyCEGUI.UDim(0.780, 0))
+                                             PyCEGUI.UDim(0.68, 0))
         self.property_editor = PropertyEditor(right_area_container, self.app)
         self.property_editor.set_size(property_editor_size)
         self.property_editor.add_property_type(properties.PointProperty)

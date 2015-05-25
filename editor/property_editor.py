@@ -28,7 +28,8 @@ class PropertyEditor(object):
     """Class containing the logic for a property editor"""
 
     WIDGET_HEIGHT = PyCEGUI.UDim(0.05, 0)
-    WIDGET_MARGIN = PyCEGUI.UDim(0.01, 0)
+    WIDGET_MARGIN = PyCEGUI.UBox(PyCEGUI.UDim(0.005, 0), PyCEGUI.UDim(0.0, 0),
+                                 PyCEGUI.UDim(0.005, 0), PyCEGUI.UDim(0.0, 0))
 
     def __init__(self, root, app):
         self.app = app
@@ -38,13 +39,16 @@ class PropertyEditor(object):
             "TaharezLook/GroupBox", "properties_box")
         self.properties_box.setSize(size)
         self.properties_box.setText("Properties")
-        self.properties_area = self.properties_box.createChild(
+        self.properties_pane = self.properties_box.createChild(
             "TaharezLook/ScrollablePane", "property_container")
-        self.properties_area.setSize(size)
+        self.properties_pane.setSize(size)
+        self.properties_area = self.properties_pane.createChild(
+            "VerticalLayoutContainer")
         self.sections = {}
         self.__value_changed_callbacks = []
         self.__list_items = []
         self.property_types = []
+        self.section_areas = {}
 
     def set_size(self, size):
         """Sets the size of the property editor
@@ -59,15 +63,11 @@ class PropertyEditor(object):
     def clear_properties(self):
         """Removed all sections and sections"""
         self.sections = {}
+        self.section_areas = {}
         self.__list_items = []
-        ignored_count = 0
-        area = self.properties_area
-        while (area.getContentPane().getChildCount() - ignored_count) > 0:
-            child = area.getContentPane().getChildAtIdx(ignored_count)
-            if child.isAutoWindow():
-                ignored_count += 1
-                continue
-            child.destroy()
+        self.properties_area.destroy()
+        self.properties_area = self.properties_pane.createChild(
+            "VerticalLayoutContainer")
 
     def add_section(self, section, update=True):
         """Adds a section to the editor.
@@ -124,33 +124,27 @@ class PropertyEditor(object):
     def update_widgets(self):
         """Update the editors widgets"""
         area = self.properties_area
-        y_pos = PyCEGUI.UDim(0, 0.0)
 
         for section, properties in self.sections.iteritems():
-            try:
-                PyCEGUI.Exception.setStdErrEnabled(False)
-                section_label = area.getChild(section)
-            except RuntimeError:
-                section_label = area.createChild("TaharezLook/Label",
-                                                 section)
+            if section in self.section_areas:
+                section_area = self.section_areas[section]
+            else:
+                section_area = area.createChild("VerticalLayoutContainer",
+                                                "%s_area" % section)
+                self.section_areas[section] = section_area
+                section_label = section_area.createChild("TaharezLook/Label",
+                                                         "%s_label" % section)
                 section_label.setText(section)
                 section_label.setWidth(PyCEGUI.UDim(0.99, 0.0))
                 section_label.setHeight(self.WIDGET_HEIGHT)
+                section_label.setMargin(self.WIDGET_MARGIN)
                 section_label.setProperty("HorzFormatting",
                                           "CentreAligned")
-            finally:
-                PyCEGUI.Exception.setStdErrEnabled(True)
 
-            section_label.setYPosition(y_pos)
-            y_pos += self.WIDGET_HEIGHT
-            y_pos += self.WIDGET_MARGIN
             for property_data in properties.itervalues():
                 if property_data.base_widget is None:
-                    property_data.setup_widget(area)
-                    property_data.update_widget(y_pos)
+                    property_data.setup_widget(section_area)
                 property_data.update_input_widgets()
-                y_pos += self.WIDGET_HEIGHT * property_data.rows
-                y_pos += self.WIDGET_MARGIN
 
     def add_value_changed_callback(self, function):
         """Adds a function to be called when a value has changed

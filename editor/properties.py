@@ -70,8 +70,10 @@ class BaseProperty(object):
             w_type: The widget type to create for the container.
         """
         base_text = "/".join((self.section, self.name))
+        widget_margin = self.editor.WIDGET_MARGIN
         property_container = root.createChild(w_type,
                                               "%s_container" % (base_text))
+        property_container.setMargin(widget_margin)
         property_label = property_container.createChild(
             "TaharezLook/Label", "%s_label" % (base_text))
         property_label.setProperty(
@@ -86,19 +88,6 @@ class BaseProperty(object):
     @abstractmethod
     def setup_widget(self, root):
         """Sets up the widget for this property"""
-
-    def update_widget(self, y_pos):
-        """Updates the base widget for this property
-
-        Args:
-
-            root: The root widget to which to add the widget to
-
-            y_pos: The vertical position of the widget
-
-        """
-        self.base_widget.setYPosition(y_pos)
-        # self.base_widget.layoutIfNecessary()
 
     @abstractmethod
     def update_input_widgets(self):
@@ -320,8 +309,9 @@ class PointProperty(BaseProperty):
                                                   "%s_x_layout" %
                                                   (self.base_text))
         widget_height = self.editor.WIDGET_HEIGHT
+        widget_margin = self.editor.WIDGET_MARGIN
         property_layout.setHeight(widget_height)
-        property_layout.setYPosition(PyCEGUI.UDim(0, 0))
+        property_layout.setMargin(widget_margin)
         property_label = property_layout.createChild("TaharezLook/Label",
                                                      "%s_x_label" %
                                                      (self.base_text))
@@ -342,7 +332,7 @@ class PointProperty(BaseProperty):
                                                   "%s_y_layout" %
                                                   (self.base_text))
         property_layout.setHeight(widget_height)
-        property_layout.setYPosition(widget_height)
+        property_layout.setMargin(widget_margin)
 
         property_label = property_layout.createChild("TaharezLook/Label",
                                                      "%s_y_label" %
@@ -440,8 +430,9 @@ class Point3DProperty(BaseProperty):
                                                   "%s_x_layout" %
                                                   (self.base_text))
         widget_height = self.editor.WIDGET_HEIGHT
+        widget_margin = self.editor.WIDGET_MARGIN
         property_layout.setHeight(widget_height)
-        property_layout.setYPosition(PyCEGUI.UDim(0, 0))
+        property_layout.setMargin(widget_margin)
         property_label = property_layout.createChild("TaharezLook/Label",
                                                      "%s_x_label" %
                                                      (self.base_text))
@@ -462,7 +453,7 @@ class Point3DProperty(BaseProperty):
                                                   "%s_y_layout" %
                                                   (self.base_text))
         property_layout.setHeight(widget_height)
-        property_layout.setYPosition(widget_height)
+        property_layout.setMargin(widget_margin)
 
         property_label = property_layout.createChild("TaharezLook/Label",
                                                      "%s_y_label" %
@@ -484,7 +475,7 @@ class Point3DProperty(BaseProperty):
                                                   "%s_z_layout" %
                                                   (self.base_text))
         property_layout.setHeight(widget_height)
-        property_layout.setYPosition(widget_height * 2)
+        property_layout.setMargin(widget_margin)
         property_label = property_layout.createChild("TaharezLook/Label",
                                                      "%s_z_label" %
                                                      (self.base_text))
