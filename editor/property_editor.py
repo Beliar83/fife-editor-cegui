@@ -30,6 +30,7 @@ class PropertyEditor(object):
     WIDGET_HEIGHT = PyCEGUI.UDim(0.05, 0)
     WIDGET_MARGIN = PyCEGUI.UBox(PyCEGUI.UDim(0.005, 0), PyCEGUI.UDim(0.0, 0),
                                  PyCEGUI.UDim(0.005, 0), PyCEGUI.UDim(0.0, 0))
+    COLLAPSE_SIZE = 10
 
     def __init__(self, root, app):
         self.app = app
@@ -142,14 +143,14 @@ class PropertyEditor(object):
                                               (lambda args, section=section:
                                                self.cb_un_collapse_clicked(
                                                    args, section)))
-                collapse_label.setWidth(PyCEGUI.UDim(0.1, 0))
+                collapse_label.setWidth(PyCEGUI.UDim(0.0, self.COLLAPSE_SIZE))
                 self.collapse_labels[section] = collapse_label
 
                 section_label = section_header.createChild("TaharezLook/Label",
                                                            "%s_label"
                                                            % section)
                 section_label.setText(section)
-                section_label.setWidth(PyCEGUI.UDim(0.98, 0.0))
+                section_label.setWidth(PyCEGUI.UDim(1.0, -self.COLLAPSE_SIZE))
                 section_label.setHeight(self.WIDGET_HEIGHT)
                 section_label.setMargin(self.WIDGET_MARGIN)
                 section_label.setProperty("HorzFormatting",
