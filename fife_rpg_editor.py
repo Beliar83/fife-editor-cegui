@@ -540,6 +540,8 @@ class EditorApplication(RPGApplicationCEGUI):
         This is called every frame.
         """
         self.editor_gui.update_toolbar_contents()
+        if self.world:
+            self.world.pump(0)
 
     def save_all_maps(self):
         """Save the edited status of all maps"""
