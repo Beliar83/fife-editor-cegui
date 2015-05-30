@@ -181,6 +181,7 @@ class EditorGui(object):
         self.property_editor.add_property_type(properties.DictProperty)
         self.property_editor.add_property_type(properties.NumberProperty)
         self.property_editor.add_value_changed_callback(self.cb_value_changed)
+        self.property_editor.add_remove_callback(self.cb_remove_component)
 
         self.previous_object = None
 
@@ -444,6 +445,9 @@ class EditorGui(object):
                 com_data = getattr(entity, comp_name)
                 if com_data:
                     for field in component.saveable_fields:
+                        if comp_name not in property_editor.sections:
+                            property_editor.add_section(
+                                comp_name, False, ("removable",))
                         value = getattr(com_data, field)
                         property_editor.set_property(
                             comp_name, field,
@@ -1021,3 +1025,16 @@ class EditorGui(object):
         item = self.menubar.getPopupMenuItem()
         if item is not None:
             item.closePopupMenu()
+
+    def cb_remove_component(self, component):
+        """Remove a component from the current selected entity
+
+        Args:
+
+
+         component: The component to be removed
+        """
+        entity = self.app.world.get_entity(self.app.selected_object.getId())
+        delattr(entity, component)
+        self.app.world.pump(0)
+        self.app.entity_changed = True

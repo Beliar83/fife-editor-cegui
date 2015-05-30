@@ -30,7 +30,8 @@ class PropertyEditor(object):
     WIDGET_HEIGHT = PyCEGUI.UDim(0.05, 0)
     WIDGET_MARGIN = PyCEGUI.UBox(PyCEGUI.UDim(0.005, 0), PyCEGUI.UDim(0.0, 0),
                                  PyCEGUI.UDim(0.005, 0), PyCEGUI.UDim(0.0, 0))
-    COLLAPSE_SIZE = 10
+    COLLAPSE_WIDTH = PyCEGUI.UDim(0.0, 10)
+    REMOVE_WIDTH = PyCEGUI.UDim(0.0, 10)
 
     def __init__(self, root, app):
         self.app = app
@@ -49,9 +50,7 @@ class PropertyEditor(object):
         self.__value_changed_callbacks = []
         self.__list_items = []
         self.property_types = []
-        self.section_areas = {}
-        self.section_headers = {}
-        self.collapse_labels = {}
+        self.remove_callbacks = set()
 
     def set_size(self, size):
         """Sets the size of the property editor
@@ -66,13 +65,12 @@ class PropertyEditor(object):
     def clear_properties(self):
         """Removed all sections and sections"""
         self.sections = {}
-        self.section_areas = {}
         self.__list_items = []
         self.properties_area.destroy()
         self.properties_area = self.properties_pane.createChild(
             "VerticalLayoutContainer")
 
-    def add_section(self, section, update=True):
+    def add_section(self, section, update=True, flags=None):
         """Adds a section to the editor.
 
         Args:
@@ -80,14 +78,66 @@ class PropertyEditor(object):
             section: The name of the section to add
 
             update: Update the widgets after adding the section
+
+            flags: List of flags for this section
         """
+        flags = set(flags) or set()
         if section not in self.sections.keys():
             self.sections[section] = {}
+            self.set_section_flags(section, flags)
+            self.sections[section]["properties"] = {}
+            self.sections[section]["area"] = None
             if update:
                 self.update_widgets()
         else:
             error = "Tried to add already present section %s" % (section)
             raise RuntimeError(error)
+
+    def set_section_flags(self, section, flags):
+        """Set the flags for a section
+
+        Args:
+
+            section: The name of the section
+
+            flags: List of flags for this section
+        """
+        if section not in self.sections.keys():
+            raise ValueError("The section %s does not exist" % section)
+        else:
+            self.sections[section]["flags"] = flags
+
+    def add_section_flag(self, section, flag):
+        """Add a flag to a section
+
+        Args:
+
+            section: The name of the section
+
+            flag: The flag to add
+        """
+        if section not in self.sections.keys():
+            raise ValueError("The section %s does not exist" % section)
+        else:
+            self.sections[section]["flags"].add(flag)
+
+    def remove_section_flag(self, section, flag):
+        """Remove a flag from a section
+
+        Args:
+
+            section: The name of the section
+
+            flag: The flag to remove
+        """
+        if section not in self.sections.keys():
+            raise ValueError("The section %s does not exist" % section)
+        else:
+            try:
+                self.sections[section]["flags"].remove(flag)
+            except KeyError:
+                raise ValueError(("The section %s did not have the "
+                                  "flag %s set") % (section, flag))
 
     def set_property(self, section, property_name, property_data):
         """Sets the value of a property
@@ -102,8 +152,8 @@ class PropertyEditor(object):
         """
         if section not in self.sections.keys():
             self.add_section(section, False)
-        if property_name not in self.sections[section]:
-            section_data = self.sections[section]
+        if property_name not in self.sections[section]["properties"]:
+            section_data = self.sections[section]["properties"]
             for property_type in self.property_types:
                 if property_type.check_type(property_data):
                     section_data[property_name] = property_type(self, section,
@@ -113,7 +163,8 @@ class PropertyEditor(object):
             else:
                 print "Could not find editor for %s" % property_name
         else:
-            self.sections[section][property_name].update_data(property_data)
+            property_ = self.sections[section]["properties"][property_name]
+            property_.update_data(property_data)
 
     def add_property_type(self, property_type):
         """Adds a property type to the end of the list.
@@ -127,13 +178,16 @@ class PropertyEditor(object):
     def update_widgets(self):
         """Update the editors widgets"""
         area = self.properties_area
-        for section, properties in self.sections.iteritems():
-            if section in self.section_areas:
-                section_area = self.section_areas[section]
+        for section in self.sections.iterkeys():
+            properties = self.sections[section]["properties"]
+            flags = self.sections[section]["flags"]
+            if self.sections[section]["area"] is not None:
+                section_area = self.sections[section]["area"]
             else:
+                label_width = PyCEGUI.UDim(1.0, 0)
                 section_header = area.createChild("HorizontalLayoutContainer",
                                                   "%s_header" % section)
-                self.section_headers[section] = section_header
+                self.sections[section]["header"] = section_header
                 collapse_label = section_header.createChild(
                     "TaharezLook/Label",
                     "%s_collapse"
@@ -143,21 +197,38 @@ class PropertyEditor(object):
                                               (lambda args, section=section:
                                                self.cb_un_collapse_clicked(
                                                    args, section)))
-                collapse_label.setWidth(PyCEGUI.UDim(0.0, self.COLLAPSE_SIZE))
-                self.collapse_labels[section] = collapse_label
-
+                collapse_label.setWidth(self.COLLAPSE_WIDTH)
+                self.sections[section]["collapse_label"] = collapse_label
+                label_width -= self.COLLAPSE_WIDTH
                 section_label = section_header.createChild("TaharezLook/Label",
                                                            "%s_label"
                                                            % section)
                 section_label.setText(section)
-                section_label.setWidth(PyCEGUI.UDim(1.0, -self.COLLAPSE_SIZE))
                 section_label.setHeight(self.WIDGET_HEIGHT)
                 section_label.setMargin(self.WIDGET_MARGIN)
                 section_label.setProperty("HorzFormatting",
                                           "CentreAligned")
+
+                if "removable" in flags:
+                    remove_label = section_header.createChild(
+                        "TaharezLook/Label",
+                        "%s_remove"
+                        % section)
+                    remove_label.setText("X")
+                    remove_label.setWidth(self.REMOVE_WIDTH)
+                    remove_label.subscribeEvent(PyCEGUI.Window.EventMouseClick,
+                                                (lambda args, section=section:
+                                                 self.cb_remove_clicked(
+                                                     args, section)))
+                    self.sections[section]["remove_label"] = remove_label
+                    label_width -= self.REMOVE_WIDTH
+                else:
+                    self.sections[section]["remove_label"] = None
+                section_label.setWidth(label_width)
+
                 section_area = area.createChild("VerticalLayoutContainer",
                                                 "%s_area" % section)
-                self.section_areas[section] = section_area
+                self.sections[section]["area"] = section_area
 
             for property_data in properties.itervalues():
                 if property_data.base_widget is None:
@@ -187,17 +258,51 @@ class PropertyEditor(object):
         for callback in self.__value_changed_callbacks:
             callback(section, property_name, value)
 
+    def add_remove_callback(self, callback):
+        """Add a function to be called when a section was removed
+
+        Args:
+
+            callback: The function to be added
+        """
+        self.remove_callbacks.add(callback)
+
     def cb_un_collapse_clicked(self, args, section):
-        """Called when un_collapse on a section header was clicked"""
+        """Called when un_collapse on a section header was clicked
+
+        Args:
+
+            args: PyCEGUI event args
+
+            section: The name of the section
+        """
         area = self.properties_area
         try:
             PyCEGUI.Exception.setStdErrEnabled(False)
             area.removeChild("%s_area" % section)
-            self.collapse_labels[section].setText("+")
+            self.sections[section]["collapse_label"].setText("+")
         except RuntimeError:
             PyCEGUI.Exception.setStdErrEnabled(True)
             header_pos = area.getPositionOfChild("%s_header" % section)
-            area.addChildToPosition(self.section_areas[section],
+            area.addChildToPosition(self.sections[section]["area"],
                                     header_pos + 1)
-            self.collapse_labels[section].setText("-")
+            self.sections[section]["collapse_label"].setText("-")
         self.properties_pane.show()
+
+    def cb_remove_clicked(self, args, section):
+        """Called when the "X" on the right side of a section header was
+        clicked
+
+        Args:
+
+            args: PyCEGUI event args
+
+            section: The name of the section
+        """
+        section_data = self.sections[section]
+        window_manager = PyCEGUI.WindowManager.getSingleton()
+        window_manager.destroyWindow(section_data["header"])
+        window_manager.destroyWindow(section_data["area"])
+        del self.sections[section]
+        for callback in self.remove_callbacks:
+            callback(section)
