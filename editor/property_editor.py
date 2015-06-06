@@ -51,6 +51,32 @@ class PropertyEditor(object):
         self.__list_items = []
         self.property_types = []
         self.remove_callbacks = set()
+        self.__enable_add = False
+        self.__add_callback = None
+        self.add_button = None
+
+    @property
+    def enable_add(self):
+        """Sets whether to add an "Add" Button to the property editor"""
+        return self.__enable_add
+
+    @enable_add.setter
+    def enable_add(self, value):
+        """Setter for "enable_add" """
+        self.__enable_add = value
+        self.update_widgets()
+
+    @property
+    def add_callback(self):
+        """Sets the function to call when "Add" was clicked"""
+        noop = lambda args: None
+        return self.__add_callback or noop
+
+    @add_callback.setter
+    def add_callback(self, value):
+        """Setter for "add_callback" """
+        self.__add_callback = value
+        self.update_widgets()
 
     def set_size(self, size):
         """Sets the size of the property editor
@@ -66,6 +92,7 @@ class PropertyEditor(object):
         """Removed all sections and sections"""
         self.sections = {}
         self.__list_items = []
+        self.add_button = None
         self.properties_area.destroy()
         self.properties_area = self.properties_pane.createChild(
             "VerticalLayoutContainer")
@@ -81,7 +108,10 @@ class PropertyEditor(object):
 
             flags: List of flags for this section
         """
-        flags = set(flags) or set()
+        if flags is None:
+            flags = set()
+        else:
+            flags = set(flags)
         if section not in self.sections.keys():
             self.sections[section] = {}
             self.set_section_flags(section, flags)
@@ -234,6 +264,22 @@ class PropertyEditor(object):
                 if property_data.base_widget is None:
                     property_data.setup_widget(section_area)
                 property_data.update_input_widgets()
+        if self.enable_add:
+            if self.add_button is None:
+                add_button = area.createChild("TaharezLook/Button",
+                                              "AddProperty")
+                add_button.setWidth(PyCEGUI.UDim(1.0, 0))
+                self.add_button = add_button
+            else:
+                add_button = area.getChild("AddProperty")
+            area.moveChildToPosition(add_button, area.getChildCount())
+            add_button.setText(_("Add"))
+            add_button.subscribeEvent(PyCEGUI.ButtonBase.EventMouseClick,
+                                      self.add_callback)
+        else:
+            if self.add_button is not None:
+                area.destroyChild(self.add_button)
+                self.add_button = None
 
     def add_value_changed_callback(self, function):
         """Adds a function to be called when a value has changed

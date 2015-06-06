@@ -81,6 +81,8 @@ class EditorGui(object):
         self.edit_systems = None
         self.edit_actions = None
         self.edit_behaviours = None
+        self.add_comp_popup = None
+        self.add_comp_event = None
 
         self.app = app
         self.editor = app.editor
@@ -380,6 +382,10 @@ class EditorGui(object):
         project_settings.setAutoPopupTimeout(0.5)
         self.project_settings = project_settings
 
+        # Add component popup
+        self.add_comp_popup = self.main_container.createChild("TaharezLook"
+                                                              "/PopupMenu")
+
     def reset_layerlist(self):
         """Resets the layerlist to be empty"""
         self.listbox.resetList()
@@ -452,6 +458,8 @@ class EditorGui(object):
                         property_editor.set_property(
                             comp_name, field,
                             [value])
+            property_editor.enable_add = True
+            property_editor.add_callback = self.cb_add_component_menu
         else:
             property_editor.set_property(
                 "Instance", "Identifier",
@@ -472,6 +480,8 @@ class EditorGui(object):
             property_editor.set_property(
                 "Instance", "StackPosition",
                 [str(visual.getStackPosition())])
+            property_editor.enable_add = False
+            property_editor.add_callback = None
         property_editor.update_widgets()
 
     def reset_maps_menu(self):
@@ -775,6 +785,11 @@ class EditorGui(object):
         layer = self.editor.create_layer(map_name, layer_name, cell_grid)
         return layer
 
+    def close_add_component_menu(self):
+        """Closes and removes the add compoment popup"""
+        self.add_comp_popup.closePopupMenu()
+        self.add_comp_popup.hide()
+
     def cb_add_map(self, args):
         """Callback when Map was clicked in the edit->Add menu"""
         import tkMessageBox
@@ -1038,3 +1053,47 @@ class EditorGui(object):
         delattr(entity, component)
         self.app.world.pump(0)
         self.app.entity_changed = True
+        self.close_add_component_menu()
+
+    def cb_add_component_menu(self, args):
+        """Called when the "Add" button in the property editor was clicked"""
+        entity = self.app.world.get_entity(self.app.selected_object.getId())
+        self.add_comp_popup.resetList()
+        for component in ComponentManager.get_components():
+            if not getattr(entity, component):
+                item_name = "add_%s_component" % component
+                item = self.add_comp_popup.createChild("TaharezLook/MenuItem",
+                                                       item_name)
+                item.setText(component)
+                item.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                                    (lambda args, component=component:
+                                     self.cb_add_component_selected(
+                                         args,
+                                         component)))
+        position = self.property_editor.add_button.getPosition()
+        position.d_y -= self.add_comp_popup.getHeight()
+        self.add_comp_popup.setPosition(position)
+        self.property_editor.properties_pane.addChild(self.add_comp_popup)
+        self.add_comp_popup.moveToFront()
+        self.add_comp_popup.show()
+        self.add_comp_popup.openPopupMenu()
+        self.add_comp_event = self.add_comp_popup.subscribeEvent(
+            PyCEGUI.PopupMenu.EventZOrderChanged,
+            self.cb_add_popup_order_changed)
+
+    def cb_add_component_selected(self, args, component):
+        """Called when a menu item in the add component menu was clicked"""
+        entity = self.app.world.get_entity(self.app.selected_object.getId())
+        setattr(entity, component, None)
+        self.update_property_editor()
+        self.property_editor.cb_un_collapse_clicked(None, component)
+        self.property_editor.cb_un_collapse_clicked(None, component)
+        self.app.entity_changed = True
+
+    def cb_add_popup_order_changed(self, args):
+        """Called when the order of the add popupmenu was changed"""
+        if self.add_comp_event is None:
+            return
+        self.add_comp_event.disconnect()
+        self.add_comp_event = None
+        self.close_add_component_menu()
