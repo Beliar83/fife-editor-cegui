@@ -31,6 +31,10 @@ from fife.extensions.serializers.simplexml import (SimpleXMLSerializer,
 from fife.extensions.serializers import ET
 from fife_rpg.map import Map as GameMap
 from fife_rpg.components import ComponentManager
+from fife_rpg.components.agent import Agent
+from fife_rpg.components.general import General
+from fife_rpg.components.fifeagent import FifeAgent
+from fife_rpg.behaviours.base import Base as BaseBehaviour
 
 from .edit_map import MapOptions
 from .edit_layer import LayerOptions
@@ -483,6 +487,9 @@ class EditorGui(object):
                 [str(visual.getStackPosition())])
             property_editor.enable_add = False
             property_editor.add_callback = None
+            property_editor.enable_add = True
+            property_editor.add_callback = self.cb_make_entity
+            property_editor.add_text = _("Convert to entity")
         property_editor.update_widgets()
 
     def reset_maps_menu(self):
@@ -1103,3 +1110,43 @@ class EditorGui(object):
         self.add_comp_event.disconnect()
         self.add_comp_event = None
         self.close_add_component_menu()
+
+    def cb_make_entity(self, args):
+        """Called when the Convert to entity button in the property editor was
+        clicked"""
+        selected_object = self.app.selected_object
+        identifier = selected_object.getId()
+        if not identifier.strip():
+            identifier = _("New Entity")
+        elif self.app.world.is_identifier_used(identifier):
+            return
+        identifier = self.app.world.create_unique_identifier(identifier)
+        selected_object.setId(identifier)
+        entity_data = {}
+        general_name = General.registered_as()
+        agent_name = Agent.registered_as()
+        fagent_name = FifeAgent.registered_as()
+        entity_data[general_name] = {}
+        entity_data[general_name]["identifier"] = identifier
+        entity_data[agent_name] = {}
+        entity_data[agent_name]["behaviour_type"] = "Base"
+
+        location = selected_object.getLocation()
+        layer = location.getLayer()
+        entity_data[agent_name]["layer"] = layer.getId()
+        game_map = layer.getMap()
+        entity_data[agent_name]["map"] = game_map.getId()
+        coords = location.getLayerCoordinates()
+        entity_data[agent_name]["position"] = (coords.x, coords.y, coords.z)
+        entity_data[agent_name]["rotation"] = selected_object.getRotation()
+        entity_data[agent_name]["gfx"] = selected_object.getObject().getId()
+        entity_data[fagent_name] = {}
+        entity_data[fagent_name]["layer"] = layer
+        entity_data[fagent_name]["instance"] = selected_object
+        entity_data[fagent_name]["behaviour"] = BaseBehaviour()
+        self.app.entities[identifier] = entity_data
+
+        self.app.world.get_or_create_entity(identifier, entity_data)
+        self.app.current_map.update_entities()
+        self.app.set_selected_object(None)
+        self.app.set_selected_object(selected_object)
