@@ -54,6 +54,7 @@ class PropertyEditor(object):
         self.__enable_add = False
         self.__add_callback = None
         self.add_button = None
+        self.__add_text = None
 
     @property
     def enable_add(self):
@@ -77,6 +78,18 @@ class PropertyEditor(object):
         """Setter for "add_callback" """
         self.__add_callback = value
         self.update_widgets()
+
+    @property
+    def add_text(self):
+        """The text that will be displayed on the Add button.
+
+        If set to None the default value will be used"""
+        return self.__add_text or _("Add")
+
+    @add_text.setter
+    def add_text(self, value):
+        """Setter for add_text"""
+        self.__add_text = value
 
     def set_size(self, size):
         """Sets the size of the property editor
@@ -273,7 +286,7 @@ class PropertyEditor(object):
             else:
                 add_button = area.getChild("AddProperty")
             area.moveChildToPosition(add_button, area.getChildCount())
-            add_button.setText(_("Add"))
+            add_button.setText(self.add_text)
             add_button.subscribeEvent(PyCEGUI.ButtonBase.EventMouseClick,
                                       self.add_callback)
         else:

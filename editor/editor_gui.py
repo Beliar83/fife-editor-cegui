@@ -460,6 +460,7 @@ class EditorGui(object):
                             [value])
             property_editor.enable_add = True
             property_editor.add_callback = self.cb_add_component_menu
+            property_editor.add_text = _("Add component")
         else:
             property_editor.set_property(
                 "Instance", "Identifier",
