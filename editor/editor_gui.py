@@ -912,8 +912,6 @@ class EditorGui(object):
             entity = world.get_entity(identifier)
             com_data = getattr(entity, section)
             try:
-                if isinstance(value, basestring):
-                    value = yaml.load(value)
                 setattr(com_data, property_name, value)
                 self.app.update_agents(self.app.current_map)
                 self.app.entity_changed = True
