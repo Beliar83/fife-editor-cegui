@@ -912,6 +912,11 @@ class EditorGui(object):
                 self.app.entity_changed = True
             except (ValueError, yaml.parser.ParserError):
                 pass
+            finally:
+                if entity.identifier != identifier:
+                    self.app.selected_object.setId(entity.identifier)
+                    old_dict = self.app.entities.pop(identifier)
+                    self.app.entities[entity.identifier] = old_dict
         else:
             if section != "Instance":
                 return
