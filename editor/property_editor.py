@@ -43,6 +43,7 @@ class PropertyEditor(object):
         self.properties_box.setText("Properties")
         self.properties_pane = self.properties_box.createChild(
             "TaharezLook/ScrollablePane", "property_container")
+        self.properties_pane.setShowVertScrollbar(True)
         self.properties_pane.setSize(size)
         self.properties_area = self.properties_pane.createChild(
             "VerticalLayoutContainer")
