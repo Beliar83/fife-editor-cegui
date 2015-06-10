@@ -27,8 +27,7 @@ def cb_cut_copy_paste(args):
     """Event callback for text copy, cut and paste operations"""
     scancode = args.scancode
     syskeys = args.sysKeys
-    if not ((syskeys & PyCEGUI.Key.LeftControl) or
-            (syskeys & PyCEGUI.Key.RightControl)):
+    if not syskeys & PyCEGUI.SystemKeys.Control:
         return False
     retval = False
     window = args.window
