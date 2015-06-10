@@ -22,6 +22,7 @@
 
 import os
 import sys
+import shutil
 from StringIO import StringIO
 
 import yaml
@@ -213,6 +214,15 @@ class EditorApplication(RPGApplicationCEGUI):
         project.load()
         update_settings(project, values)
         project.save()
+        comp_file = project.get("fife-rpg", "ComponentsFile")
+        act_file = comp_file or project.get("fife-rpg", "ActionsFile")
+        syst_file = act_file or project.get("fife-rpg", "SystemsFile")
+        beh_file = syst_file or project.get("fife-rpg", "BehavioursFile")
+        comb_file = beh_file or project.get("fife-rpg", "CombinedFile")
+        if not comb_file:
+            dest = os.path.join(os.path.dirname(settings_path),
+                                "combined.yaml")
+            shutil.copy("combined.yaml.template", dest)
         self.try_load_project(settings_path)
         tkMessageBox.showinfo(_("Project created"),
                               _("Project successfully created"))
