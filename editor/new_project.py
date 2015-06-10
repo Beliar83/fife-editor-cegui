@@ -85,9 +85,9 @@ class NewProject(ProjectSettings):
         ProjectSettings.setup_dialog(self, root)
 
         self.window.setArea(PyCEGUI.UDim(0, 3), PyCEGUI.UDim(0, 4),
-                            PyCEGUI.UDim(0.4, 3), PyCEGUI.UDim(0.61, 4))
+                            PyCEGUI.UDim(0.4, 3), PyCEGUI.UDim(0.65, 4))
         self.window.setMinSize(PyCEGUI.USize(PyCEGUI.UDim(0.4, 3),
-                                             PyCEGUI.UDim(0.61, 4)))
+                                             PyCEGUI.UDim(0.65, 4)))
         self.window.setText(_("New Project"))
 
     def validate(self):
