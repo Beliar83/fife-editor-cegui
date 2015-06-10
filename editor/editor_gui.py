@@ -664,6 +664,18 @@ class EditorGui(object):
         """Callback when save->entities was clicked in the file menu"""
         self.app.save_entities()
 
+    def enable_menus(self):
+        """Enable the menus for loaded projects"""
+        self.file_close.setEnabled(True)
+        self.file_save.setEnabled(True)
+        self.file_import.setEnabled(True)
+        self.project_settings.setEnabled(True)
+        self.edit_add.setEnabled(True)
+        self.edit_components.setEnabled(True)
+        self.edit_systems.setEnabled(True)
+        self.edit_actions.setEnabled(True)
+        self.edit_behaviours.setEnabled(True)
+
     def cb_open(self, args):
         """Callback when open was clicked in the file menu"""
         import tkFileDialog
@@ -707,15 +719,7 @@ class EditorGui(object):
                     os.rename(selected_file, conv_file)
                     os.rename(bak_file, selected_file)
 
-            self.file_close.setEnabled(True)
-            self.file_save.setEnabled(True)
-            self.file_import.setEnabled(True)
-            self.project_settings.setEnabled(True)
-            self.edit_add.setEnabled(True)
-            self.edit_components.setEnabled(True)
-            self.edit_systems.setEnabled(True)
-            self.edit_actions.setEnabled(True)
-            self.edit_behaviours.setEnabled(True)
+            self.enable_menus()
 
             tkMessageBox.showinfo(_("Project loaded"),
                                   _("Project successfully loaded"))

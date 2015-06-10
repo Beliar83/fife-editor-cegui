@@ -226,6 +226,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.try_load_project(settings_path)
         tkMessageBox.showinfo(_("Project created"),
                               _("Project successfully created"))
+        self.editor_gui.enable_menus()
         self.project_changed = False
         self.entity_changed = False
 
