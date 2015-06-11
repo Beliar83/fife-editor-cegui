@@ -1141,7 +1141,9 @@ class EditorGui(object):
         coords = location.getLayerCoordinates()
         entity_data[agent_name]["position"] = (coords.x, coords.y, coords.z)
         entity_data[agent_name]["rotation"] = selected_object.getRotation()
-        entity_data[agent_name]["gfx"] = selected_object.getObject().getId()
+        fife_object = selected_object.getObject()
+        entity_data[agent_name]["gfx"] = fife_object.getId()
+        entity_data[agent_name]["namespace"] = fife_object.getNamespace()
         entity_data[fagent_name] = {}
         entity_data[fagent_name]["layer"] = layer
         entity_data[fagent_name]["instance"] = selected_object
