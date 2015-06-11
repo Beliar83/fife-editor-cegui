@@ -380,6 +380,10 @@ class EditorApplication(RPGApplicationCEGUI):
             filename = os.path.join(self.project_dir, maps_path,
                                     "%s.xml" % map_name)
             fife_map.setFilename(filename)
+        try:
+            os.makedirs(os.path.dirname(filename))
+        except os.error:
+            pass
 
         old_dir = os.getcwd()
         os.chdir(self.project_dir)
