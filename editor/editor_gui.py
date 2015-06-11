@@ -1125,9 +1125,9 @@ class EditorGui(object):
         identifier = self.app.world.create_unique_identifier(identifier)
         selected_object.setId(identifier)
         entity_data = {}
-        general_name = General.registered_as()
-        agent_name = Agent.registered_as()
-        fagent_name = FifeAgent.registered_as()
+        general_name = General.registered_as
+        agent_name = Agent.registered_as
+        fagent_name = FifeAgent.registered_as
         entity_data[general_name] = {}
         entity_data[general_name]["identifier"] = identifier
         entity_data[agent_name] = {}
