@@ -556,7 +556,10 @@ class EditorApplication(RPGApplicationCEGUI):
         """
         self.editor_gui.update_toolbar_contents()
         if self.world:
-            self.world.pump(0)
+            try:
+                self.world.pump(0)
+            except Exception:  # pylint: disable=broad-except
+                pass
 
     def save_all_maps(self):
         """Save the edited status of all maps"""
