@@ -581,7 +581,13 @@ class EditorApplication(RPGApplicationCEGUI):
         self.create_world()
         try:
             self.world.read_object_db()
+        except:  # pylint: disable=bare-except
+            pass
+        try:
             self.world.import_agent_objects()
+        except:  # pylint: disable=bare-except
+            pass
+        try:
             if entities_file is not None:
                 self.parse_entities(entities_file)
             else:
