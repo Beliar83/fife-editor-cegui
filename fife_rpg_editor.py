@@ -251,12 +251,14 @@ class EditorApplication(RPGApplicationCEGUI):
             self.editor_gui.listbox.resetList()
             if self.current_map:
                 self.editor_gui.update_layerlist()
-
                 if not self.editor_gui.show_agents_check.isSelected():
                     self.hide_map_entities(self.current_map.name)
-        except Exception as error:
-            print error
-            raise
+        except Exception as error:  # pylint: disable=broad-except
+            import tkMessageBox
+            tkMessageBox.showerror("Can't change map",
+                                   "The following error was raised when "
+                                   "trying to switch the map: %s" % error)
+            self.switch_map(None)
 
     def objects_imported(self):
         """Should be called when an object was imported"""
