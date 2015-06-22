@@ -498,10 +498,13 @@ class EditorApplication(RPGApplicationCEGUI):
         Returns:
             The created node
         """
-        old_entity_dict = self.entities[data.identifier]
-        template = None
-        if "Template" in old_entity_dict:
-            template = old_entity_dict["Template"]
+        if data.identifier in self.entities:
+            old_entity_dict = self.entities[data.identifier]
+            template = None
+            if "Template" in old_entity_dict:
+                template = old_entity_dict["Template"]
+        else:
+            template = None
         entity_dict = self.world.create_entity_dictionary(data)
         if template is not None:
             components = entity_dict["Components"]
