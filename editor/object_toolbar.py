@@ -20,21 +20,23 @@
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
 
+from __future__ import absolute_import
 from io import StringIO
 import os
-from Queue import Queue, Empty
-import thread
+from six.moves.queue import Queue, Empty
+import six.moves._thread
 
 from lxml import etree
 import PyCEGUI
 from fife import fife
 
 # pylint: disable=unused-import
-from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
+import PyCEGUIOpenGLRenderer  # @UnusedImport
 # pylint: enable=unused-import
 
 from .toolbarpage import ToolbarPage
 from .undo_editor import UndoCreateInstance, UndoRemoveInstance
+import six
 
 
 def parse_file(filename):
@@ -50,7 +52,7 @@ def parse_file(filename):
         tree = etree.parse(filename)
         yield parse_object(tree.getroot(), root_path)
     except etree.XMLSyntaxError as error:
-        doc = file(filename, "r")
+        doc = open(filename, "r")
         line_no = error.position[0] - 2
         lines = doc.readlines()
         first_doc = StringIO(u"".join(lines[:line_no]))
@@ -295,8 +297,8 @@ class ObjectToolbar(ToolbarPage):
         self.app.add_project_clear_callback(self.cb_project_closed)
         self.app.add_objects_imported_callback(self.cb_objects_imported)
         self.objects = Queue()
-        self.images_lock = thread.allocate_lock()
-        self.namespaces_lock = thread.allocate_lock()
+        self.images_lock = six.moves._thread.allocate_lock()
+        self.namespaces_lock = six.moves._thread.allocate_lock()
 
     def image_clicked(self, args):
         """Called when the user clicked on an image
@@ -322,7 +324,7 @@ class ObjectToolbar(ToolbarPage):
     def update_contents(self):
         """Update the contents of the toolbar page"""
         if self.have_objects_changed and self.is_active:
-            thread.start_new(self.update_objects_threaded, ())
+            six.moves._thread.start_new(self.update_objects_threaded, ())
         elif self.is_active:
             self.process_object()
         ToolbarPage.update_contents(self)
@@ -356,7 +358,7 @@ class ObjectToolbar(ToolbarPage):
                     self.namespaces[namespace].append(identifier)
                     self.objects.put((namespace, obj))
         self.images_lock.acquire()
-        for image in self.images.itervalues():
+        for image in six.itervalues(self.images):
             namespace, image_id = image.user_data
             if image_id not in self.namespaces[namespace]:
                 wmgr = PyCEGUI.WindowManager.getSingleton()
@@ -389,7 +391,8 @@ class ObjectToolbar(ToolbarPage):
             actions = obj["actions"]
             img_def["actions"] = {}
             actions_dict = img_def["actions"]
-            action, action_def = actions.iteritems().next()
+            action_data = six.iteritems(actions)
+            action, action_def = next(action_data)
             img_type = action_def["type"]
             if img_type == "single":
                 atlas_def = action_def["atlas"]
@@ -406,7 +409,7 @@ class ObjectToolbar(ToolbarPage):
                 frame_count = 0
             dirs_def = action_def["directions"]
             actions_dict[action] = {}
-            dirs = sorted(dirs_def.iterkeys())
+            dirs = sorted(six.iterkeys(dirs_def))
             dir_def = dirs_def[dirs[0]]
 
             if img_type == "multi":
@@ -437,7 +440,7 @@ class ObjectToolbar(ToolbarPage):
         elif int(obj_def["static"]) == 1:
             img_def["directions"] = []
             dirs_def = obj["directions"]
-            dirs = sorted(dirs_def.iterkeys())
+            dirs = sorted(six.iterkeys(dirs_def))
             dir_def = dirs_def[dirs[0]]
             source = dir_def["source"]
             if dir_def["type"] == "atlas":
@@ -580,9 +583,9 @@ class ObjectToolbar(ToolbarPage):
         if self.selected_object[0] is None:
             return
         layer = self.app.current_map.get_layer(
-            self.app.editor_gui.selected_layer)
+            str(self.app.editor_gui.selected_layer))
         location = self.app.screen_coords_to_map_coords(
-            click_point, self.app.editor_gui.selected_layer
+            click_point, str(self.app.editor_gui.selected_layer)
         )
         coords = location.getLayerCoordinates()
         self.last_mouse_pos = location

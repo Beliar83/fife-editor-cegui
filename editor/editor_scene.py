@@ -20,6 +20,7 @@
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
 
+from __future__ import absolute_import
 from fife import fife
 
 from fife_rpg.game_scene import GameSceneListener, GameSceneController
@@ -73,7 +74,7 @@ class EditorListener(GameSceneListener, fife.IKeyListener):
 
             cb_kwargs:func: Function that returns kwargs for the callback
         """
-        if cb_type not in self.callbacks.keys():
+        if cb_type not in list(self.callbacks.keys()):
             raise RuntimeError("%s is not a valid callback type" % (cb_type))
         self.callbacks[cb_type].append({"func": cb_func, "kwargs": cb_kwargs})
 

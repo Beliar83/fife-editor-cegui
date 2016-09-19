@@ -20,6 +20,7 @@
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
 
+from __future__ import absolute_import
 from fife_rpg.game_scene import BaseOutliner
 
 from .toolbarpage import ToolbarPage

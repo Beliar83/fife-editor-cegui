@@ -18,6 +18,7 @@
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
 
+from __future__ import absolute_import
 import os
 
 import PyCEGUI
@@ -31,8 +32,8 @@ def cb_cut_copy_paste(args):
         return False
     retval = False
     window = args.window
-    import Tkinter
-    tk_win = Tkinter.Tk()
+    import six.moves.tkinter
+    tk_win = six.moves.tkinter.Tk()
     tk_win.wm_withdraw()
     tk_win.update()
     clipboard = PyCEGUI.System.getSingleton().getClipboard()
@@ -115,8 +116,8 @@ def select_path(title, initialdir=None):
 
         initialdir: The directory the dialog starts in
     """
-    import tkFileDialog
-    return tkFileDialog.askdirectory(title=title, initialdir=initialdir)
+    import six.moves.tkinter_filedialog
+    return six.moves.tkinter_filedialog.askdirectory(title=title, initialdir=initialdir)
 
 
 def ask_create_path(path):
@@ -127,8 +128,8 @@ def ask_create_path(path):
         path: The path that should be created - Will not be checked if really
         nonexistent.
     """
-    import tkMessageBox
-    answer = tkMessageBox.askyesno(
+    import six.moves.tkinter_messagebox
+    answer = six.moves.tkinter_messagebox.askyesno(
         _("Create path"),
         _("Path does not exist, create it? "
             "(Must be manually deleted if changed later)"))

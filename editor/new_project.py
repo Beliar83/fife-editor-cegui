@@ -18,6 +18,7 @@
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
 
+from __future__ import absolute_import
 import os
 
 import PyCEGUI
@@ -115,8 +116,8 @@ class NewProject(ProjectSettings):
             return True
         selected_path = os.path.normpath(selected_path)
         if not is_dir_path_valid(selected_path):
-            import tkMessageBox
-            tkMessageBox.showerror(_("Invalid path"),
+            import six.moves.tkinter_messagebox
+            six.moves.tkinter_messagebox.showerror(_("Invalid path"),
                                    _("%s is not a valid path") % selected_path)
             return True
         if not os.path.exists(selected_path):

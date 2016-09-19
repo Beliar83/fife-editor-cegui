@@ -18,6 +18,8 @@
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 import PyCEGUI
@@ -418,7 +420,7 @@ class ProjectSettings(Dialog):
             if self.comb_file_cb.isSelected():
                 values["CombinedFile"] = self.comb_file_editor.getText()
         except AttributeError:
-            print "Please call setup_dialog before trying to get the values"
+            print("Please call setup_dialog before trying to get the values")
         return values
 
     def validate(self):
@@ -575,8 +577,8 @@ class ProjectSettings(Dialog):
             return True
         checked_path = self.check_agent_path(selected_path)
         if not checked_path:
-            import tkMessageBox
-            tkMessageBox.showerror(_("Invalid path"),
+            import six.moves.tkinter_messagebox
+            six.moves.tkinter_messagebox.showerror(_("Invalid path"),
                                    _("%s is not a valid path") % selected_path)
             return True
         abspath = checked_path
@@ -641,8 +643,8 @@ class ProjectSettings(Dialog):
 
             filetypes: The available file types
         """
-        import tkFileDialog
-        selected_file = tkFileDialog.askopenfilename(
+        import six.moves.tkinter_filedialog
+        selected_file = six.moves.tkinter_filedialog.askopenfilename(
             filetypes=filetypes,
             title="Open file",
             initialdir=self.project_dir)

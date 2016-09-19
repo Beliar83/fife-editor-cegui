@@ -14,6 +14,7 @@
 
 """Contains classes and functions for the components dialog"""
 
+from __future__ import absolute_import
 from importlib import import_module
 
 import PyCEGUI
@@ -21,6 +22,8 @@ from fife_rpg.components.base import Base as BaseComponent
 
 from .dialog import Dialog
 from .common import clear_text
+import six
+from six.moves import range
 
 
 class Components(Dialog):
@@ -158,7 +161,7 @@ class Components(Dialog):
             self.current_items.append(item)
             current_components.add(component)
 
-        all_components = set(self.app.components.iterkeys())
+        all_components = set(six.iterkeys(self.app.components))
         for component in all_components - self.project_components:
             item = self.available_list.createChild("TaharezLook/ListboxItem")
             text = component
@@ -174,7 +177,7 @@ class Components(Dialog):
     def get_values(self):
         """Returns the values of the dialog fields"""
         current_items = set()
-        for x in xrange(self.current_list.getItemCount()):
+        for x in range(self.current_list.getItemCount()):
             text = self.current_list.getItemFromIndex(x).getText()
             text = clear_text(text)
             current_items.add(text)
@@ -302,7 +305,7 @@ class AvailableComponents(Dialog):
         edit_set.resetList()
         self.items = []
         self.values = dict()
-        for name, path in self.app.components.iteritems():
+        for name, path in six.iteritems(self.app.components):
             text = name
             if name in self.components_in_use:
                 text = text = "[colour='FFFF0000']" + text

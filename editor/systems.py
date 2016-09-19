@@ -14,6 +14,7 @@
 
 """Contains classes and functions for the systems dialog"""
 
+from __future__ import absolute_import
 from importlib import import_module
 
 import PyCEGUI
@@ -21,6 +22,8 @@ from fife_rpg.systems.base import Base as BaseSystem
 
 from .dialog import Dialog
 from .common import clear_text
+import six
+from six.moves import range
 
 
 class Systems(Dialog):
@@ -144,7 +147,7 @@ class Systems(Dialog):
             self.current_items.append(item)
             current_systems.add(system)
 
-        all_systems = set(self.app.systems.iterkeys())
+        all_systems = set(six.iterkeys(self.app.systems))
         for system in all_systems - self.project_systems:
             item = self.available_list.createChild("TaharezLook/ListboxItem")
             text = system
@@ -160,7 +163,7 @@ class Systems(Dialog):
     def get_values(self):
         """Returns the values of the dialog fields"""
         current_items = set()
-        for x in xrange(self.current_list.getItemCount()):
+        for x in range(self.current_list.getItemCount()):
             text = self.current_list.getItemFromIndex(x).getText()
             text = clear_text(text)
             current_items.add(text)
@@ -273,7 +276,7 @@ class AvailableSystems(Dialog):
         edit_set.resetList()
         self.items = []
         self.values = dict()
-        for name, path in self.app.systems.iteritems():
+        for name, path in six.iteritems(self.app.systems):
             item = edit_set.createChild("TaharezLook/ListboxItem")
             item.setText(name)
             self.items.append(item)

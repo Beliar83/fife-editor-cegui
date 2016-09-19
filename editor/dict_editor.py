@@ -19,9 +19,11 @@
 
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
+from __future__ import absolute_import
 import PyCEGUI
 
 from .dialog import Dialog
+import six
 
 
 class DictEditor(Dialog):
@@ -67,7 +69,7 @@ class DictEditor(Dialog):
                                    SelectionMode.RowSingle)
         self.items = []
         self.values = {}
-        for key, value in self.dict.iteritems():
+        for key, value in six.iteritems(self.dict):
             row = edit_dict.addRow()
             item = PyCEGUI.ListboxTextItem(str(key))
             item.setSelectionBrushImage("TaharezLook/"

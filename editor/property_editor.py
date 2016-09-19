@@ -20,7 +20,10 @@
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import PyCEGUI
+import six
 
 
 class PropertyEditor(object):
@@ -126,7 +129,7 @@ class PropertyEditor(object):
             flags = set()
         else:
             flags = set(flags)
-        if section not in self.sections.keys():
+        if section not in list(self.sections.keys()):
             self.sections[section] = {}
             self.set_section_flags(section, flags)
             self.sections[section]["properties"] = {}
@@ -146,7 +149,7 @@ class PropertyEditor(object):
 
             flags: List of flags for this section
         """
-        if section not in self.sections.keys():
+        if section not in list(self.sections.keys()):
             raise ValueError("The section %s does not exist" % section)
         else:
             self.sections[section]["flags"] = flags
@@ -160,7 +163,7 @@ class PropertyEditor(object):
 
             flag: The flag to add
         """
-        if section not in self.sections.keys():
+        if section not in list(self.sections.keys()):
             raise ValueError("The section %s does not exist" % section)
         else:
             self.sections[section]["flags"].add(flag)
@@ -174,7 +177,7 @@ class PropertyEditor(object):
 
             flag: The flag to remove
         """
-        if section not in self.sections.keys():
+        if section not in list(self.sections.keys()):
             raise ValueError("The section %s does not exist" % section)
         else:
             try:
@@ -194,7 +197,7 @@ class PropertyEditor(object):
 
             property_data: Property dependent information
         """
-        if section not in self.sections.keys():
+        if section not in list(self.sections.keys()):
             self.add_section(section, False)
         if property_name not in self.sections[section]["properties"]:
             section_data = self.sections[section]["properties"]
@@ -205,7 +208,7 @@ class PropertyEditor(object):
                                                                 property_data)
                     break
             else:
-                print "Could not find editor for %s" % property_name
+                print("Could not find editor for %s" % property_name)
         else:
             property_ = self.sections[section]["properties"][property_name]
             property_.update_data(property_data)
@@ -222,7 +225,7 @@ class PropertyEditor(object):
     def update_widgets(self):
         """Update the editors widgets"""
         area = self.properties_area
-        for section in self.sections.iterkeys():
+        for section in six.iterkeys(self.sections):
             properties = self.sections[section]["properties"]
             flags = self.sections[section]["flags"]
             if self.sections[section]["area"] is not None:
@@ -274,7 +277,7 @@ class PropertyEditor(object):
                                                 "%s_area" % section)
                 self.sections[section]["area"] = section_area
 
-            for property_data in properties.itervalues():
+            for property_data in six.itervalues(properties):
                 if property_data.base_widget is None:
                     property_data.setup_widget(section_area)
                 property_data.update_input_widgets()

@@ -20,15 +20,17 @@
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
-from StringIO import StringIO
+from io import StringIO
 
 import yaml
 # pylint: disable=unused-import
 import PyCEGUI  # @UnusedImport # PyCEGUI won't work otherwise (on windows)
-from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
+import PyCEGUIOpenGLRenderer  # @UnusedImport
 # pylint: enable=unused-import
 
 from fife.extensions.fife_settings import Setting
@@ -60,6 +62,7 @@ from editor.components import Components, AvailableComponents
 from editor.systems import Systems, AvailableSystems
 from editor.actions import Actions, AvailableActions
 from editor.behaviours import Behaviours, AvailableBehaviours
+import six
 
 BASIC_SETTINGS = """<?xml version='1.0' encoding='UTF-8'?>
 <Settings>
@@ -206,8 +209,8 @@ class EditorApplication(RPGApplicationCEGUI):
 
             values: The starting values of the project.
         """
-        import tkMessageBox
-        settings_file = file(settings_path, "w")
+        import six.moves.tkinter_messagebox
+        settings_file = open(settings_path, "w")
         settings_file.write(BASIC_SETTINGS)
         settings_file.close()
         project = SimpleXMLSerializer(settings_path)
@@ -224,7 +227,7 @@ class EditorApplication(RPGApplicationCEGUI):
                                 "combined.yaml")
             shutil.copy("combined.yaml.template", dest)
         self.try_load_project(settings_path)
-        tkMessageBox.showinfo(_("Project created"),
+        six.moves.tkinter_messagebox.showinfo(_("Project created"),
                               _("Project successfully created"))
         self.editor_gui.enable_menus()
         self.project_changed = False
@@ -254,8 +257,8 @@ class EditorApplication(RPGApplicationCEGUI):
                 if not self.editor_gui.show_agents_check.isSelected():
                     self.hide_map_entities(self.current_map.name)
         except Exception as error:  # pylint: disable=broad-except
-            import tkMessageBox
-            tkMessageBox.showerror("Can't change map",
+            import six.moves.tkinter_messagebox
+            six.moves.tkinter_messagebox.showerror("Can't change map",
                                    "The following error was raised when "
                                    "trying to switch the map: %s" % error)
             self.switch_map(None)
@@ -279,7 +282,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.editor_gui.reset_layerlist()
         self.map_entities = None
         self.set_selected_object(None)
-        tmp_settings = self.settings.getSettingsFromFile("fife-rpg").keys()
+        tmp_settings = list(self.settings.getSettingsFromFile("fife-rpg").keys())
         for setting in tmp_settings:
             if setting in self.editor_settings:
                 self.settings.set("fife-rpg", setting,
@@ -315,7 +318,7 @@ class EditorApplication(RPGApplicationCEGUI):
         try:
             self.clear()
         except Exception as error:  # pylint: disable=broad-except
-            print error
+            print(error)
         settings = SimpleXMLSerializer()
         try:
             settings.load(filepath)
@@ -345,7 +348,7 @@ class EditorApplication(RPGApplicationCEGUI):
         """Loads the settings file"""
         project_settings = self.project.getAllSettings("fife-rpg")
         del project_settings["ProjectName"]
-        for setting, value in project_settings.iteritems():
+        for setting, value in six.iteritems(project_settings):
             self.settings.set("fife-rpg", setting, value)
 
     def save_map(self, map_name=None):
@@ -474,8 +477,8 @@ class EditorApplication(RPGApplicationCEGUI):
 
         entities = yaml.safe_load_all(entities_file)
         try:
-            while entities.next():
-                entities.next()
+            while next(entities):
+                next(entities)
         except StopIteration:
             pass
 
@@ -513,10 +516,10 @@ class EditorApplication(RPGApplicationCEGUI):
             entity_dict["Template"] = template
             template_dict = {}
             self.world.update_from_template(template_dict, template)
-            for component, fields in template_dict.iteritems():
+            for component, fields in six.iteritems(template_dict):
                 if component not in components:
                     continue
-                for field, value in fields.iteritems():
+                for field, value in six.iteritems(fields):
                     if field not in components[component]:
                         continue
                     if components[component][field] == value:
@@ -546,7 +549,7 @@ class EditorApplication(RPGApplicationCEGUI):
         old_wd = os.getcwd()
         os.chdir(self.project_dir)
         try:
-            entities_file = file(entities_file_name, "w")
+            entities_file = open(entities_file_name, "w")
             self.dump_entities(entities_file)
             self.entity_changed = False
         finally:
@@ -562,9 +565,14 @@ class EditorApplication(RPGApplicationCEGUI):
         self.editor_gui.update_toolbar_contents()
         if self.world:
             try:
-                self.world.pump(0)
-            except Exception:  # pylint: disable=broad-except
-                pass
+                self.world.step(0)
+            except Exception as error:  # pylint: disable=broad-except
+                import traceback
+                import os.path
+                top = traceback.extract_stack()[-2]
+                print(', '.join([type(error).__name__,
+                                 os.path.basename(top[0]), str(top[1])]))
+                print(error)
 
     def save_all_maps(self):
         """Save the edited status of all maps"""
@@ -644,7 +652,7 @@ class EditorApplication(RPGApplicationCEGUI):
         """Saves the current project"""
         self.project.save()
         maps = {}
-        for game_map in self.maps.itervalues():
+        for game_map in six.itervalues(self.maps):
             if isinstance(game_map.fife_map, FifeMap):
                 fife_map = game_map.fife_map
                 filepath = os.path.split(fife_map.getFilename())[-1]
@@ -655,7 +663,7 @@ class EditorApplication(RPGApplicationCEGUI):
         save_data = {"Maps": maps}
         maps_path = self.settings.get("fife-rpg", "MapsPath", "maps")
         maps_filename = os.path.join(self.project_dir, maps_path, "maps.yaml")
-        maps_file = file(maps_filename, "w")
+        maps_file = open(maps_filename, "w")
         yaml.dump(save_data, maps_file, default_flow_style=False)
         maps_file.close()
         combined_filename = self.settings.get("fife-rpg", "CombinedFile", None)
@@ -670,7 +678,7 @@ class EditorApplication(RPGApplicationCEGUI):
         if comp_filename is not None:
             data = {"Components": self._components}
             filename = os.path.join(project_dir, comp_filename)
-            stream = file(filename, "w")
+            stream = open(filename, "w")
             yaml.dump(data, stream, dumper=helpers.FRPGDumper)
             stream.close()
         else:
@@ -678,7 +686,7 @@ class EditorApplication(RPGApplicationCEGUI):
         if syst_filename is not None:
             data = {"Systems": self._systems}
             filename = os.path.join(project_dir, syst_filename)
-            stream = file(filename, "w")
+            stream = open(filename, "w")
             yaml.dump(data, stream, dumper=helpers.FRPGDumper)
             stream.close()
         else:
@@ -686,7 +694,7 @@ class EditorApplication(RPGApplicationCEGUI):
         if act_filename is not None:
             data = {"Actions": self._actions}
             filename = os.path.join(project_dir, act_filename)
-            stream = file(filename, "w")
+            stream = open(filename, "w")
             yaml.dump(data, stream, dumper=helpers.FRPGDumper)
             stream.close()
         else:
@@ -694,14 +702,14 @@ class EditorApplication(RPGApplicationCEGUI):
         if beh_filename is not None:
             data = {"Behaviours": self._behaviours}
             filename = os.path.join(project_dir, beh_filename)
-            stream = file(filename, "w")
+            stream = open(filename, "w")
             yaml.dump(data, stream, dumper=helpers.FRPGDumper)
             stream.close()
         else:
             combined["Behaviours"] = self._behaviours
         if combined_filename is not None:
             filename = os.path.join(project_dir, combined_filename)
-            stream = file(filename, "w")
+            stream = open(filename, "w")
             yaml.dump(combined, stream, Dumper=helpers.FRPGDumper)
             stream.close()
         self.project_changed = False
@@ -814,7 +822,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.register_components(current_items)
         tmp_file.seek(0)
         self.reset_world(tmp_file)
-        for game_map in self.maps.itervalues():
+        for game_map in six.itervalues(self.maps):
             game_map.update_entities()
             self.update_agents(game_map)
         if entities_hidden:
@@ -918,12 +926,12 @@ def update_settings(project, values):
         values: The new fife-rpg settings
     """
     settings = project.getAllSettings("fife-rpg")
-    for key, value in values.iteritems():
+    for key, value in six.iteritems(values):
         project.set("fife-rpg", key, value)
 
     ignore_keys = "Actions", "Behaviours", "Systems", "Components"
     deleted_keys = [x for x in settings.keys() if
-                    x not in values.keys() and x not in ignore_keys]
+                    x not in list(values.keys()) and x not in ignore_keys]
     for key in deleted_keys:
         project.remove("fife-rpg", key)
 
