@@ -18,6 +18,8 @@
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
 
+from future import standard_library
+standard_library.install_aliases()
 import PyCEGUI
 
 from .dialog import Dialog

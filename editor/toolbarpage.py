@@ -20,6 +20,7 @@
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
 
+from builtins import object
 from abc import ABCMeta, abstractmethod
 import PyCEGUI
 

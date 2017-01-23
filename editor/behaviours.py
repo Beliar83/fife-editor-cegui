@@ -14,6 +14,9 @@
 
 """Contains classes and functions for the behaviours dialog"""
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
 from importlib import import_module
 
 import PyCEGUI
@@ -144,7 +147,7 @@ class Behaviours(Dialog):
             self.current_items.append(item)
             current_behaviours.add(behaviour)
 
-        all_behaviours = set(self.app.behaviours.iterkeys())
+        all_behaviours = set(self.app.behaviours.keys())
         for behaviour in all_behaviours - self.project_behaviours:
             item = self.available_list.createChild("TaharezLook/ListboxItem")
             text = behaviour
@@ -160,7 +163,7 @@ class Behaviours(Dialog):
     def get_values(self):
         """Returns the values of the dialog fields"""
         current_items = set()
-        for x in xrange(self.current_list.getItemCount()):
+        for x in range(self.current_list.getItemCount()):
             text = self.current_list.getItemFromIndex(x).getText()
             text = clear_text(text)
             current_items.add(text)
@@ -273,7 +276,7 @@ class AvailableBehaviours(Dialog):
         edit_set.resetList()
         self.items = []
         self.values = dict()
-        for name, path in self.app.behaviours.iteritems():
+        for name, path in self.app.behaviours.items():
             item = edit_set.createChild("TaharezLook/ListboxItem")
             item.setText(name)
             self.items.append(item)

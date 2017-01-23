@@ -18,6 +18,8 @@
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
 
+from future import standard_library
+standard_library.install_aliases()
 import os
 
 import PyCEGUI
@@ -115,8 +117,8 @@ class NewProject(ProjectSettings):
             return True
         selected_path = os.path.normpath(selected_path)
         if not is_dir_path_valid(selected_path):
-            import tkMessageBox
-            tkMessageBox.showerror(_("Invalid path"),
+            import tkinter.messagebox
+            tkinter.messagebox.showerror(_("Invalid path"),
                                    _("%s is not a valid path") % selected_path)
             return True
         if not os.path.exists(selected_path):

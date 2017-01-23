@@ -19,16 +19,21 @@
 
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
+from __future__ import print_function
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import next
 import os
 import sys
 import shutil
-from StringIO import StringIO
+from io import StringIO
 
 import yaml
 # pylint: disable=unused-import
 import PyCEGUI  # @UnusedImport # PyCEGUI won't work otherwise (on windows)
-from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
+import PyCEGUIOpenGLRenderer  # @UnusedImport
 # pylint: enable=unused-import
 
 from fife.extensions.fife_settings import Setting
@@ -206,7 +211,7 @@ class EditorApplication(RPGApplicationCEGUI):
 
             values: The starting values of the project.
         """
-        import tkMessageBox
+        import tkinter.messagebox
         settings_file = file(settings_path, "w")
         settings_file.write(BASIC_SETTINGS)
         settings_file.close()
@@ -224,7 +229,7 @@ class EditorApplication(RPGApplicationCEGUI):
                                 "combined.yaml")
             shutil.copy("combined.yaml.template", dest)
         self.try_load_project(settings_path)
-        tkMessageBox.showinfo(_("Project created"),
+        tkinter.messagebox.showinfo(_("Project created"),
                               _("Project successfully created"))
         self.editor_gui.enable_menus()
         self.project_changed = False
@@ -254,8 +259,8 @@ class EditorApplication(RPGApplicationCEGUI):
                 if not self.editor_gui.show_agents_check.isSelected():
                     self.hide_map_entities(self.current_map.name)
         except Exception as error:  # pylint: disable=broad-except
-            import tkMessageBox
-            tkMessageBox.showerror("Can't change map",
+            import tkinter.messagebox
+            tkinter.messagebox.showerror("Can't change map",
                                    "The following error was raised when "
                                    "trying to switch the map: %s" % error)
             self.switch_map(None)
@@ -279,7 +284,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.editor_gui.reset_layerlist()
         self.map_entities = None
         self.set_selected_object(None)
-        tmp_settings = self.settings.getSettingsFromFile("fife-rpg").keys()
+        tmp_settings = list(self.settings.getSettingsFromFile("fife-rpg").keys())
         for setting in tmp_settings:
             if setting in self.editor_settings:
                 self.settings.set("fife-rpg", setting,
@@ -315,7 +320,7 @@ class EditorApplication(RPGApplicationCEGUI):
         try:
             self.clear()
         except Exception as error:  # pylint: disable=broad-except
-            print error
+            print(error)
         settings = SimpleXMLSerializer()
         try:
             settings.load(filepath)
@@ -345,7 +350,7 @@ class EditorApplication(RPGApplicationCEGUI):
         """Loads the settings file"""
         project_settings = self.project.getAllSettings("fife-rpg")
         del project_settings["ProjectName"]
-        for setting, value in project_settings.iteritems():
+        for setting, value in project_settings.items():
             self.settings.set("fife-rpg", setting, value)
 
     def save_map(self, map_name=None):
@@ -474,8 +479,8 @@ class EditorApplication(RPGApplicationCEGUI):
 
         entities = yaml.safe_load_all(entities_file)
         try:
-            while entities.next():
-                entities.next()
+            while next(entities):
+                next(entities)
         except StopIteration:
             pass
 
@@ -513,10 +518,10 @@ class EditorApplication(RPGApplicationCEGUI):
             entity_dict["Template"] = template
             template_dict = {}
             self.world.update_from_template(template_dict, template)
-            for component, fields in template_dict.iteritems():
+            for component, fields in template_dict.items():
                 if component not in components:
                     continue
-                for field, value in fields.iteritems():
+                for field, value in fields.items():
                     if field not in components[component]:
                         continue
                     if components[component][field] == value:
@@ -644,7 +649,7 @@ class EditorApplication(RPGApplicationCEGUI):
         """Saves the current project"""
         self.project.save()
         maps = {}
-        for game_map in self.maps.itervalues():
+        for game_map in self.maps.values():
             if isinstance(game_map.fife_map, FifeMap):
                 fife_map = game_map.fife_map
                 filepath = os.path.split(fife_map.getFilename())[-1]
@@ -814,7 +819,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.register_components(current_items)
         tmp_file.seek(0)
         self.reset_world(tmp_file)
-        for game_map in self.maps.itervalues():
+        for game_map in self.maps.values():
             game_map.update_entities()
             self.update_agents(game_map)
         if entities_hidden:
@@ -918,12 +923,12 @@ def update_settings(project, values):
         values: The new fife-rpg settings
     """
     settings = project.getAllSettings("fife-rpg")
-    for key, value in values.iteritems():
+    for key, value in values.items():
         project.set("fife-rpg", key, value)
 
     ignore_keys = "Actions", "Behaviours", "Systems", "Components"
-    deleted_keys = [x for x in settings.keys() if
-                    x not in values.keys() and x not in ignore_keys]
+    deleted_keys = [x for x in list(settings.keys()) if
+                    x not in list(values.keys()) and x not in ignore_keys]
     for key in deleted_keys:
         project.remove("fife-rpg", key)
 

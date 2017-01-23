@@ -19,7 +19,12 @@
 
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
+from __future__ import print_function
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import object
 import os
 import PyCEGUI
 import yaml
@@ -91,8 +96,8 @@ class EditorGui(object):
         self.app = app
         self.editor = app.editor
 
-        import Tkinter
-        self.window = Tkinter.Tk()
+        import tkinter
+        self.window = tkinter.Tk()
         self.window.wm_withdraw()
         self.window.attributes("-topmost", 1)
 
@@ -435,7 +440,7 @@ class EditorGui(object):
 
     def update_toolbar_contents(self):
         """Updates the contents of the toolbars"""
-        for toolbar in self.toolbars.itervalues():
+        for toolbar in self.toolbars.values():
             toolbar.update_contents()
 
     def update_property_editor(self):
@@ -451,7 +456,7 @@ class EditorGui(object):
         components = ComponentManager.get_components()
         if world.is_identifier_used(identifier):
             entity = world.get_entity(identifier)
-            for comp_name, component in components.iteritems():
+            for comp_name, component in components.items():
                 com_data = getattr(entity, comp_name)
                 if com_data:
                     for field in component.saveable_fields:
@@ -510,7 +515,7 @@ class EditorGui(object):
         item.setText(_("All"))
         item.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
                             self.cb_save_maps_all)
-        for identifier, game_map in self.app.maps.iteritems():
+        for identifier, game_map in self.app.maps.items():
             map_name = game_map.view_name
             item = menu.createChild("TaharezLook/MenuItem", map_name)
             item.setUserData(identifier)
@@ -559,11 +564,11 @@ class EditorGui(object):
         Returns:
             True if no dialog was cancelled. False if a dialog was cancelled
         """
-        import tkMessageBox
+        import tkinter.messagebox
         if (self.app.changed_maps or self.app.project_changed or
                 self.app.entity_changed):
             message = _("Something was changed. Save everything?")
-            answer = tkMessageBox.askyesnocancel("Save?", message)
+            answer = tkinter.messagebox.askyesnocancel("Save?", message)
             if answer is True:
                 self.save_all()
                 return True
@@ -571,21 +576,21 @@ class EditorGui(object):
                 return False
         if self.app.project_changed:
             message = _("The project was changed. Save the project?")
-            answer = tkMessageBox.askyesnocancel("Save?", message)
+            answer = tkinter.messagebox.askyesnocancel("Save?", message)
             if answer is True:
                 self.app.save_project()
             if answer is None:
                 return False
         if self.app.changed_maps:
             message = _("One or more maps have changed. Save ALL maps?")
-            answer = tkMessageBox.askyesnocancel("Save?", message)
+            answer = tkinter.messagebox.askyesnocancel("Save?", message)
             if answer is True:
                 self.app.save_all_maps()
             elif answer is False:
                 for changed_map in self.app.changed_maps:
                     message = _("The map {map_name} has changed. "
                                 "Save?").format(map_name=changed_map)
-                    answer = tkMessageBox.askyesnocancel("Save?",
+                    answer = tkinter.messagebox.askyesnocancel("Save?",
                                                          message)
                     if answer is True:
                         self.app.save_map(changed_map)
@@ -595,7 +600,7 @@ class EditorGui(object):
                 return False
         if self.app.entity_changed:
             message = _("One or more entities have changed. Save entities?")
-            answer = tkMessageBox.askyesnocancel("Save?", message)
+            answer = tkinter.messagebox.askyesnocancel("Save?", message)
             if answer is True:
                 self.app.save_entities()
             elif answer is None:
@@ -609,7 +614,7 @@ class EditorGui(object):
 
     def cb_new(self, args):
         """Callback when new was clicked in the file menu"""
-        import tkMessageBox
+        import tkinter.messagebox
         dialog = NewProject(self.app)
         values = dialog.show_modal(self.editor_window,
                                    self.app.engine.pump)
@@ -620,7 +625,7 @@ class EditorGui(object):
         if (os.path.exists(settings_path)
                 or os.path.exists(os.path.join(new_project_path,
                                                "settings.xml"))):
-            answer = tkMessageBox.askyesno(
+            answer = tkinter.messagebox.askyesno(
                 _("Project file exists"),
                 _("There is already a settings.xml or settings-dist.xml file. "
                   "If you create a new project the settings-dist.xml will "
@@ -678,11 +683,11 @@ class EditorGui(object):
 
     def cb_open(self, args):
         """Callback when open was clicked in the file menu"""
-        import tkFileDialog
-        import tkMessageBox
+        import tkinter.filedialog
+        import tkinter.messagebox
         # Based on code from unknown-horizons
         try:
-            selected_file = tkFileDialog.askopenfilename(
+            selected_file = tkinter.filedialog.askopenfilename(
                 filetypes=[("fife-rpg project", ".xml",)],
                 title="Open project")
         except ImportError:
@@ -695,10 +700,10 @@ class EditorGui(object):
                 try:
                     project.load()
                 except (InvalidFormat, ET.ParseError):
-                    print _("%s is not a valid fife or fife-rpg project" %
-                            selected_file)
+                    print(_("%s is not a valid fife or fife-rpg project" %
+                            selected_file))
                     return
-                answer = tkMessageBox.askyesno(
+                answer = tkinter.messagebox.askyesno(
                     _("Convert project"),
                     _("%s is not a fife-rpg project. Convert it? " %
                       selected_file))
@@ -708,7 +713,7 @@ class EditorGui(object):
                 if bak_file is None:
                     return
                 if not self.app.try_load_project(selected_file):
-                    tkMessageBox.showerror("Load Error",
+                    tkinter.messagebox.showerror("Load Error",
                                            "There was a problem loading the "
                                            "converted project. Reverting. "
                                            "Converted file will be stored as "
@@ -721,7 +726,7 @@ class EditorGui(object):
 
             self.enable_menus()
 
-            tkMessageBox.showinfo(_("Project loaded"),
+            tkinter.messagebox.showinfo(_("Project loaded"),
                                   _("Project successfully loaded"))
 
     def cb_project_settings(self, args):
@@ -738,11 +743,11 @@ class EditorGui(object):
     def cb_import_objects(self, args):
         """Callback when objects was clicked in the file->import menu"""
         self.import_popup.closePopupMenu()
-        import tkFileDialog
+        import tkinter.filedialog
 
         # Based on code from unknown-horizons
         try:
-            selected_file = tkFileDialog.askopenfilename(
+            selected_file = tkinter.filedialog.askopenfilename(
                 filetypes=[("fife object definition", ".xml",)],
                 initialdir=self.app.project_dir,
                 title="import objects")
@@ -804,7 +809,7 @@ class EditorGui(object):
 
     def cb_add_map(self, args):
         """Callback when Map was clicked in the edit->Add menu"""
-        import tkMessageBox
+        import tkinter.messagebox
 
         self.add_popup.closePopupMenu()
         dialog = MapOptions(self.app)
@@ -818,7 +823,7 @@ class EditorGui(object):
         try:
             fife_map = self.editor.create_map(map_id)
         except RuntimeError as error:
-            tkMessageBox.showerror("Could not create map",
+            tkinter.messagebox.showerror("Could not create map",
                                    "Creation of the map failed with the "
                                    "following FIFE Error: %s" % str(error))
             return
@@ -926,7 +931,7 @@ class EditorGui(object):
             except (ValueError, yaml.parser.ParserError):
                 pass
             except Exception as error:  # pylint: disable=broad-except
-                print error
+                print(error)
         else:
             if section != "Instance":
                 return
@@ -940,7 +945,7 @@ class EditorGui(object):
                     value = value.encode()
                     self.app.selected_object.setCost(value, cur_cost)
                 except UnicodeEncodeError:
-                    print "The CostId has to be an ascii value"
+                    print("The CostId has to be an ascii value")
                     is_valid = False
             elif property_name == "Cost":
                 cur_cost_id = self.app.selected_object.getCostId()
@@ -948,7 +953,7 @@ class EditorGui(object):
                     self.app.selected_object.setCost(cur_cost_id,
                                                      float(value))
                 except ValueError as error:
-                    print error.message
+                    print(error.message)
                     is_valid = False
             elif property_name == "Blocking":
                 self.app.selected_object.setBlocking(value)
@@ -956,14 +961,14 @@ class EditorGui(object):
                 try:
                     self.app.selected_object.setRotation(int(value))
                 except ValueError as error:
-                    print error.message
+                    print(error.message)
                     is_valid = False
             elif property_name == "StackPosition":
                 try:
                     visual = self.app.selected_object.get2dGfxVisual()
                     visual.setStackPosition(int(value))
                 except ValueError as error:
-                    print error.message
+                    print(error.message)
                     is_valid = False
             if is_valid:
                 map_name = self.app.current_map.name
@@ -996,8 +1001,8 @@ class EditorGui(object):
             renderer = InstanceRenderer.getInstance(current_map.camera)
             renderer.addActiveLayer(layer)
         except ValueError:
-            import tkMessageBox
-            tkMessageBox.showerror("Error",
+            import tkinter.messagebox
+            tkinter.messagebox.showerror("Error",
                                    "There is already a layer with that name.")
             return
         self.reset_layerlist()
@@ -1012,8 +1017,8 @@ class EditorGui(object):
         """
         map_id = self.app.current_map.fife_map.getId()
         if self.editor.get_layer_count(map_id) <= 1:
-            import tkMessageBox
-            tkMessageBox.showerror(_("Error"),
+            import tkinter.messagebox
+            tkinter.messagebox.showerror(_("Error"),
                                    _("Cannot delete the last layer"))
             return
         self.editor.delete_layer(map_id,

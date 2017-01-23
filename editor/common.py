@@ -18,6 +18,8 @@
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
 
+from future import standard_library
+standard_library.install_aliases()
 import os
 
 import PyCEGUI
@@ -31,8 +33,8 @@ def cb_cut_copy_paste(args):
         return False
     retval = False
     window = args.window
-    import Tkinter
-    tk_win = Tkinter.Tk()
+    import tkinter
+    tk_win = tkinter.Tk()
     tk_win.wm_withdraw()
     tk_win.update()
     clipboard = PyCEGUI.System.getSingleton().getClipboard()
@@ -84,7 +86,7 @@ def is_dir_path_valid(path):
     if os.path.exists(path):
         return True
     exist_path, new_path = split_new_path(path)
-    old_cwd = os.getcwdu()
+    old_cwd = os.getcwd()
     os.chdir(exist_path)
     try:
         os.makedirs(new_path)
@@ -115,8 +117,8 @@ def select_path(title, initialdir=None):
 
         initialdir: The directory the dialog starts in
     """
-    import tkFileDialog
-    return tkFileDialog.askdirectory(title=title, initialdir=initialdir)
+    import tkinter.filedialog
+    return tkinter.filedialog.askdirectory(title=title, initialdir=initialdir)
 
 
 def ask_create_path(path):
@@ -127,8 +129,8 @@ def ask_create_path(path):
         path: The path that should be created - Will not be checked if really
         nonexistent.
     """
-    import tkMessageBox
-    answer = tkMessageBox.askyesno(
+    import tkinter.messagebox
+    answer = tkinter.messagebox.askyesno(
         _("Create path"),
         _("Path does not exist, create it? "
             "(Must be manually deleted if changed later)"))

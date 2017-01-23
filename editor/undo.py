@@ -20,8 +20,10 @@
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
 
+from builtins import object
 from abc import ABCMeta, abstractmethod
 from copy import copy
+from future.utils import with_metaclass
 
 
 class UndoError(Exception):
@@ -31,10 +33,8 @@ class UndoError(Exception):
     pass
 
 
-class UndoableAction(object):
+class UndoableAction(with_metaclass(ABCMeta, object)):
     """An Action that can be undone"""
-
-    __metaclass__ = ABCMeta
 
     def __init__(self, description):
         self.description = description

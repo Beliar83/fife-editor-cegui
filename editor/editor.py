@@ -19,6 +19,7 @@
 
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
+from builtins import object
 from fife import fife
 from .undo import UndoManager
 
@@ -679,7 +680,7 @@ class Editor(object):
             map_name: The name of the map to the the imports for
         """
         if map_name in self.__import_ref_count:
-            return self.__import_ref_count[map_name].iterkeys()
+            return iter(self.__import_ref_count[map_name].keys())
         else:
             return []
 

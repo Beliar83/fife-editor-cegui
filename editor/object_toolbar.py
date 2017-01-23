@@ -19,18 +19,23 @@
 
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
+from __future__ import division
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import next
+from past.utils import old_div
 from io import StringIO
 import os
-from Queue import Queue, Empty
-import thread
+from queue import Queue, Empty
+import _thread
 
 from lxml import etree
 import PyCEGUI
 from fife import fife
 
 # pylint: disable=unused-import
-from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
+import PyCEGUIOpenGLRenderer  # @UnusedImport
 # pylint: enable=unused-import
 
 from .toolbarpage import ToolbarPage
@@ -295,8 +300,8 @@ class ObjectToolbar(ToolbarPage):
         self.app.add_project_clear_callback(self.cb_project_closed)
         self.app.add_objects_imported_callback(self.cb_objects_imported)
         self.objects = Queue()
-        self.images_lock = thread.allocate_lock()
-        self.namespaces_lock = thread.allocate_lock()
+        self.images_lock = _thread.allocate_lock()
+        self.namespaces_lock = _thread.allocate_lock()
 
     def image_clicked(self, args):
         """Called when the user clicked on an image
@@ -322,7 +327,7 @@ class ObjectToolbar(ToolbarPage):
     def update_contents(self):
         """Update the contents of the toolbar page"""
         if self.have_objects_changed and self.is_active:
-            thread.start_new(self.update_objects_threaded, ())
+            _thread.start_new(self.update_objects_threaded, ())
         elif self.is_active:
             self.process_object()
         ToolbarPage.update_contents(self)
@@ -356,7 +361,7 @@ class ObjectToolbar(ToolbarPage):
                     self.namespaces[namespace].append(identifier)
                     self.objects.put((namespace, obj))
         self.images_lock.acquire()
-        for image in self.images.itervalues():
+        for image in self.images.values():
             namespace, image_id = image.user_data
             if image_id not in self.namespaces[namespace]:
                 wmgr = PyCEGUI.WindowManager.getSingleton()
@@ -389,7 +394,7 @@ class ObjectToolbar(ToolbarPage):
             actions = obj["actions"]
             img_def["actions"] = {}
             actions_dict = img_def["actions"]
-            action, action_def = actions.iteritems().next()
+            action, action_def = next(iter(actions.items()))
             img_type = action_def["type"]
             if img_type == "single":
                 atlas_def = action_def["atlas"]
@@ -402,11 +407,11 @@ class ObjectToolbar(ToolbarPage):
                 tex_width = tex_size.d_width
                 frame_width = int(atlas_def["width"])
                 frame_height = int(atlas_def["height"])
-                frames_p_line = tex_width / frame_width
+                frames_p_line = old_div(tex_width, frame_width)
                 frame_count = 0
             dirs_def = action_def["directions"]
             actions_dict[action] = {}
-            dirs = sorted(dirs_def.iterkeys())
+            dirs = sorted(dirs_def.keys())
             dir_def = dirs_def[dirs[0]]
 
             if img_type == "multi":
@@ -422,7 +427,7 @@ class ObjectToolbar(ToolbarPage):
                     image.setTexture(tex)
                     image.setArea(area)
             elif img_type == "single":
-                line = frame_count / frames_p_line
+                line = old_div(frame_count, frames_p_line)
                 col = frame_count % frames_p_line
                 pos = vec2f(col * frame_width,
                             line * frame_height)
@@ -437,7 +442,7 @@ class ObjectToolbar(ToolbarPage):
         elif int(obj_def["static"]) == 1:
             img_def["directions"] = []
             dirs_def = obj["directions"]
-            dirs = sorted(dirs_def.iterkeys())
+            dirs = sorted(dirs_def.keys())
             dir_def = dirs_def[dirs[0]]
             source = dir_def["source"]
             if dir_def["type"] == "atlas":

@@ -19,16 +19,17 @@
 
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
+from __future__ import print_function
+from builtins import object
 from abc import ABCMeta, abstractmethod
 
 import PyCEGUI
+from future.utils import with_metaclass
 
 
-class Dialog(object):  # pylint: disable=abstract-class-not-used
+class Dialog(with_metaclass(ABCMeta, object)):  # pylint: disable=abstract-class-not-used
 
     """Class that displays an empty dialog"""
-
-    __metaclass__ = ABCMeta
 
     def __init__(self, app):
         """Constructor"""
@@ -135,7 +136,7 @@ class Dialog(object):  # pylint: disable=abstract-class-not-used
             try:
                 is_valid = self.validate()
             except Exception as error:  # pylint: disable=broad-except
-                print error
+                print(error)
             self.__ok_btn.setDisabled(not is_valid)
         if self.return_value:
             return self.get_values()

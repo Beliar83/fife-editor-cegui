@@ -20,6 +20,9 @@
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
 
+from builtins import str
+from past.builtins import basestring
+from builtins import object
 from abc import ABCMeta, abstractmethod
 
 import PyCEGUI
@@ -28,13 +31,12 @@ from fife_rpg import helpers
 from .list_editor import ListEditor
 from .set_editor import SetEditor
 from .dict_editor import DictEditor
+from future.utils import with_metaclass
 
 
-class BaseProperty(object):
+class BaseProperty(with_metaclass(ABCMeta, object)):
 
     """Base class for properties"""
-
-    __metaclass__ = ABCMeta
 
     def __init__(self, editor, section, name, value_data, rows=1):
         self.editor = editor
@@ -181,7 +183,7 @@ class ComboProperty(BaseProperty):
             args: PyCEGUI event args
         """
         window = args.window
-        new_value = unicode(window.getText())
+        new_value = str(window.getText())
         window.setTooltipText(new_value)
         self.editor.send_value_changed(self.section,
                                        self.name,
@@ -282,8 +284,8 @@ class PointProperty(BaseProperty):
 
     def update_input_widgets(self):
         """Updates the input widgets to the current data"""
-        x_pos = unicode(self.value_data[0].x)
-        y_pos = unicode(self.value_data[0].y)
+        x_pos = str(self.value_data[0].x)
+        y_pos = str(self.value_data[0].y)
         self.property_input_x.setMutedState(True)
         self.property_input_y.setMutedState(True)
 
@@ -398,9 +400,9 @@ class Point3DProperty(BaseProperty):
 
     def update_input_widgets(self):
         """Updates the input widgets to the current data"""
-        x_pos = unicode(self.value_data[0].x)
-        y_pos = unicode(self.value_data[0].y)
-        z_pos = unicode(self.value_data[0].z)
+        x_pos = str(self.value_data[0].x)
+        y_pos = str(self.value_data[0].y)
+        z_pos = str(self.value_data[0].z)
         self.property_input_x.setMutedState(True)
         self.property_input_y.setMutedState(True)
         self.property_input_z.setMutedState(True)
@@ -574,7 +576,7 @@ class TextProperty(BaseProperty):
             args: PyCEGUI event args
         """
         window = args.window
-        new_value = unicode(window.getText())
+        new_value = str(window.getText())
         window.setTooltipText(new_value)
         self.editor.send_value_changed(self.section, self.name, new_value)
 

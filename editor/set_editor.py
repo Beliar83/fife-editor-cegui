@@ -19,6 +19,8 @@
 
 .. moduleauthor:: Karsten Bock <KarstenBock@gmx.net>
 """
+from future import standard_library
+standard_library.install_aliases()
 from copy import copy
 
 import PyCEGUI
