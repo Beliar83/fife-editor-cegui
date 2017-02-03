@@ -104,10 +104,10 @@ class LayerOptions(Dialog):
     def get_values(self):
         """Returns the values of the dialog fields"""
         values = {}
-        values["LayerName"] = self.l_name_editor.getText().encode()
+        values["LayerName"] = self.l_name_editor.getText()
         selected_grid_type = self.cellgrid_edit.getSelectedItem()
         if selected_grid_type is not None:
-            values["GridType"] = selected_grid_type.getText().encode().lower()
+            values["GridType"] = selected_grid_type.getText().lower()
         else:
             values["GridType"] = ""
         return values

@@ -208,7 +208,7 @@ class EditorGui(object):
         """Returns the currently selected layer"""
         selected = self.listbox.getFirstSelectedItem()
         if selected is not None:
-            return selected.getText().encode()
+            return selected.getText()
         return None
 
     @property
@@ -694,7 +694,21 @@ class EditorGui(object):
             # tkinter may be missing
             selected_file = ""
         if selected_file:
-            loaded = self.app.try_load_project(selected_file)
+            try:
+                loaded = self.app.try_load_project(selected_file)
+            except Exception as e:
+                import tkinter.messagebox
+                tkinter.messagebox.showerror(_("Loading failed"),
+                                            _("Loading of the project failed\n"
+                                              "The following expection was "
+                                              "raised: \"" + str(e) +"\"\n"
+                                              "Make sure that the project is "
+                                              "written for the same python "
+                                              "version(s) as you use to run "
+                                              "the editor."))
+                self.app.clear()
+                return
+
             if not loaded:
                 project = SimpleXMLSerializer(selected_file)
                 try:
@@ -758,7 +772,7 @@ class EditorGui(object):
         if selected_file:
             selected_file = os.path.relpath(selected_file,
                                             self.app.project_dir)
-            self.editor.import_object(selected_file.encode())
+            self.editor.import_object(selected_file)
             self.app.objects_imported()
 
     def show_layer_dialog(self, layer=None):
@@ -937,12 +951,12 @@ class EditorGui(object):
                 return
             is_valid = True
             if property_name == "Identifier":
-                value = value.encode()
+                value = value
                 self.app.selected_object.setId(value)
             elif property_name == "CostId":
                 cur_cost = self.app.selected_object.getCost()
                 try:
-                    value = value.encode()
+                    value = value
                     self.app.selected_object.setCost(value, cur_cost)
                 except UnicodeEncodeError:
                     print("The CostId has to be an ascii value")

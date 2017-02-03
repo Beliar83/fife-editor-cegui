@@ -98,8 +98,8 @@ class MapOptions(Dialog):
     def get_values(self):
         """Returns the values of the dialog fields"""
         values = {}
-        values["MapId"] = self.m_id_editor.getText().encode()
-        values["MapName"] = self.m_name_editor.getText().encode()
+        values["MapId"] = self.m_id_editor.getText()
+        values["MapName"] = self.m_name_editor.getText()
         return values
 
     def validate(self):

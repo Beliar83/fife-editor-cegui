@@ -271,7 +271,7 @@ class CameraOptions(Dialog):
         """Returns the values of the dialog fields"""
         values = {}
         try:
-            values["CameraName"] = self.c_name_editor.getText().encode()
+            values["CameraName"] = self.c_name_editor.getText()
             vp_x = int(self.c_vp_x_editor.getText())
             vp_y = int(self.c_vp_y_editor.getText())
             vp_width = int(self.c_vp_width_editor.getText())

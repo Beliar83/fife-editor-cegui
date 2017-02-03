@@ -25,6 +25,7 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import str
 from builtins import next
+from builtins import open
 import os
 import sys
 import shutil
@@ -212,7 +213,7 @@ class EditorApplication(RPGApplicationCEGUI):
             values: The starting values of the project.
         """
         import tkinter.messagebox
-        settings_file = file(settings_path, "w")
+        settings_file = open(settings_path, "w")
         settings_file.write(BASIC_SETTINGS)
         settings_file.close()
         project = SimpleXMLSerializer(settings_path)
@@ -551,7 +552,7 @@ class EditorApplication(RPGApplicationCEGUI):
         old_wd = os.getcwd()
         os.chdir(self.project_dir)
         try:
-            entities_file = file(entities_file_name, "w")
+            entities_file = open(entities_file_name, "w")
             self.dump_entities(entities_file)
             self.entity_changed = False
         finally:
@@ -660,7 +661,7 @@ class EditorApplication(RPGApplicationCEGUI):
         save_data = {"Maps": maps}
         maps_path = self.settings.get("fife-rpg", "MapsPath", "maps")
         maps_filename = os.path.join(self.project_dir, maps_path, "maps.yaml")
-        maps_file = file(maps_filename, "w")
+        maps_file = open(maps_filename, "w")
         yaml.dump(save_data, maps_file, default_flow_style=False)
         maps_file.close()
         combined_filename = self.settings.get("fife-rpg", "CombinedFile", None)
@@ -675,7 +676,7 @@ class EditorApplication(RPGApplicationCEGUI):
         if comp_filename is not None:
             data = {"Components": self._components}
             filename = os.path.join(project_dir, comp_filename)
-            stream = file(filename, "w")
+            stream = open(filename, "w")
             yaml.dump(data, stream, dumper=helpers.FRPGDumper)
             stream.close()
         else:
@@ -683,7 +684,7 @@ class EditorApplication(RPGApplicationCEGUI):
         if syst_filename is not None:
             data = {"Systems": self._systems}
             filename = os.path.join(project_dir, syst_filename)
-            stream = file(filename, "w")
+            stream = open(filename, "w")
             yaml.dump(data, stream, dumper=helpers.FRPGDumper)
             stream.close()
         else:
@@ -691,7 +692,7 @@ class EditorApplication(RPGApplicationCEGUI):
         if act_filename is not None:
             data = {"Actions": self._actions}
             filename = os.path.join(project_dir, act_filename)
-            stream = file(filename, "w")
+            stream = open(filename, "w")
             yaml.dump(data, stream, dumper=helpers.FRPGDumper)
             stream.close()
         else:
@@ -699,14 +700,14 @@ class EditorApplication(RPGApplicationCEGUI):
         if beh_filename is not None:
             data = {"Behaviours": self._behaviours}
             filename = os.path.join(project_dir, beh_filename)
-            stream = file(filename, "w")
+            stream = open(filename, "w")
             yaml.dump(data, stream, dumper=helpers.FRPGDumper)
             stream.close()
         else:
             combined["Behaviours"] = self._behaviours
         if combined_filename is not None:
             filename = os.path.join(project_dir, combined_filename)
-            stream = file(filename, "w")
+            stream = open(filename, "w")
             yaml.dump(combined, stream, Dumper=helpers.FRPGDumper)
             stream.close()
         self.project_changed = False
