@@ -48,8 +48,21 @@ def parse_file(filename):
     root_path = os.path.dirname(filename)
     try:
         tree = etree.parse(filename)
-        yield parse_object(tree.getroot(), root_path)
+        """:type : etree._ElementTree"""
+        root = tree.getroot()
+        """:type : etree._Element"""
+        assert(root.tag == "assets")
+        atlas_def = dict()
+        for element in root.findall("atlas"):
+            atlas_def.update(parse_atlas(element, root_path))
+        for obj in root.findall("object"):
+            assert(isinstance(obj, etree._Element))
+            yield parse_object(obj, root_path, atlas_def)
+
     except etree.XMLSyntaxError as error:
+        # TODO: Should be obsolete with the fife xml update
+
+        assert False
         doc = file(filename, "r")
         line_no = error.position[0] - 2
         lines = doc.readlines()
@@ -70,7 +83,6 @@ def parse_file(filename):
         for obj in object_defs:
             yield parse_object(obj, root_path, atlas_def)
 
-
 def parse_atlas(element, root_path):  # pylint: disable=unused-argument
     """Parse an atlas definition
 
@@ -86,10 +98,10 @@ def parse_atlas(element, root_path):  # pylint: disable=unused-argument
 
     atlas_def["atlas"] = element
     atlas_def["images"] = {}
-    images = element.findall("image")
+    images = element.findall("subimage")
     for image in images:
         attribs = image.attrib
-        image_name = attribs["source"]
+        image_name = attribs["id"]
         atlas_def["images"][image_name] = image
 
     return atlas_def
@@ -125,7 +137,7 @@ def parse_object(obj, root_path, atlas_def=None):
             if source in image_sources:
                 image_def.update(image_sources[source].attrib)
                 image_def["type"] = "atlas"
-                image_def["source"] = atlas_def["atlas"].attrib["name"]
+                image_def["source"] = atlas_def["atlas"].attrib["source"]
             else:
                 image_def["type"] = "image"
             source = os.path.join(root_path, image_def["source"])
