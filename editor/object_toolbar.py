@@ -624,6 +624,8 @@ class ObjectToolbar(ToolbarPage):
         """Called when the current project was closed"""
         self.namespaces = {}
         self.images_lock.acquire()
+        for image in self.images:
+            PyCEGUI.ImageManager.getSingleton().destroy(image)
         self.images = {}
         self.images_lock.release()
         self.selected_object = [None, None]
