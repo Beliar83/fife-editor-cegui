@@ -30,7 +30,7 @@ import PyCEGUI
 from fife import fife
 
 # pylint: disable=unused-import
-from PyCEGUIOpenGLRenderer import PyCEGUIOpenGLRenderer  # @UnusedImport
+import PyCEGUIOpenGLRenderer  # @UnusedImport
 # pylint: enable=unused-import
 
 from .toolbarpage import ToolbarPage
