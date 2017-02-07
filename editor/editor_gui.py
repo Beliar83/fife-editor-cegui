@@ -935,11 +935,14 @@ class EditorGui(object):
             entity = world.get_entity(identifier)
             com_data = getattr(entity, section)
             try:
-                setattr(com_data, property_name, value)
-                if entity.identifier != identifier:
-                    self.app.selected_object.setId(entity.identifier)
+                if (section == General.registered_as and property_name ==
+                    "identifier" and value != identifier):
+                    value = world.rename_entity(identifier, value)
+                    self.app.selected_object.setId(value)
                     old_dict = self.app.entities.pop(identifier)
-                    self.app.entities[entity.identifier] = old_dict
+                    self.app.entities[value] = old_dict
+                else:
+                    setattr(com_data, property_name, value)
                 self.app.update_agents(self.app.current_map)
                 self.app.entity_changed = True
             except (ValueError, yaml.parser.ParserError):
