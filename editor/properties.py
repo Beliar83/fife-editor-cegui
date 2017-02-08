@@ -561,7 +561,7 @@ class TextProperty(BaseProperty):
 
         property_input.subscribeEvent(PyCEGUI.Editbox.EventTextAccepted,
                                       self.cb_value_changed)
-        property_input.subscribeEvent(PyCEGUI.Editbox.EventInputCaptureLost,
+        property_input.subscribeEvent(PyCEGUI.Editbox.EventDeactivated,
                                       self.cb_value_changed)
         self.property_input = property_input
         self.update_input_widgets()
