@@ -118,6 +118,9 @@ class Components(Dialog):
 
         self.project_components = set(self.app.project.get("fife-rpg",
                                                            "Components", []))
+        for component in self.MANDATORY_COMPONENTS:
+            if component not in self.project_components:
+                self.project_components.add(component)
         self.update_lists()
 
     def update_lists(self):
@@ -128,7 +131,7 @@ class Components(Dialog):
         self.available_items = []
         self.used_bases = set()
         self.components_in_use = set()
-        current_components = set(self.MANDATORY_COMPONENTS)
+        current_components = set()
 
         for component in self.project_components:
             component_class = self.app.get_component_data(component)[0]
@@ -196,7 +199,8 @@ class Components(Dialog):
         for item in items:
             text = item.getText()
             text = clear_text(text)
-            if text in self.components_in_use:
+            if (text in self.components_in_use or
+                text in self.MANDATORY_COMPONENTS):
                 continue
             index = self.current_list.getItemIndex(item)
             self.current_list.removeItem(item)
@@ -238,8 +242,18 @@ class Components(Dialog):
         self.cb_list_changed(None)
 
     def cb_list_changed(self, args):
-        """Called when the selected items of a list wer changed"""
-        self.move_left.setEnabled(self.current_list.getSelectedCount() > 0)
+        """Called when the selected items of a list were changed"""
+        items = []
+        item = self.current_list.getFirstSelectedItem()
+        has_non_mandatory = False
+        while item is not None:
+            if item.getText() not in self.MANDATORY_COMPONENTS:
+                has_non_mandatory = True
+            item = self.current_list.getNextSelectedItem()
+        if not has_non_mandatory:
+            self.move_left.setEnabled(False)
+        else:
+            self.move_left.setEnabled(self.current_list.getSelectedCount() > 0)
         self.move_right.setEnabled(self.available_list.getSelectedCount() > 0)
 
     def cb_edit_available_components_clicked(self, args):
