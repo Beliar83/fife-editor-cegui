@@ -39,6 +39,7 @@ from fife_rpg.components import ComponentManager
 from fife_rpg.components.agent import Agent
 from fife_rpg.components.general import General
 from fife_rpg.components.fifeagent import FifeAgent
+from fife_rpg.behaviours import BehaviourManager
 from fife_rpg.behaviours.base import Base as BaseBehaviour
 
 from .edit_map import MapOptions
@@ -92,6 +93,8 @@ class EditorGui(object):
         self.edit_behaviours = None
         self.add_comp_popup = None
         self.add_comp_event = None
+        self.select_behaviour_popup = None
+        self.select_bevaviour_event = None
 
         self.app = app
         self.editor = app.editor
@@ -395,6 +398,10 @@ class EditorGui(object):
         self.add_comp_popup = self.main_container.createChild("TaharezLook"
                                                               "/PopupMenu")
 
+        # Select behaviour popup
+        self.select_behaviour_popup = self.main_container.createChild(
+            "TaharezLook/PopupMenu")
+
     def reset_layerlist(self):
         """Resets the layerlist to be empty"""
         self.listbox.resetList()
@@ -493,7 +500,7 @@ class EditorGui(object):
             property_editor.enable_add = False
             property_editor.add_callback = None
             property_editor.enable_add = True
-            property_editor.add_callback = self.cb_make_entity
+            property_editor.add_callback = self.cb_convert_entity
             property_editor.add_text = _("Convert to entity")
         property_editor.update_widgets()
 
@@ -1136,9 +1143,43 @@ class EditorGui(object):
         self.add_comp_event = None
         self.close_add_component_menu()
 
-    def cb_make_entity(self, args):
+    def cb_convert_entity(self, args):
         """Called when the Convert to entity button in the property editor was
         clicked"""
+        self.select_behaviour_popup.resetList()
+        behaviours = BehaviourManager.get_behaviours()
+        if not behaviours:
+            item_name = "No behaviour registered"
+            item = self.select_behaviour_popup.createChild(
+                                                   "TaharezLook/MenuItem",
+                                                   item_name)
+            item.setText(item_name)
+        for behaviour in behaviours:
+            item_name = "%s" % behaviour
+            item = self.select_behaviour_popup.createChild("TaharezLook/MenuItem",
+                                                   item_name)
+            item.setText(behaviour)
+            item.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                                (lambda args, behaviour_name=behaviour:
+                                 self.cb_make_entity(
+                                     args,
+                                     behaviour_name)))
+        position = self.property_editor.add_button.getPosition()
+        position.d_y -= self.select_behaviour_popup.getHeight()
+        self.select_behaviour_popup.setPosition(position)
+        self.property_editor.properties_pane.addChild(self.select_behaviour_popup)
+        self.select_behaviour_popup.moveToFront()
+        self.select_behaviour_popup.show()
+        self.select_behaviour_popup.openPopupMenu()
+        self.select_bevaviour_event = self.select_behaviour_popup.subscribeEvent(
+            PyCEGUI.PopupMenu.EventZOrderChanged,
+            self.cb_select_behaviour_order_changed)
+
+    def cb_make_entity(self, args, behaviour_name):
+        """Called when an item in the select behaviour popup was clicked"""
+        behaviour = BehaviourManager.get_behaviour(behaviour_name)
+        if behaviour is None:
+            return
         selected_object = self.app.selected_object
         identifier = selected_object.getId()
         if not identifier.strip():
@@ -1154,7 +1195,7 @@ class EditorGui(object):
         entity_data[general_name] = {}
         entity_data[general_name]["identifier"] = identifier
         entity_data[agent_name] = {}
-        entity_data[agent_name]["behaviour_type"] = "Base"
+        entity_data[agent_name]["behaviour_type"] = behaviour_name
 
         location = selected_object.getLocation()
         layer = location.getLayer()
@@ -1170,10 +1211,25 @@ class EditorGui(object):
         entity_data[fagent_name] = {}
         entity_data[fagent_name]["layer"] = layer
         entity_data[fagent_name]["instance"] = selected_object
-        entity_data[fagent_name]["behaviour"] = BaseBehaviour()
+
+        entity_data[fagent_name]["behaviour"] = behaviour()
         self.app.entities[identifier] = entity_data
 
         self.app.world.get_or_create_entity(identifier, entity_data)
         self.app.current_map.update_entities()
         self.app.set_selected_object(None)
         self.app.set_selected_object(selected_object)
+
+    def close_select_behaviour_menu(self):
+        """Closes and removes the select behaviour popup"""
+        self.select_behaviour_popup.closePopupMenu()
+        self.select_behaviour_popup.hide()
+
+    def cb_select_behaviour_order_changed(self, args):
+        """Called when the order of the select behaviour popupmenu was
+        changed"""
+        if self.select_bevaviour_event is None:
+            return
+        self.select_bevaviour_event.disconnect()
+        self.select_bevaviour_event = None
+        self.close_select_behaviour_menu()
