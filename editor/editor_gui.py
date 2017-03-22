@@ -1096,7 +1096,7 @@ class EditorGui(object):
         """
         entity = self.app.world.get_entity(self.app.selected_object.getId())
         delattr(entity, component)
-        self.app.world.pump(0)
+        getattr(self.app.world.components, component).step(0)
         self.app.entity_changed = True
         self.close_add_component_menu()
 
