@@ -447,6 +447,8 @@ class EditorGui(object):
 
     def update_property_editor(self):
         """Update the properties editor"""
+        unremovable_components = (General.registered_as, )
+
         property_editor = self.property_editor
         if not self.app.selected_object == self.previous_object:
             property_editor.clear_properties()
@@ -463,8 +465,11 @@ class EditorGui(object):
                 if com_data:
                     for field in component.saveable_fields:
                         if comp_name not in property_editor.sections:
+                            flags = list()
+                            if comp_name not in unremovable_components:
+                                flags.append("removable")
                             property_editor.add_section(
-                                comp_name, False, ("removable",))
+                                comp_name, False, flags)
                         value = getattr(com_data, field)
                         property_editor.set_property(
                             comp_name, field,
