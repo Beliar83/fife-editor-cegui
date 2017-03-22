@@ -457,9 +457,15 @@ class EditorGui(object):
             return
         identifier = self.app.selected_object.getId()
         world = self.app.world
+        entities = getattr(world[...], FifeAgent.registered_as)
+        for entity in entities:
+            if (getattr(entity, FifeAgent.registered_as).instance.this ==
+                    self.app.selected_object.this):
+                break
+        else:
+            entity = None
         components = ComponentManager.get_components()
-        if world.is_identifier_used(identifier):
-            entity = world.get_entity(identifier)
+        if entity is not None:
             for comp_name, component in components.iteritems():
                 com_data = getattr(entity, comp_name)
                 if com_data:
@@ -1170,8 +1176,6 @@ class EditorGui(object):
         identifier = selected_object.getId()
         if not identifier.strip():
             identifier = _("New Entity")
-        elif self.app.world.is_identifier_used(identifier):
-            return
         identifier = self.app.world.create_unique_identifier(identifier)
         selected_object.setId(identifier)
         entity_data = {}
