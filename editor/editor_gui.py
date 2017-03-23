@@ -464,8 +464,8 @@ class EditorGui(object):
         world = self.app.world
         entities = getattr(world[...], FifeAgent.registered_as)
         for entity in entities:
-            if (getattr(entity, FifeAgent.registered_as).instance.this ==
-                    self.app.selected_object.this):
+            if (getattr(entity, FifeAgent.registered_as).instance.getFifeId() ==
+                    self.app.selected_object.getFifeId()):
                 break
         else:
             entity = None
@@ -949,7 +949,14 @@ class EditorGui(object):
         """
         identifier = self.app.selected_object.getId()
         world = self.app.world
-        if world.is_identifier_used(identifier):
+        entities = getattr(world[...], FifeAgent.registered_as)
+        for entity in entities:
+            if (getattr(entity, FifeAgent.registered_as).instance.getFifeId() ==
+                    self.app.selected_object.getFifeId()):
+                break
+        else:
+            entity = None
+        if entity is not None:
             entity = world.get_entity(identifier)
             com_data = getattr(entity, section)
             try:
