@@ -825,6 +825,6 @@ class NumberProperty(BaseProperty):
         input_modes = PyCEGUI.Spinner.TextInputMode
         input_mode = window.getTextInputMode()
         val_type = int if input_mode == input_modes.Integer else float
-        new_value = val_type(window.getText())
+        new_value = val_type(window.getCurrentValue())
         window.setTooltipText(str(new_value))
         self.editor.send_value_changed(self.section, self.name, new_value)
