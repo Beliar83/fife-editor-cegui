@@ -22,6 +22,7 @@
 from __future__ import print_function
 
 from future import standard_library
+from future.utils import iteritems
 standard_library.install_aliases()
 from builtins import str
 from builtins import object
@@ -471,7 +472,7 @@ class EditorGui(object):
             entity = None
         components = ComponentManager.get_components()
         if entity is not None:
-            for comp_name, component in components.iteritems():
+            for comp_name, component in iteritems(components):
                 com_data = getattr(entity, comp_name)
                 if com_data:
                     for field in component.saveable_fields:
