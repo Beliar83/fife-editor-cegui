@@ -459,8 +459,8 @@ class EditorGui(object):
         world = self.app.world
         entities = getattr(world[...], FifeAgent.registered_as)
         for entity in entities:
-            if (getattr(entity, FifeAgent.registered_as).instance.getFifeId() ==
-                    self.app.selected_object.getFifeId()):
+            if (getattr(entity, FifeAgent.registered_as).instance ==
+                    self.app.selected_object):
                 break
         else:
             entity = None
@@ -932,8 +932,8 @@ class EditorGui(object):
         world = self.app.world
         entities = getattr(world[...], FifeAgent.registered_as)
         for entity in entities:
-            if (getattr(entity, FifeAgent.registered_as).instance.getFifeId() ==
-                    self.app.selected_object.getFifeId()):
+            if (getattr(entity, FifeAgent.registered_as).instance ==
+                    self.app.selected_object):
                 break
         else:
             entity = None
