@@ -545,6 +545,9 @@ class EditorApplication(RPGApplicationCEGUI):
                                               "objects/entities.yaml")
         old_wd = os.getcwd()
         os.chdir(self.project_dir)
+        tmp_path = os.path.split(entities_file_name)[0]
+        if not os.path.exists(tmp_path):
+            os.makedirs(tmp_path)
         try:
             entities_file = file(entities_file_name, "w")
             self.dump_entities(entities_file)
