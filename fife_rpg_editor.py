@@ -298,8 +298,8 @@ class EditorApplication(RPGApplicationCEGUI):
         ActionManager.clear_commands()
         SystemManager.clear_systems()
         BehaviourManager.clear_behaviours()
-        self.editor.delete_objects()
         self.editor.delete_maps()
+        self.editor.delete_objects()
         if self.project_source is not None:
             self.engine.getVFS().removeSource(self.project_source)
             self.project_source = None
@@ -551,6 +551,9 @@ class EditorApplication(RPGApplicationCEGUI):
                                               "objects/entities.yaml")
         old_wd = os.getcwd()
         os.chdir(self.project_dir)
+        tmp_path = os.path.split(entities_file_name)[0]
+        if not os.path.exists(tmp_path):
+            os.makedirs(tmp_path)
         try:
             entities_file = open(entities_file_name, "w")
             self.dump_entities(entities_file)
