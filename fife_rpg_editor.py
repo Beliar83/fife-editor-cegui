@@ -44,6 +44,7 @@ from fife.extensions.serializers.simplexml import (SimpleXMLSerializer,
 from fife.extensions.serializers.xml_loader_tools import root_subfile
 from fife_rpg.components import ComponentManager
 from fife_rpg.components.agent import Agent
+from fife_rpg.components.fifeagent import FifeAgent
 from fife_rpg.actions import ActionManager
 from fife_rpg.systems import SystemManager
 from fife_rpg.behaviours import BehaviourManager
@@ -60,6 +61,7 @@ from editor.components import Components, AvailableComponents
 from editor.systems import Systems, AvailableSystems
 from editor.actions import Actions, AvailableActions
 from editor.behaviours import Behaviours, AvailableBehaviours
+from editor.common import get_entity
 
 BASIC_SETTINGS = """<?xml version='1.0' encoding='UTF-8'?>
 <Settings>
@@ -803,6 +805,10 @@ class EditorApplication(RPGApplicationCEGUI):
         if not dialog.return_value:
             return False
         entities_hidden = self.map_entities is not None
+        entity = get_entity(self.world, self.selected_object)
+        tmp_entity_id = None
+        if entity is not None:
+            tmp_entity_id = entity.identifier
         if entities_hidden:
             self.show_map_entities(self.current_map.name)
         tmp_file = StringIO()
@@ -820,6 +826,10 @@ class EditorApplication(RPGApplicationCEGUI):
         for game_map in self.maps.itervalues():
             game_map.update_entities()
             self.update_agents(game_map)
+        if tmp_entity_id is not None:
+            tmp_entity = self.world.get_entity(tmp_entity_id)
+            fife_agent = getattr(tmp_entity, FifeAgent.registered_as)
+            self.set_selected_object(fife_agent.instance)
         if entities_hidden:
             self.hide_map_entities(self.current_map.name)
 
