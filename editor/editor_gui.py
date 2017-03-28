@@ -45,7 +45,7 @@ from .object_toolbar import ObjectToolbar
 from .basic_toolbar import BasicToolbar
 from .property_editor import PropertyEditor
 from . import properties
-
+from .common import get_entity
 
 class EditorGui(object):
 
@@ -457,13 +457,7 @@ class EditorGui(object):
             return
         identifier = self.app.selected_object.getId()
         world = self.app.world
-        entities = getattr(world[...], FifeAgent.registered_as)
-        for entity in entities:
-            if (getattr(entity, FifeAgent.registered_as).instance ==
-                    self.app.selected_object):
-                break
-        else:
-            entity = None
+        entity = get_entity(world, self.app.selected_object)
         components = ComponentManager.get_components()
         if entity is not None:
             for comp_name, component in components.iteritems():
@@ -930,13 +924,7 @@ class EditorGui(object):
         """
         identifier = self.app.selected_object.getId()
         world = self.app.world
-        entities = getattr(world[...], FifeAgent.registered_as)
-        for entity in entities:
-            if (getattr(entity, FifeAgent.registered_as).instance ==
-                    self.app.selected_object):
-                break
-        else:
-            entity = None
+        entity = get_entity(world, self.app.selected_object)
         if entity is not None:
             entity = world.get_entity(identifier)
             com_data = getattr(entity, section)
