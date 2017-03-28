@@ -29,7 +29,10 @@ from builtins import open
 import os
 import sys
 import shutil
-from io import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 import yaml
 # pylint: disable=unused-import
@@ -819,6 +822,7 @@ class EditorApplication(RPGApplicationCEGUI):
             self.show_map_entities(self.current_map.name)
         tmp_file = StringIO()
         self.dump_entities(tmp_file)
+
         for entity in tuple(self.world.entities):
             entity.delete()
         ComponentManager.clear_components()
