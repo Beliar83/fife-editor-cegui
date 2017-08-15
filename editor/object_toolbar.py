@@ -362,7 +362,11 @@ class ObjectToolbar(ToolbarPage):
                     continue
                 project_dir = self.app.project_source
                 object_filename = fife_object.getFilename()
-                filename = os.path.join(project_dir, object_filename)
+                if project_dir is not None:
+                    filename = os.path.join(project_dir, object_filename)
+                else:
+                    filename = object_filename
+
                 objects = parse_file(filename)
                 for obj in objects:
                     identifier = obj["object"]["id"]

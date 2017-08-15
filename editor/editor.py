@@ -67,7 +67,12 @@ class Editor(object):
         Returns:
             The loaded map
         """
-        return self.__map_loader.load(filename)
+        fife_map = self.__map_loader.load(filename)
+        for layer in self.get_layers(fife_map):
+            for instance in self.get_instances_of_layer(layer):
+                self.increase_refcount(instance.getObject().getFilename(),
+                                       fife_map.getId())
+        return fife_map
 
     def delete_map(self, map_or_identifier):
         """Deletes a specific map.

@@ -35,7 +35,7 @@ from fife.fife import InstanceRenderer
 from fife.extensions.serializers.simplexml import (SimpleXMLSerializer,
                                                    InvalidFormat)
 from fife.extensions.serializers import ET
-from fife_rpg.map import Map as GameMap
+from fife_rpg import GameMap
 from fife_rpg.components import ComponentManager
 from fife_rpg.components.agent import Agent
 from fife_rpg.components.general import General
@@ -76,6 +76,9 @@ class EditorGui(object):
         self.file_menu = None
         self.file_close = None
         self.file_save = None
+        self.save_maps = None
+        self.save_project = None
+        self.save_entities = None
         self.project_settings = None
         self.edit_menu = None
         self.view_menu = None
@@ -245,12 +248,25 @@ class EditorGui(object):
         file_popup = self.file_menu.createChild("TaharezLook/PopupMenu",
                                                 "FilePopup")
         file_new = file_popup.createChild("TaharezLook/MenuItem", "FileNew")
-        file_new.setText(_("New Project"))
-        file_new.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_new)
-        file_new.setAutoPopupTimeout(0.5)
+        file_new.setText(_("New"))
+        file_new_popup = file_new.createChild("TaharezLook/PopupMenu",
+                                                "FileNewPopup")
+        file_new_project = file_new_popup.createChild("TaharezLook/MenuItem",
+                                                      "FileNewProject")
+        file_new_project.setText(_("New Project"))
+        file_new_project.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                                      self.cb_new)
+        file_new_project.setAutoPopupTimeout(0.5)
+
+        file_new_map =  file_new_popup.createChild("TaharezLook/MenuItem",
+                                                   "FileNewMap")
+        file_new_map.setText(_("New Map"))
+        file_new_map.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
+                                      self.cb_add_map)
+        file_new_map.setAutoPopupTimeout(0.5)
         file_open = file_popup.createChild("TaharezLook/MenuItem", "FileOpen")
         file_open.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_open)
-        file_open.setText(_("Open Project"))
+        file_open.setText(_("Open"))
         file_open.setAutoPopupTimeout(0.5)
         file_import = file_popup.createChild(
             "TaharezLook/MenuItem", "FileImport")
@@ -284,12 +300,16 @@ class EditorGui(object):
                                               "FileSaveProject")
         save_project.setText(_("Project"))
         save_project.setAutoPopupTimeout(0.5)
+        save_project.setEnabled(False)
         save_project.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
                                     self.cb_save_project)
+        self.save_project = save_project
         save_maps = save_popup.createChild("TaharezLook/MenuItem",
                                            "FileSaveMaps")
         save_maps.setText(_("Maps") + "  ")
         save_maps.setAutoPopupTimeout(0.5)
+        save_maps.setEnabled(False)
+        self.save_maps = save_maps
         save_maps_popup = save_maps.createChild("TaharezLook/PopupMenu",
                                                 "SaveMapsPopup")
         self.save_maps_popup = save_maps_popup
@@ -297,6 +317,8 @@ class EditorGui(object):
                                                "FileSaveEntities")
         save_entities.setText(_("Entities"))
         save_entities.setAutoPopupTimeout(0.5)
+        save_entities.setEnabled(False)
+        self.save_entities = save_entities
         save_entities.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
                                      self.cb_save_entities)
         file_close = file_popup.createChild(
@@ -505,9 +527,10 @@ class EditorGui(object):
                 [str(visual.getStackPosition())])
             property_editor.enable_add = False
             property_editor.add_callback = None
-            property_editor.enable_add = True
-            property_editor.add_callback = self.cb_convert_entity
-            property_editor.add_text = _("Convert to entity")
+            if self.app.project_dir is not None:
+                property_editor.enable_add = True
+                property_editor.add_callback = self.cb_convert_entity
+                property_editor.add_text = _("Convert to entity")
         property_editor.update_widgets()
 
     def reset_maps_menu(self):
@@ -682,17 +705,26 @@ class EditorGui(object):
         """Callback when save->entities was clicked in the file menu"""
         self.app.save_entities()
 
-    def enable_menus(self):
-        """Enable the menus for loaded projects"""
-        self.file_close.setEnabled(True)
+    def enable_map_menus(self):
         self.file_save.setEnabled(True)
+        self.save_maps.setEnabled(True)
         self.file_import.setEnabled(True)
+
+    def enable_project_menus(self):
+        self.file_close.setEnabled(True)
         self.project_settings.setEnabled(True)
         self.edit_add.setEnabled(True)
         self.edit_components.setEnabled(True)
         self.edit_systems.setEnabled(True)
         self.edit_actions.setEnabled(True)
         self.edit_behaviours.setEnabled(True)
+        self.save_project.setEnabled(True)
+        self.save_entities.setEnabled(True)
+
+    def enable_all_menus(self):
+        """Enable the menus for loaded projects"""
+        self.enable_map_menus()
+        self.enable_project_menus()
 
     def cb_open(self, args):
         """Callback when open was clicked in the file menu"""
@@ -701,60 +733,70 @@ class EditorGui(object):
         # Based on code from unknown-horizons
         try:
             selected_file = tkinter.filedialog.askopenfilename(
-                filetypes=[("fife-rpg project", ".xml",)],
-                title="Open project")
+                filetypes=[(_("fife xml file"), ".xml",)],
+                title=_("Open file"))
         except ImportError:
-            # tkinter may be missing
+            # tkinter may be missing5555
             selected_file = ""
         if selected_file:
-            try:
-                loaded = self.app.try_load_project(selected_file)
-            except Exception as e:
-                import tkinter.messagebox
-                tkinter.messagebox.showerror(_("Loading failed"),
-                                            _("Loading of the project failed\n"
-                                              "The following expection was "
-                                              "raised: \"" + str(e) +"\"\n"
-                                              "Make sure that the project is "
-                                              "written for the same python "
-                                              "version(s) as you use to run "
-                                              "the editor."))
-                self.app.clear()
-                return
-
-            if not loaded:
-                project = SimpleXMLSerializer(selected_file)
+            tree = ET.parse(selected_file)
+            if tree.getroot().tag == "Settings":
                 try:
-                    project.load()
-                except (InvalidFormat, ET.ParseError):
-                    print(_("%s is not a valid fife or fife-rpg project" %
-                            selected_file))
-                    return
-                answer = tkinter.messagebox.askyesno(
-                    _("Convert project"),
-                    _("%s is not a fife-rpg project. Convert it? " %
-                      selected_file))
-                if not answer:
-                    return
-                bak_file = self.app.convert_fife_project(selected_file)
-                if bak_file is None:
-                    return
-                if not self.app.try_load_project(selected_file):
-                    tkinter.messagebox.showerror("Load Error",
-                                           "There was a problem loading the "
-                                           "converted project. Reverting. "
-                                           "Converted file will be stored as "
-                                           "original_file.converted")
-                    conv_file = "%s.converted" % selected_file
-                    if os.path.exists(conv_file):
-                        os.remove(conv_file)
-                    os.rename(selected_file, conv_file)
-                    os.rename(bak_file, selected_file)
+                    loaded = self.app.try_load_project(selected_file)
+                except Exception as e:
+                    import tkinter.messagebox
 
-            self.enable_menus()
+                    tkinter.messagebox.showerror(_("Loading failed"),
+                        _("Loading of the project failed\n"
+                          "The following exception was raised: \""
+                          + str(e) + "\"\n"
+                          "Make sure that the project is written for the same"
+                          "python version(s) as you use to run the editor."))
+                    self.app.clear()
+                    return
+                if not loaded:
+                    project = SimpleXMLSerializer(selected_file)
+                    try:
+                        project.load()
+                    except (InvalidFormat, ET.ParseError):
+                        print(_("%s is not a valid fife or fife-rpg project" %
+                                selected_file))
+                        return
+                    answer = tkinter.messagebox.askyesno(
+                        _("Convert project"),
+                        _("%s is not a fife-rpg project. Convert it? " %
+                          selected_file))
+                    if not answer:
+                        return
+                    bak_file = self.app.convert_fife_project(selected_file)
+                    if bak_file is None:
+                        return
+                    if not self.app.try_load_project(selected_file):
+                        tkinter.messagebox.showerror("Load Error",
+                                                     "There was a problem loading the "
+                                                     "converted project. Reverting. "
+                                                     "Converted file will be stored as "
+                                                     "original_file.converted")
+                        conv_file = "%s.converted" % selected_file
+                        if os.path.exists(conv_file):
+                            os.remove(conv_file)
+                        os.rename(selected_file, conv_file)
+                        os.rename(bak_file, selected_file)
 
-            tkinter.messagebox.showinfo(_("Project loaded"),
-                                  _("Project successfully loaded"))
+                self.enable_all_menus()
+
+                tkinter.messagebox.showinfo(_("Project loaded"),
+                                            _("Project successfully loaded"))
+            elif tree.getroot().tag == "map":
+                filename = os.path.relpath(selected_file, os.getcwd())
+                fife_map = self.app.editor.load_map(filename)
+                for cam in fife_map.getCameras():
+                    if cam.getLocationRef().getMap().getId() == fife_map.getId():
+                        game_map = GameMap(fife_map, fife_map.getId(),
+                                           cam.getId(), dict(), self.app)
+                        self.app.add_map(fife_map.getId(), game_map)
+                        self.reset_maps_menu()
+                        self.enable_map_menus()
 
     def cb_project_settings(self, args):
         """Callback when project settings was clicked in the file menu"""
@@ -783,8 +825,13 @@ class EditorGui(object):
             selected_file = ""
 
         if selected_file:
-            selected_file = os.path.relpath(selected_file,
-                                            self.app.project_dir)
+            if self.app.project_dir is not None:
+                selected_file = os.path.relpath(selected_file,
+                                                self.app.project_dir)
+            else:
+                selected_file = os.path.relpath(selected_file,
+                                                os.getcwd())
+
             self.editor.import_object(selected_file)
             self.app.objects_imported()
 
@@ -888,6 +935,7 @@ class EditorGui(object):
         self.app.add_map(map_id, game_map)
         self.app.changed_maps.append(map_id)
         self.reset_maps_menu()
+        self.enable_map_menus()
 
     def cb_edit_components(self, args):
         """Callback when Components was clicked in the edit menu"""

@@ -59,7 +59,7 @@ from fife_rpg.systems import SystemManager
 from fife_rpg.behaviours import BehaviourManager
 from fife_rpg.game_scene import GameSceneView
 from fife_rpg import helpers
-from fife_rpg.map import Map as GameMap
+from fife_rpg import GameMap
 from fife_rpg.entities import RPGEntity
 
 from editor.editor_gui import EditorGui
@@ -250,20 +250,20 @@ class EditorApplication(RPGApplicationCEGUI):
         if self.map_entities:
             self.show_map_entities(self.current_map.name)
             self.map_entities = None
-        if not self.project_dir:
-            return
         try:
             old_dir = os.getcwd()
-            os.chdir(self.project_dir)
+            if self.project_dir is not None:
+                os.chdir(self.project_dir)
             try:
                 RPGApplicationCEGUI.switch_map(self, map_name)
             finally:
-                os.chdir(old_dir)
+                    os.chdir(old_dir)
             self.editor_gui.listbox.resetList()
             if self.current_map:
                 self.editor_gui.update_layerlist()
-                if not self.editor_gui.show_agents_check.isSelected():
-                    self.hide_map_entities(self.current_map.name)
+                if self.project_dir is not None:
+                    if not self.editor_gui.show_agents_check.isSelected():
+                        self.hide_map_entities(self.current_map.name)
         except Exception as error:  # pylint: disable=broad-except
             import tkinter.messagebox
             tkinter.messagebox.showerror("Can't change map",
@@ -314,6 +314,7 @@ class EditorApplication(RPGApplicationCEGUI):
         self.project = None
         for callback in self._project_cleared_callbacks:
             callback()
+        self.create_world()
 
     def load_project(self, filepath):
         """Tries to load a project
@@ -388,18 +389,33 @@ class EditorApplication(RPGApplicationCEGUI):
         fife_map = game_map.fife_map
         filename = fife_map.getFilename()
         if not filename:
-            maps_path = self.settings.get(
-                "fife-rpg", "MapsPath", "maps")
-            filename = os.path.join(self.project_dir, maps_path,
-                                    "%s.xml" % map_name)
+            if self.project_dir is not None:
+                maps_path = self.settings.get(
+                    "fife-rpg", "MapsPath", "maps")
+                filename = os.path.join(self.project_dir, maps_path,
+                                        "%s.xml" % map_name)
+            else:
+                import tkinter.filedialog
+                import tkinter.messagebox
+                # Based on code from unknown-horizons
+                try:
+                    filename = tkinter.filedialog.asksaveasfilename(
+                        filetypes=[("fife map", ".xml",)],
+                        title="Save Map")
+                except ImportError:
+                    # tkinter may be missing5555
+                    filename = ""
             fife_map.setFilename(filename)
+
+
         try:
             os.makedirs(os.path.dirname(filename))
         except os.error:
             pass
 
         old_dir = os.getcwd()
-        os.chdir(self.project_dir)
+        if self.project_dir is not None:
+            os.chdir(self.project_dir)
         import_list = [root_subfile(filename, i) for
                        i in self.editor.get_import_list(fife_map.getId())]
         saver = MapSaver()
