@@ -77,40 +77,15 @@ class MapOptions(Dialog):
             m_id_editor.setText(self.game_map.name)
         self.m_id_editor = m_id_editor
 
-        if self.app.project_dir is not None:
-            m_name_layout = root.createChild("HorizontalLayoutContainer")
-            m_name_layout.setMargin(vert_margin)
-            m_name_layout.setHeight(PyCEGUI.UDim(0.05, 0))
-            m_name_label = m_name_layout.createChild("TaharezLook/Label")
-            m_name_label.setMargin(horz_margin)
-            m_name_label.setText(_("Display name of map"))
-            m_name_label.setProperty("HorzFormatting", "LeftAligned")
-            text_width = font.getTextExtent(m_name_label.getText())
-            m_name_label.setWidth(PyCEGUI.UDim(0, text_width))
-            m_name_editor = m_name_layout.createChild("TaharezLook/Editbox")
-            m_name_editor.setMargin(horz_margin)
-            m_name_editor.setWidth(PyCEGUI.UDim(1.0, -(text_width + 4 * margin)))
-            m_name_editor.subscribeEvent(evt_key_down,
-                                         cb_cut_copy_paste)
-            if self.game_map is not None:
-                m_name_editor.setText(self.game_map.name)
-            self.m_name_editor = m_name_editor
-
     def get_values(self):
         """Returns the values of the dialog fields"""
         values = {}
         values["MapId"] = self.m_id_editor.getText()
-        if(self.app.project_dir is not None):
-            values["MapName"] = self.m_name_editor.getText()
-        else:
-            values["MapName"] = values["MapId"]
+        values["MapName"] = values["MapId"]
         return values
 
     def validate(self):
         """Check if the current state of the dialog fields is valid"""
         if not self.m_id_editor.getText().strip():
-            return False
-        if (self.app.project_dir is not None
-                and not self.m_name_editor.getText().strip()):
             return False
         return True

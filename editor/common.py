@@ -23,7 +23,6 @@ standard_library.install_aliases()
 import os
 
 import PyCEGUI
-from fife_rpg.components.fifeagent import FifeAgent
 
 def cb_cut_copy_paste(args):
     """Event callback for text copy, cut and paste operations"""
@@ -147,23 +146,3 @@ def clear_text(text):
         rindex = text.find("]", lindex)
         text = text[:lindex] + text[rindex + 1:]
     return text
-
-
-def get_entity(world, instance):
-    """Get the entity that is linked to the instance, if there is any.
-
-        Args:
-                world: A fife_rpg.RPGWorld
-
-                instance: A fife instance object
-
-        Returns: If any entity has that instance in its FifeAgent component
-        that entity is returned, otherwise None
-    """
-    entities = getattr(world[...], FifeAgent.registered_as)
-    for entity in entities:
-        if getattr(entity, FifeAgent.registered_as).instance == instance:
-            break
-    else:
-        entity = None
-    return entity

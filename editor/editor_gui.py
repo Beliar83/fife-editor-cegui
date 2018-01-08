@@ -46,12 +46,10 @@ from fife_rpg.behaviours.base import Base as BaseBehaviour
 from .edit_map import MapOptions
 from .edit_layer import LayerOptions
 from .edit_camera import CameraOptions
-from .new_project import NewProject
 from .object_toolbar import ObjectToolbar
 from .basic_toolbar import BasicToolbar
 from .property_editor import PropertyEditor
 from . import properties
-from .common import get_entity
 
 class EditorGui(object):
 
@@ -59,7 +57,7 @@ class EditorGui(object):
 
     def __init__(self, app):
         if False:  # Only for IDEs
-            from fife_rpg_editor import EditorApplication
+            from fife_editor import EditorApplication
             from .editor import Editor
             self.app = EditorApplication(None)
             self.editor = Editor(None)
@@ -71,34 +69,20 @@ class EditorGui(object):
             self.file_menu = PyCEGUI.MenuItem()
             self.view_menu = PyCEGUI.MenuItem()
             self.edit_menu = PyCEGUI.MenuItem()
-            self.project_menu = PyCEGUI.MenuItem()
         self.menubar = None
         self.file_menu = None
         self.file_close = None
         self.file_save = None
         self.save_maps = None
-        self.save_project = None
-        self.save_entities = None
-        self.project_settings = None
         self.edit_menu = None
         self.view_menu = None
         self.view_maps_menu = None
         self.save_maps_popup = None
         self.save_popup = None
-        self.save_entities_popup = None
-        self.project_menu = None
         self.file_import = None
         self.import_popup = None
         self.edit_add = None
         self.add_popup = None
-        self.edit_components = None
-        self.edit_systems = None
-        self.edit_actions = None
-        self.edit_behaviours = None
-        self.add_comp_popup = None
-        self.add_comp_event = None
-        self.select_behaviour_popup = None
-        self.select_bevaviour_event = None
 
         self.app = app
         self.editor = app.editor
@@ -175,16 +159,6 @@ class EditorGui(object):
                                          self.cb_edit_layer_activated)
 
         self.edit_layer_button = edit_layer_button
-        self.show_agents_check = right_area_container.createChild("TaharezLook"
-                                                                  "/Checkbox",
-                                                                  "show_agents"
-                                                                  )
-        self.show_agents_check.setText(_("Show Entities"))
-        self.show_agents_check.setSelected(True)
-        self.show_agents_check.subscribeEvent(
-            PyCEGUI.ToggleButton.EventSelectStateChanged,
-            self.cb_show_agent_selection_changed
-        )
         property_editor_size = PyCEGUI.USize(PyCEGUI.UDim(1.0, 0),
                                              PyCEGUI.UDim(0.68, 0))
         self.property_editor = PropertyEditor(right_area_container, self.app)
@@ -199,7 +173,6 @@ class EditorGui(object):
         self.property_editor.add_property_type(properties.DictProperty)
         self.property_editor.add_property_type(properties.NumberProperty)
         self.property_editor.add_value_changed_callback(self.cb_value_changed)
-        self.property_editor.add_remove_callback(self.cb_remove_component)
 
         self.previous_object = None
 
@@ -207,7 +180,6 @@ class EditorGui(object):
             self.editor_window)
         self.toolbars = {}
         self.main_container.layout()
-        self.app.add_project_clear_callback(self.cb_project_cleared)
         self.app.add_map_switch_callback(self.cb_map_switched)
 
     @property
@@ -251,12 +223,6 @@ class EditorGui(object):
         file_new.setText(_("New"))
         file_new_popup = file_new.createChild("TaharezLook/PopupMenu",
                                                 "FileNewPopup")
-        file_new_project = file_new_popup.createChild("TaharezLook/MenuItem",
-                                                      "FileNewProject")
-        file_new_project.setText(_("New Project"))
-        file_new_project.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
-                                      self.cb_new)
-        file_new_project.setAutoPopupTimeout(0.5)
 
         file_new_map =  file_new_popup.createChild("TaharezLook/MenuItem",
                                                    "FileNewMap")
@@ -296,14 +262,6 @@ class EditorGui(object):
                                 self.cb_save_all)
         save_all.setAutoPopupTimeout(0.5)
         self.file_save = file_save
-        save_project = save_popup.createChild("TaharezLook/MenuItem",
-                                              "FileSaveProject")
-        save_project.setText(_("Project"))
-        save_project.setAutoPopupTimeout(0.5)
-        save_project.setEnabled(False)
-        save_project.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
-                                    self.cb_save_project)
-        self.save_project = save_project
         save_maps = save_popup.createChild("TaharezLook/MenuItem",
                                            "FileSaveMaps")
         save_maps.setText(_("Maps") + "  ")
@@ -313,18 +271,10 @@ class EditorGui(object):
         save_maps_popup = save_maps.createChild("TaharezLook/PopupMenu",
                                                 "SaveMapsPopup")
         self.save_maps_popup = save_maps_popup
-        save_entities = save_popup.createChild("TaharezLook/MenuItem",
-                                               "FileSaveEntities")
-        save_entities.setText(_("Entities"))
-        save_entities.setAutoPopupTimeout(0.5)
-        save_entities.setEnabled(False)
-        self.save_entities = save_entities
-        save_entities.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
-                                     self.cb_save_entities)
         file_close = file_popup.createChild(
             "TaharezLook/MenuItem", "FileClose")
         file_close.subscribeEvent(PyCEGUI.MenuItem.EventClicked, self.cb_close)
-        file_close.setText(_("Close Project"))
+        file_close.setText(_("Close Map"))
         file_close.setEnabled(False)
         file_close.setAutoPopupTimeout(0.5)
         self.file_close = file_close
@@ -356,41 +306,7 @@ class EditorGui(object):
         self.edit_add = edit_add
         self.edit_add.setEnabled(False)
 
-        edit_components = edit_popup.createChild("TaharezLook/MenuItem",
-                                                 "Edit/Components")
-        edit_components.setText(_("Components"))
-        edit_components.setAutoPopupTimeout(0.5)
-        edit_components.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
-                                       self.cb_edit_components)
-        self.edit_components = edit_components
-        self.edit_components.setEnabled(False)
 
-        edit_systems = edit_popup.createChild("TaharezLook/MenuItem",
-                                              "Edit/Systems")
-        edit_systems.setText(_("Systems"))
-        edit_systems.setAutoPopupTimeout(0.5)
-        edit_systems.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
-                                    self.cb_edit_systems)
-        self.edit_systems = edit_systems
-        self.edit_systems.setEnabled(False)
-
-        edit_actions = edit_popup.createChild("TaharezLook/MenuItem",
-                                              "Edit/Actions")
-        edit_actions.setText(_("Actions"))
-        edit_actions.setAutoPopupTimeout(0.5)
-        edit_actions.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
-                                    self.cb_edit_actions)
-        self.edit_actions = edit_actions
-        self.edit_actions.setEnabled(False)
-
-        edit_behaviours = edit_popup.createChild("TaharezLook/MenuItem",
-                                                 "Edit/Behaviours")
-        edit_behaviours.setText(_("Behaviours"))
-        edit_behaviours.setAutoPopupTimeout(0.5)
-        edit_behaviours.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
-                                       self.cb_edit_behaviours)
-        self.edit_behaviours = edit_behaviours
-        self.edit_behaviours.setEnabled(False)
 
         # View Menu
         self.view_menu = self.menubar.createChild("TaharezLook/MenuItem",
@@ -403,27 +319,6 @@ class EditorGui(object):
         self.view_maps_menu = view_maps.createChild("TaharezLook/PopupMenu",
                                                     "ViewMapsMenu")
         view_maps.setAutoPopupTimeout(0.5)
-        self.project_menu = self.menubar.createChild("TaharezLook/MenuItem",
-                                                     "Project")
-        self.project_menu.setText(_("Project"))
-        project_popup = self.project_menu.createChild("TaharezLook/PopupMenu",
-                                                      "ProjectPopup")
-        project_settings = project_popup.createChild(
-            "TaharezLook/MenuItem", "ProjectSettings")
-        project_settings.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
-                                        self.cb_project_settings)
-        project_settings.setText(_("Settings"))
-        project_settings.setEnabled(False)
-        project_settings.setAutoPopupTimeout(0.5)
-        self.project_settings = project_settings
-
-        # Add component popup
-        self.add_comp_popup = self.main_container.createChild("TaharezLook"
-                                                              "/PopupMenu")
-
-        # Select behaviour popup
-        self.select_behaviour_popup = self.main_container.createChild(
-            "TaharezLook/PopupMenu")
 
     def reset_layerlist(self):
         """Resets the layerlist to be empty"""
@@ -485,52 +380,27 @@ class EditorGui(object):
             return
         identifier = self.app.selected_object.getId()
         world = self.app.world
-        entity = get_entity(world, self.app.selected_object)
-        components = ComponentManager.get_components()
-        if entity is not None:
-            for comp_name, component in iteritems(components):
-                com_data = getattr(entity, comp_name)
-                if com_data:
-                    for field in component.saveable_fields:
-                        if comp_name not in property_editor.sections:
-                            flags = list()
-                            if comp_name not in unremovable_components:
-                                flags.append("removable")
-                            property_editor.add_section(
-                                comp_name, False, flags)
-                        value = getattr(com_data, field)
-                        property_editor.set_property(
-                            comp_name, field,
-                            [value])
-            property_editor.enable_add = True
-            property_editor.add_callback = self.cb_add_component_menu
-            property_editor.add_text = _("Add component")
-        else:
-            property_editor.set_property(
-                "Instance", "Identifier",
-                [identifier])
-            property_editor.set_property(
-                "Instance", "CostId",
-                [str(self.app.selected_object.getCostId())])
-            property_editor.set_property(
-                "Instance", "Cost",
-                [self.app.selected_object.getCost()])
-            property_editor.set_property(
-                "Instance", "Blocking",
-                [self.app.selected_object.isBlocking()])
-            property_editor.set_property(
-                "Instance", "Rotation",
-                [self.app.selected_object.getRotation()])
-            visual = self.app.selected_object.get2dGfxVisual()
-            property_editor.set_property(
-                "Instance", "StackPosition",
-                [str(visual.getStackPosition())])
-            property_editor.enable_add = False
-            property_editor.add_callback = None
-            if self.app.project_dir is not None:
-                property_editor.enable_add = True
-                property_editor.add_callback = self.cb_convert_entity
-                property_editor.add_text = _("Convert to entity")
+        property_editor.set_property(
+            "Instance", "Identifier",
+            [identifier])
+        property_editor.set_property(
+            "Instance", "CostId",
+            [str(self.app.selected_object.getCostId())])
+        property_editor.set_property(
+            "Instance", "Cost",
+            [self.app.selected_object.getCost()])
+        property_editor.set_property(
+            "Instance", "Blocking",
+            [self.app.selected_object.isBlocking()])
+        property_editor.set_property(
+            "Instance", "Rotation",
+            [self.app.selected_object.getRotation()])
+        visual = self.app.selected_object.get2dGfxVisual()
+        property_editor.set_property(
+            "Instance", "StackPosition",
+            [str(visual.getStackPosition())])
+        property_editor.enable_add = False
+        property_editor.add_callback = None
         property_editor.update_widgets()
 
     def reset_maps_menu(self):
@@ -558,7 +428,7 @@ class EditorGui(object):
             item.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
                                 self.cb_map_switch_clicked)
             if (self.app.current_map is not None and
-                    self.app.current_map.name is map_name):
+                    self.app.current_map.name == map_name):
                 item.setText("+" + map_name)
             else:
                 item.setText("   " + map_name)
@@ -601,22 +471,6 @@ class EditorGui(object):
             True if no dialog was cancelled. False if a dialog was cancelled
         """
         import tkinter.messagebox
-        if (self.app.changed_maps or self.app.project_changed or
-                self.app.entity_changed):
-            message = _("Something was changed. Save everything?")
-            answer = tkinter.messagebox.askyesnocancel("Save?", message)
-            if answer is True:
-                self.save_all()
-                return True
-            elif answer is None:
-                return False
-        if self.app.project_changed:
-            message = _("The project was changed. Save the project?")
-            answer = tkinter.messagebox.askyesnocancel("Save?", message)
-            if answer is True:
-                self.app.save_project()
-            if answer is None:
-                return False
         if self.app.changed_maps:
             message = _("One or more maps have changed. Save ALL maps?")
             answer = tkinter.messagebox.askyesnocancel("Save?", message)
@@ -634,58 +488,33 @@ class EditorGui(object):
                         return False
             elif answer is None:
                 return False
-        if self.app.entity_changed:
-            message = _("One or more entities have changed. Save entities?")
-            answer = tkinter.messagebox.askyesnocancel("Save?", message)
-            if answer is True:
-                self.app.save_entities()
-            elif answer is None:
-                return False
         return True
 
     def cb_close(self, args):
         """Callback when close was clicked in the file menu"""
-        if self.ask_save_changed():
-            self.app.clear()
-
-    def cb_new(self, args):
-        """Callback when new was clicked in the file menu"""
-        import tkinter.messagebox
-        dialog = NewProject(self.app)
-        values = dialog.show_modal(self.editor_window,
-                                   self.app.engine.pump)
-        if not dialog.return_value:
+        if self.app.current_map is None:
             return
-        new_project_path = values["ProjectPath"]
-        settings_path = os.path.join(new_project_path, "settings-dist.xml")
-        if (os.path.exists(settings_path)
-                or os.path.exists(os.path.join(new_project_path,
-                                               "settings.xml"))):
-            answer = tkinter.messagebox.askyesno(
-                _("Project file exists"),
-                _("There is already a settings.xml or settings-dist.xml file. "
-                  "If you create a new project the settings-dist.xml will "
-                  "be overwritten. If you want to convert a project open it "
-                  "instead. Continue with creating a new project?"))
-            if not answer:
+        if self.app.current_map.name in self.app.changed_maps:
+            import tkinter.filedialog
+            import tkinter.messagebox
+            message = _("The map {map_name} has changed. "
+                        "Save?").format(map_name=self.app.current_map.name)
+            answer = tkinter.messagebox.askyesnocancel("Save?",
+                                                       message)
+            if answer is None:
                 return
-            os.remove(settings_path)
-        self.app.new_project(settings_path, values)
+            if answer is True:
+                self.app.save_map()
+        self.app.close_map()
+        self.reset_maps_menu()
 
     def save_all(self):
-        """Save all maps, entities and the project"""
+        """Save all maps"""
         self.app.save_all_maps()
-        self.app.save_entities()
-        self.app.save_project()
 
     def cb_save_all(self, args):
         """Callback when save->all was clicked in the file menu"""
         self.save_all()
-        self.save_popup.closePopupMenu()
-
-    def cb_save_project(self, args):
-        """Callback when save->project was clicked in the file menu"""
-        self.app.save_project()
         self.save_popup.closePopupMenu()
 
     def cb_save_maps_all(self, args):
@@ -701,30 +530,21 @@ class EditorGui(object):
         self.save_popup.closePopupMenu()
         self.save_maps_popup.closePopupMenu()
 
-    def cb_save_entities(self, args):
-        """Callback when save->entities was clicked in the file menu"""
-        self.app.save_entities()
-
     def enable_map_menus(self):
         self.file_save.setEnabled(True)
+        self.file_close.setEnabled(True)
         self.save_maps.setEnabled(True)
         self.file_import.setEnabled(True)
 
-    def enable_project_menus(self):
-        self.file_close.setEnabled(True)
-        self.project_settings.setEnabled(True)
-        self.edit_add.setEnabled(True)
-        self.edit_components.setEnabled(True)
-        self.edit_systems.setEnabled(True)
-        self.edit_actions.setEnabled(True)
-        self.edit_behaviours.setEnabled(True)
-        self.save_project.setEnabled(True)
-        self.save_entities.setEnabled(True)
+    def disable_map_menus(self):
+        self.file_save.setEnabled(False)
+        self.file_close.setEnabled(False)
+        self.save_maps.setEnabled(False)
+        self.file_import.setEnabled(False)
 
     def enable_all_menus(self):
-        """Enable the menus for loaded projects"""
+        """Enable the menus for loaded maps"""
         self.enable_map_menus()
-        self.enable_project_menus()
 
     def cb_open(self, args):
         """Callback when open was clicked in the file menu"""
@@ -733,61 +553,14 @@ class EditorGui(object):
         # Based on code from unknown-horizons
         try:
             selected_file = tkinter.filedialog.askopenfilename(
-                filetypes=[(_("fife xml file"), ".xml",)],
+                filetypes=[(_("fife map file"), ".xml",)],
                 title=_("Open file"))
         except ImportError:
             # tkinter may be missing5555
             selected_file = ""
         if selected_file:
             tree = ET.parse(selected_file)
-            if tree.getroot().tag == "Settings":
-                try:
-                    loaded = self.app.try_load_project(selected_file)
-                except Exception as e:
-                    import tkinter.messagebox
-
-                    tkinter.messagebox.showerror(_("Loading failed"),
-                        _("Loading of the project failed\n"
-                          "The following exception was raised: \""
-                          + str(e) + "\"\n"
-                          "Make sure that the project is written for the same"
-                          "python version(s) as you use to run the editor."))
-                    self.app.clear()
-                    return
-                if not loaded:
-                    project = SimpleXMLSerializer(selected_file)
-                    try:
-                        project.load()
-                    except (InvalidFormat, ET.ParseError):
-                        print(_("%s is not a valid fife or fife-rpg project" %
-                                selected_file))
-                        return
-                    answer = tkinter.messagebox.askyesno(
-                        _("Convert project"),
-                        _("%s is not a fife-rpg project. Convert it? " %
-                          selected_file))
-                    if not answer:
-                        return
-                    bak_file = self.app.convert_fife_project(selected_file)
-                    if bak_file is None:
-                        return
-                    if not self.app.try_load_project(selected_file):
-                        tkinter.messagebox.showerror("Load Error",
-                                                     "There was a problem loading the "
-                                                     "converted project. Reverting. "
-                                                     "Converted file will be stored as "
-                                                     "original_file.converted")
-                        conv_file = "%s.converted" % selected_file
-                        if os.path.exists(conv_file):
-                            os.remove(conv_file)
-                        os.rename(selected_file, conv_file)
-                        os.rename(bak_file, selected_file)
-
-                self.enable_all_menus()
-
-                tkinter.messagebox.showinfo(_("Project loaded"),
-                                            _("Project successfully loaded"))
-            elif tree.getroot().tag == "map":
+            if tree.getroot().tag == "map":
                 filename = os.path.relpath(selected_file, os.getcwd())
                 fife_map = self.app.editor.load_map(filename)
                 for cam in fife_map.getCameras():
@@ -795,13 +568,9 @@ class EditorGui(object):
                         game_map = GameMap(fife_map, fife_map.getId(),
                                            cam.getId(), dict(), self.app)
                         self.app.add_map(fife_map.getId(), game_map)
+                        self.app.switch_map(game_map.name)
                         self.reset_maps_menu()
-                        self.enable_map_menus()
-
-    def cb_project_settings(self, args):
-        """Callback when project settings was clicked in the file menu"""
-        self.app.edit_project_settings(self.app.project_dir,
-                                       self.app.project)
+                        return
 
     def cb_map_switch_clicked(self, args):
         """Callback when a map from the menu was clicked"""
@@ -818,19 +587,14 @@ class EditorGui(object):
         try:
             selected_file = tkinter.filedialog.askopenfilename(
                 filetypes=[("fife object definition", ".xml",)],
-                initialdir=self.app.project_dir,
                 title="import objects")
         except ImportError:
             # tkinter may be missing
             selected_file = ""
 
         if selected_file:
-            if self.app.project_dir is not None:
-                selected_file = os.path.relpath(selected_file,
-                                                self.app.project_dir)
-            else:
-                selected_file = os.path.relpath(selected_file,
-                                                os.getcwd())
+            selected_file = os.path.relpath(selected_file,
+                                            os.getcwd())
 
             self.editor.import_object(selected_file)
             self.app.objects_imported()
@@ -875,11 +639,6 @@ class EditorGui(object):
         cell_grid = values["GridType"]
         layer = self.editor.create_layer(map_name, layer_name, cell_grid)
         return layer
-
-    def close_add_component_menu(self):
-        """Closes and removes the add compoment popup"""
-        self.add_comp_popup.closePopupMenu()
-        self.add_comp_popup.hide()
 
     def cb_add_map(self, args):
         """Callback when Map was clicked in the edit->Add menu"""
@@ -935,49 +694,6 @@ class EditorGui(object):
         self.app.add_map(map_id, game_map)
         self.app.changed_maps.append(map_id)
         self.reset_maps_menu()
-        self.enable_map_menus()
-
-    def cb_edit_components(self, args):
-        """Callback when Components was clicked in the edit menu"""
-        self.app.edit_components()
-
-    def cb_edit_systems(self, args):
-        """Callback when Systems was clicked in the edit menu"""
-        self.app.edit_systems()
-
-    def cb_edit_actions(self, args):
-        """Callback when Systems was clicked in the edit menu"""
-        self.app.edit_actions()
-
-    def cb_edit_behaviours(self, args):
-        """Callback when Systems was clicked in the edit menu"""
-        self.app.edit_behaviours()
-
-    def cb_project_cleared(self):
-        """Called when the project was cleared"""
-        self.file_save.setEnabled(False)
-        self.file_import.setEnabled(False)
-        self.file_close.setEnabled(False)
-        self.project_settings.setEnabled(False)
-        self.edit_add.setEnabled(False)
-        self.edit_components.setEnabled(False)
-        self.edit_systems.setEnabled(False)
-        self.edit_actions.setEnabled(False)
-        self.edit_behaviours.setEnabled(False)
-        self.view_maps_menu.closePopupMenu()
-        self.save_popup.closePopupMenu()
-        self.import_popup.closePopupMenu()
-        self.save_maps_popup.closePopupMenu()
-        self.reset_maps_menu()
-
-    def cb_show_agent_selection_changed(self, args):
-        """Called when the "Show Entities" checkbox was changed"""
-        if self.app.current_map is None:
-            return
-        if self.show_agents_check.isSelected():
-            self.app.show_map_entities(self.app.current_map.name)
-        else:
-            self.app.hide_map_entities(self.app.current_map.name)
 
     def cb_value_changed(self, section, property_name, value):
         """Called when the value of a properties changed
@@ -992,67 +708,47 @@ class EditorGui(object):
         """
         identifier = self.app.selected_object.getId()
         world = self.app.world
-        entity = get_entity(world, self.app.selected_object)
-        if entity is not None:
-            entity = world.get_entity(identifier)
-            com_data = getattr(entity, section)
+        if section != "Instance":
+            return
+        is_valid = True
+        if property_name == "Identifier":
+            value = value
+            self.app.selected_object.setId(value)
+        elif property_name == "CostId":
+            cur_cost = self.app.selected_object.getCost()
             try:
-                if (section == General.registered_as and property_name ==
-                    "identifier" and value != identifier):
-                    value = world.rename_entity(identifier, value)
-                    self.app.selected_object.setId(value)
-                    old_dict = self.app.entities.pop(identifier)
-                    self.app.entities[value] = old_dict
-                else:
-                    setattr(com_data, property_name, value)
-                self.app.update_agents(self.app.current_map)
-                self.app.entity_changed = True
-            except (ValueError, yaml.parser.ParserError):
-                pass
-            except Exception as error:  # pylint: disable=broad-except
-                print(error)
-        else:
-            if section != "Instance":
-                return
-            is_valid = True
-            if property_name == "Identifier":
                 value = value
-                self.app.selected_object.setId(value)
-            elif property_name == "CostId":
-                cur_cost = self.app.selected_object.getCost()
-                try:
-                    value = value
-                    self.app.selected_object.setCost(value, cur_cost)
-                except UnicodeEncodeError:
-                    print("The CostId has to be an ascii value")
-                    is_valid = False
-            elif property_name == "Cost":
-                cur_cost_id = self.app.selected_object.getCostId()
-                try:
-                    self.app.selected_object.setCost(cur_cost_id,
-                                                     float(value))
-                except ValueError as error:
-                    print(error.message)
-                    is_valid = False
-            elif property_name == "Blocking":
-                self.app.selected_object.setBlocking(value)
-            elif property_name == "Rotation":
-                try:
-                    self.app.selected_object.setRotation(int(value))
-                except ValueError as error:
-                    print(error.message)
-                    is_valid = False
-            elif property_name == "StackPosition":
-                try:
-                    visual = self.app.selected_object.get2dGfxVisual()
-                    visual.setStackPosition(int(value))
-                except ValueError as error:
-                    print(error.message)
-                    is_valid = False
-            if is_valid:
-                map_name = self.app.current_map.name
-                if map_name not in self.app.changed_maps:
-                    self.app.changed_maps.append(map_name)
+                self.app.selected_object.setCost(value, cur_cost)
+            except UnicodeEncodeError:
+                print("The CostId has to be an ascii value")
+                is_valid = False
+        elif property_name == "Cost":
+            cur_cost_id = self.app.selected_object.getCostId()
+            try:
+                self.app.selected_object.setCost(cur_cost_id,
+                                                 float(value))
+            except ValueError as error:
+                print(error.message)
+                is_valid = False
+        elif property_name == "Blocking":
+            self.app.selected_object.setBlocking(value)
+        elif property_name == "Rotation":
+            try:
+                self.app.selected_object.setRotation(int(value))
+            except ValueError as error:
+                print(error.message)
+                is_valid = False
+        elif property_name == "StackPosition":
+            try:
+                visual = self.app.selected_object.get2dGfxVisual()
+                visual.setStackPosition(int(value))
+            except ValueError as error:
+                print(error.message)
+                is_valid = False
+        if is_valid:
+            map_name = self.app.current_map.name
+            if map_name not in self.app.changed_maps:
+                self.app.changed_maps.append(map_name)
         self.update_property_editor()
 
     def cb_layer_box_changed(self, args):
@@ -1134,61 +830,16 @@ class EditorGui(object):
           new_map_name: The name of the new_map
         """
         self.add_layer_button.setEnabled(new_map_name is not None)
+        if new_map_name is not None:
+            self.enable_map_menus()
+        else:
+            self.disable_map_menus()
 
     def cb_menu_leave(self, args):
         """Calld when the menubar loses input focus"""
         item = self.menubar.getPopupMenuItem()
         if item is not None:
             item.closePopupMenu()
-
-    def cb_remove_component(self, component):
-        """Remove a component from the current selected entity
-
-        Args:
-
-
-         component: The component to be removed
-        """
-        entity = self.app.world.get_entity(self.app.selected_object.getId())
-        delattr(entity, component)
-        getattr(self.app.world.components, component).step(0)
-        self.app.entity_changed = True
-        self.close_add_component_menu()
-
-    def cb_add_component_menu(self, args):
-        """Called when the "Add" button in the property editor was clicked"""
-        entity = self.app.world.get_entity(self.app.selected_object.getId())
-        self.add_comp_popup.resetList()
-        for component in ComponentManager.get_components():
-            if not getattr(entity, component):
-                item_name = "add_%s_component" % component
-                item = self.add_comp_popup.createChild("TaharezLook/MenuItem",
-                                                       item_name)
-                item.setText(component)
-                item.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
-                                    (lambda args, component=component:
-                                     self.cb_add_component_selected(
-                                         args,
-                                         component)))
-        position = self.property_editor.add_button.getPosition()
-        position.d_y -= self.add_comp_popup.getHeight()
-        self.add_comp_popup.setPosition(position)
-        self.property_editor.properties_pane.addChild(self.add_comp_popup)
-        self.add_comp_popup.moveToFront()
-        self.add_comp_popup.show()
-        self.add_comp_popup.openPopupMenu()
-        self.add_comp_event = self.add_comp_popup.subscribeEvent(
-            PyCEGUI.PopupMenu.EventZOrderChanged,
-            self.cb_add_popup_order_changed)
-
-    def cb_add_component_selected(self, args, component):
-        """Called when a menu item in the add component menu was clicked"""
-        entity = self.app.world.get_entity(self.app.selected_object.getId())
-        setattr(entity, component, None)
-        self.update_property_editor()
-        self.property_editor.cb_un_collapse_clicked(None, component)
-        self.property_editor.cb_un_collapse_clicked(None, component)
-        self.app.entity_changed = True
 
     def cb_add_popup_order_changed(self, args):
         """Called when the order of the add popupmenu was changed"""
@@ -1197,92 +848,3 @@ class EditorGui(object):
         self.add_comp_event.disconnect()
         self.add_comp_event = None
         self.close_add_component_menu()
-
-    def cb_convert_entity(self, args):
-        """Called when the Convert to entity button in the property editor was
-        clicked"""
-        self.select_behaviour_popup.resetList()
-        behaviours = BehaviourManager.get_behaviours()
-        if not behaviours:
-            item_name = "No behaviour registered"
-            item = self.select_behaviour_popup.createChild(
-                                                   "TaharezLook/MenuItem",
-                                                   item_name)
-            item.setText(item_name)
-        for behaviour in behaviours:
-            item_name = "%s" % behaviour
-            item = self.select_behaviour_popup.createChild("TaharezLook/MenuItem",
-                                                   item_name)
-            item.setText(behaviour)
-            item.subscribeEvent(PyCEGUI.MenuItem.EventClicked,
-                                (lambda args, behaviour_name=behaviour:
-                                 self.cb_make_entity(
-                                     args,
-                                     behaviour_name)))
-        position = self.property_editor.add_button.getPosition()
-        position.d_y -= self.select_behaviour_popup.getHeight()
-        self.select_behaviour_popup.setPosition(position)
-        self.property_editor.properties_pane.addChild(self.select_behaviour_popup)
-        self.select_behaviour_popup.moveToFront()
-        self.select_behaviour_popup.show()
-        self.select_behaviour_popup.openPopupMenu()
-        self.select_bevaviour_event = self.select_behaviour_popup.subscribeEvent(
-            PyCEGUI.PopupMenu.EventZOrderChanged,
-            self.cb_select_behaviour_order_changed)
-
-    def cb_make_entity(self, args, behaviour_name):
-        """Called when an item in the select behaviour popup was clicked"""
-        behaviour = BehaviourManager.get_behaviour(behaviour_name)
-        if behaviour is None:
-            return
-        selected_object = self.app.selected_object
-        identifier = selected_object.getId()
-        if not identifier.strip():
-            identifier = _("New Entity")
-        identifier = self.app.world.create_unique_identifier(identifier)
-        selected_object.setId(identifier)
-        entity_data = {}
-        general_name = General.registered_as
-        agent_name = Agent.registered_as
-        fagent_name = FifeAgent.registered_as
-        entity_data[general_name] = {}
-        entity_data[general_name]["identifier"] = identifier
-        entity_data[agent_name] = {}
-        entity_data[agent_name]["behaviour_type"] = behaviour_name
-
-        location = selected_object.getLocation()
-        layer = location.getLayer()
-        entity_data[agent_name]["layer"] = layer.getId()
-        game_map = layer.getMap()
-        entity_data[agent_name]["map"] = game_map.getId()
-        coords = location.getLayerCoordinates()
-        entity_data[agent_name]["position"] = (coords.x, coords.y, coords.z)
-        entity_data[agent_name]["rotation"] = selected_object.getRotation()
-        fife_object = selected_object.getObject()
-        entity_data[agent_name]["gfx"] = fife_object.getId()
-        entity_data[agent_name]["namespace"] = fife_object.getNamespace()
-        entity_data[fagent_name] = {}
-        entity_data[fagent_name]["layer"] = layer
-        entity_data[fagent_name]["instance"] = selected_object
-
-        entity_data[fagent_name]["behaviour"] = behaviour()
-        self.app.entities[identifier] = entity_data
-
-        self.app.world.get_or_create_entity(identifier, entity_data)
-        self.app.current_map.update_entities()
-        self.app.set_selected_object(None)
-        self.app.set_selected_object(selected_object)
-
-    def close_select_behaviour_menu(self):
-        """Closes and removes the select behaviour popup"""
-        self.select_behaviour_popup.closePopupMenu()
-        self.select_behaviour_popup.hide()
-
-    def cb_select_behaviour_order_changed(self, args):
-        """Called when the order of the select behaviour popupmenu was
-        changed"""
-        if self.select_bevaviour_event is None:
-            return
-        self.select_bevaviour_event.disconnect()
-        self.select_bevaviour_event = None
-        self.close_select_behaviour_menu()

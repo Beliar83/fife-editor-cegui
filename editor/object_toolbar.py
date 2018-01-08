@@ -295,7 +295,8 @@ class ObjectToolbar(ToolbarPage):
         size.d_width.d_offset = size.d_width.d_offset - x_adjust
         items_panel.setSize(size)
         self.items_panel = items_panel
-        self.items = None
+        self.items = self.items_panel.createChild("VerticalLayoutContainer",
+                                                  "Items")
         self.have_objects_changed = False
         self.app.add_map_switch_callback(self.cb_map_changed)
         self.last_mouse_pos = None
@@ -309,7 +310,7 @@ class ObjectToolbar(ToolbarPage):
                                    self.cb_map_moved)
         mode.listener.add_callback("key_pressed",
                                    self.cb_key_pressed)
-        self.app.add_project_clear_callback(self.cb_project_closed)
+        self.app.add_map_switch_callback(self.map_switch)
         self.app.add_objects_imported_callback(self.cb_objects_imported)
         self.objects = Queue()
         self.images_lock = _thread.allocate_lock()
@@ -336,6 +337,9 @@ class ObjectToolbar(ToolbarPage):
         self.cur_rotation = self.image_directions[identifier][0]
         self.images_lock.release()
 
+    def map_switch(self, old_map, name):
+        self.have_objects_changed = True
+
     def update_contents(self):
         """Update the contents of the toolbar page"""
         if self.have_objects_changed and self.is_active:
@@ -360,12 +364,7 @@ class ObjectToolbar(ToolbarPage):
                     continue
                 if identifier in self.images:
                     continue
-                project_dir = self.app.project_source
-                object_filename = fife_object.getFilename()
-                if project_dir is not None:
-                    filename = os.path.join(project_dir, object_filename)
-                else:
-                    filename = object_filename
+                filename = fife_object.getFilename()
 
                 objects = parse_file(filename)
                 for obj in objects:
@@ -580,7 +579,7 @@ class ObjectToolbar(ToolbarPage):
 
     def clean_mouse_instance(self):
         """Removes the instance that was created by mouse movement"""
-        if self.last_instance is not None:
+        if self.app.current_map is not None and self.last_instance is not None:
             self.app.editor.delete_instance(self.last_instance)
         self.last_instance = None
         self.last_mouse_pos = None
@@ -628,20 +627,6 @@ class ObjectToolbar(ToolbarPage):
                     self.cur_rotation = directions[0]
                 if self.last_instance is not None:
                     self.last_instance.setRotation(self.cur_rotation)
-
-    def cb_project_closed(self):
-        """Called when the current project was closed"""
-        self.namespaces = {}
-        self.images_lock.acquire()
-        for image in self.images:
-            PyCEGUI.ImageManager.getSingleton().destroy(image)
-        self.images = {}
-        self.images_lock.release()
-        self.selected_object = [None, None]
-        if self.items:
-            self.items_panel.destroyChild(self.items)
-        self.items = self.items_panel.createChild("VerticalLayoutContainer",
-                                                  "Items")
 
     def cb_objects_imported(self):
         """Called when objects where imported to the project"""
